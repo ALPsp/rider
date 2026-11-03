@@ -100,6 +100,8 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
   .ok { font-size:56px; text-align:center; }
   .num-icon { background:var(--rosso); color:#fff; border:3px solid #fff; border-radius:50%; width:30px !important; height:30px !important; display:grid !important; place-items:center; font-weight:900; box-shadow:0 2px 6px rgba(0,0,0,.3); }
   .casa-icon { background:var(--lime); border:3px solid #fff; border-radius:50%; width:30px !important; height:30px !important; display:grid !important; place-items:center; font-size:15px; box-shadow:0 2px 6px rgba(0,0,0,.3); }
+  .leaflet-control-attribution { font-size:9px !important; opacity:.7; }
+  .leaflet-control-attribution a[href*="leaflet"], .leaflet-attribution-flag { display:none !important; }
 </style>
 </head>
 <body>
@@ -307,8 +309,8 @@ function navigazione() {
       <div class="banner" id="banner"><div class="fr" id="fr">⬆</div><div class="bt"><b id="bdist">Calcolo il percorso…</b><span id="bistr"></span></div></div>
       <div class="navbar"><button id="voce">${voce ? '🔊' : '🔇'}</button><button id="centra">◎</button></div>
       <div class="arrivo" id="arrivo"></div><div class="foglio basso" id="foglio"></div>`;
-    map = L.map('mappa', { zoomControl: false, attributionControl: false }).setView(S.casa, 16);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+    map = L.map('mappa', { zoomControl: false, attributionControl: true }).setView(S.casa, 16);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
     map._livello = L.layerGroup().addTo(map);
     map.on('dragstart', () => { segue = false; $('#centra').classList.add('on'); });
     $('#centra').onclick = () => { segue = true; $('#centra').classList.remove('on'); map.setZoom(17); centra(); };
