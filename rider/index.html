@@ -126,9 +126,22 @@ function chiama(fn, ...a) {
   return new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(e => ko(e && e.message ? e.message : String(e)))[fn](...a));
 }
 function attesa(txt) { $('#attesaTxt').textContent = txt || 'Un attimo…'; $('#attesa').classList.toggle('on', !!txt); }
+function memorizza() { try { if (S) localStorage.setItem('rider_S', JSON.stringify(S)); } catch (e) {} }
+/** Aggiorna subito lo schermo, salva sul server in sottofondo; se il server risponde con errore, ripristina e avvisa. */
+async function ottimista(cambia, fn, ...a) {
+  const prima = JSON.stringify(S);
+  try { cambia(S); disegna(); memorizza(); } catch (e) {}
+  for (let tentativo = 0; tentativo < 3; tentativo++) {
+    try { S = await chiama(fn, PIN, ...a); memorizza(); disegna(); return; }
+    catch (e) {
+      if (!/Connessione/.test(String(e)) || tentativo === 2) { S = JSON.parse(prima); disegna(); avviso(e); return; }
+      await new Promise(r => setTimeout(r, 2000 * (tentativo + 1)));
+    }
+  }
+}
 async function fai(txt, fn, ...a) {
   attesa(txt);
-  try { S = await chiama(fn, PIN, ...a); attesa(); disegna(); return S; }
+  try { S = await chiama(fn, PIN, ...a); memorizza(); attesa(); disegna(); return S; }
   catch (e) { attesa(); avviso(e); throw e; }
 }
 function avviso(e) { alert(String(e).replace(/^Error:\s*/, '')); }
@@ -155,7 +168,7 @@ function login() {
 function disegna() {
   $('#chi').innerHTML = `${esc(S.nome)}<small>${S.turno ? 'In servizio dalle ' + hhmm(S.turno.inizio) : 'Fuori servizio'}${S.portafoglio && S.portafoglio.inTasca ? ' · 💶 in tasca ' + euro(S.portafoglio.inTasca) : ''}</small>`;
   $('#topbtn').innerHTML = `<button id="esci">Esci</button>`;
-  $('#esci').onclick = () => { togli('rider_pin'); PIN = null; S = null; login(); };
+  $('#esci').onclick = () => { togli('rider_pin'); togli('rider_S'); PIN = null; S = null; login(); };
   if (!S.turno) return inizioServizio();
   if (S.giro && S.giro.partenza) return navigazione();
   return preparaGiro();
@@ -176,7 +189,7 @@ function inizioServizio(fine) {
     const f = e.target.files[0]; if (!f) return;
     attesa('Leggo i km…');
     try {
-      const r = await chiama('riderFotoCruscotto', PIN, fine ? 'fine' : 'inizio', await comprimi(f, 1400));
+      const r = await chiama('riderFotoCruscotto', PIN, fine ? 'fine' : 'inizio', await comprimi(f, 1100));
       attesa();
       const km = prompt('Km sul cruscotto' + (r.ultimo ? ' (ultima volta: ' + r.ultimo + ')' : ''), r.proposta || '');
       if (!km) return;
@@ -209,10 +222,10 @@ function preparaGiro() {
   $('#file').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     attesa('Leggo comanda e scontrino…');
-    try { const o = await chiama('riderScansiona', PIN, await comprimi(f, 1800)); attesa(); modulo(o); }
+    try { const o = await chiama('riderScansiona', PIN, await comprimi(f, 1500)); attesa(); modulo(o); }
     catch (er) { attesa(); avviso(er); }
   };
-  document.querySelectorAll('.x').forEach(b => b.onclick = () => confirm('Tolgo questa consegna?') && fai('Tolgo…', 'riderTogli', b.dataset.id));
+  document.querySelectorAll('.x').forEach(b => b.onclick = () => confirm('Tolgo questa consegna?') && ottimista(s => { s.consegne = s.consegne.filter(x => x.id !== b.dataset.id); }, 'riderTogli', b.dataset.id));
   if ($('#parti')) $('#parti').onclick = () => { parla('Buon giro'); fai('Calcolo il percorso migliore…', 'riderParto'); };
   if ($('#fine')) $('#fine').onclick = () => inizioServizio(true);
 }
@@ -330,8 +343,8 @@ function navigazione() {
        <div class="icone"><a class="btn s pic" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(S.pizzeria)}&travelmode=driving" target="_blank" style="font-size:13px;font-weight:900">Maps</a>
        <button class="btn p" id="rientro" style="flex:3">🏠 Sono rientrato</button></div>`;
   if (prossima) $('#fatto').onclick = () => confirm('Consegnato a ' + (prossima.cliente || prossima.indirizzo) + (prossima.importo ? ' e incassato ' + euro(prossima.importo) + '?' : '?'))
-    && fai('Salvo…', 'riderConsegnato', prossima.id);
-  else $('#rientro').onclick = () => fai('Chiudo il giro…', 'riderRientrato');
+    && ottimista(s => { s.consegne.find(x => x.id === prossima.id).consegnata = new Date().toISOString(); if (navigator.vibrate) navigator.vibrate(60); }, 'riderConsegnato', prossima.id);
+  else $('#rientro').onclick = () => ottimista(s => { s.giro = null; s.consegne = []; }, 'riderRientrato');
   posizionaArrivo();
   if (!NAV || NAV.meta !== meta) { NAV = { meta, passi: null }; calcola(true); }
   else aggiornaNav();
@@ -449,7 +462,7 @@ function comprimi(file, max) {
       const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
       c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      ok(c.toDataURL('image/jpeg', 0.85));
+      ok(c.toDataURL('image/jpeg', 0.78));
     };
     img.onerror = ko; img.src = url;
   });
@@ -457,7 +470,11 @@ function comprimi(file, max) {
 
 (async () => {
   const p = leggi('rider_pin'); if (!p) return login();
-  try { attesa('Entro…'); S = await chiama('riderStato', p); PIN = p; attesa(); disegna(); } catch (e) { attesa(); togli('rider_pin'); login(); }
+  PIN = p;
+  let salvato = null; try { salvato = JSON.parse(localStorage.getItem('rider_S') || 'null'); } catch (e) {}
+  if (salvato && salvato.nome) { S = salvato; disegna(); } else attesa('Entro…');
+  try { S = await chiama('riderStato', p); memorizza(); attesa(); disegna(); }
+  catch (e) { attesa(); if (/PIN/.test(String(e))) { togli('rider_pin'); togli('rider_S'); login(); } }
 })();
 
 })();

@@ -93,7 +93,7 @@ function login() {
 
 function avvia() {
   $('#hb').innerHTML = '<button id="esci">Esci</button>';
-  $('#esci').onclick = () => { togli('hub_pin'); clearInterval(timer); if (map) { map.remove(); map = null; } login(); };
+  $('#esci').onclick = () => { togli('hub_pin'); togli('hub_D'); clearInterval(timer); if (map) { map.remove(); map = null; } login(); };
   $('#app').innerHTML = `<div class="kpi">
       <div><span>Fuori adesso</span><b id="k1">-</b></div><div><span>Consegne oggi</span><b id="k2">-</b></div>
       <div><span>Media consegna</span><b id="k3">-</b></div><div><span>💶 Contanti incassati</span><b id="k4">-</b><small id="k4b" style="font-weight:800"></small></div><div><span>💳 SumUp</span><b id="k5">-</b></div></div>
@@ -108,7 +108,7 @@ function avvia() {
   map = L.map('mappa', { attributionControl: true });
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
   livello = L.layerGroup().addTo(map);
-  primoFit = true; aggiorna(); clearInterval(timer); timer = setInterval(aggiorna, 15000);
+  primoFit = true; aggiorna(true); aggiorna(); clearInterval(timer); timer = setInterval(() => aggiorna(), 15000);
 }
 
 function decodifica(s) {
@@ -127,8 +127,10 @@ function ritardoSuOrario(eta, previsto) {
   return (e.getHours() * 60 + e.getMinutes()) - (h * 60 + m);
 }
 
-async function aggiorna() {
-  let d; try { d = await chiama('hubDati', PIN); } catch (e) { return; }
+async function aggiorna(daMemoria) {
+  let d;
+  if (daMemoria) { try { d = JSON.parse(localStorage.getItem('hub_D') || 'null'); } catch (e) {} if (!d) return; }
+  else { try { d = await chiama('hubDati', PIN); } catch (e) { return; } try { localStorage.setItem('hub_D', JSON.stringify(d)); } catch (e) {} }
   $('#sotto').textContent = 'Aggiornato alle ' + hhmm(d.ora) + ' · ' + d.chi;
   const tot = d.stat.reduce((a, s) => a + s.consegne, 0), min = d.stat.reduce((a, s) => a + s.minuti, 0);
   $('#k1').textContent = d.attivi.filter(g => g.partenza).length;
