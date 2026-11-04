@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    // "accessi" lo scrive solo lo script Google, dopo aver controllato il PIN
+    function acc() { return get(/databases/$(db)/documents/accessi/$(request.auth.uid)).data; }
+    function dentro() { return request.auth != null && exists(/databases/$(db)/documents/accessi/$(request.auth.uid)); }
+    function hub() { return dentro() && acc().ruolo == 'hub'; }
+    function sono(nome) { return dentro() && acc().ruolo == 'rider' && acc().nome == nome; }
+
+    match /accessi/{u} { allow read: if request.auth != null && request.auth.uid == u; }
+    match /stato/{nome} { allow read: if hub() || sono(nome); }
+    match /hub/{doc} { allow read: if hub(); }
+    match /posizioni/{nome} {
+      allow read: if hub() || sono(nome);
+      allow write: if sono(nome)
+        && request.resource.data.keys().hasOnly(['lat', 'lng', 'acc', 'ora', 'giro'])
+        && request.resource.data.lat is number && request.resource.data.lng is number;
+    }
+  }
+}

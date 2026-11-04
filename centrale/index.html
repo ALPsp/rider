@@ -12,6 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icone/icona-180.png">
 <link rel="icon" href="icone/icona-192.png">
+<script src="../fb.js"></script>
 <script>window.API_URL = "https://script.google.com/macros/s/AKfycbwzKqDFmwR66rYvYyHV4Ih1mdb4jtuXlwYGJskz69RNnCKwuONjjDLgIU8nRQBmYwJf/exec";
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});</script>
 <script>window.onerror=function(m,u,l,c,e){try{var d=document.getElementById('errbox')||document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#C6413C;color:#fff;font:600 13px -apple-system,sans-serif;padding:10px;border-radius:12px;white-space:pre-wrap';d.textContent+='Errore: '+m+' (riga '+l+':'+c+')\n';(document.body||document.documentElement).appendChild(d);}catch(x){}};</script>
@@ -76,12 +77,15 @@ const salva = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 const togli = k => { try { localStorage.removeItem(k); } catch (e) {} };
 const COLORI = ['#C6413C', '#2563eb', '#2e9e4f', '#e07b00', '#7c3aed', '#0891b2', '#db2777'];
 const colore = n => COLORI[Math.abs([...n].reduce((a, c) => a + c.charCodeAt(0), 0)) % COLORI.length];
-function chiama(fn, ...a) {
-  if (window.API_URL) return fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, a }) })
+const UID = window.FB ? Promise.race([FB.uid(), new Promise(r => setTimeout(() => r(null), 4000))]) : Promise.resolve(null);
+async function chiama(fn, ...a) {
+  const u = await UID;
+  if (window.API_URL) return fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, a, u }) })
     .then(r => r.json()).then(j => { if (!j.ok) throw j.e; return j.r; }, () => { throw 'Connessione assente: riprova'; });
   return new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(e => ko(e && e.message ? e.message : String(e)))[fn](...a));
 }
 
+let POS = {}, ULTIMO = null, CHI = '', inAscolto = false;
 let PIN = null, map = null, livello = null, timer = null, primoFit = true, giriVisti = '';
 
 function login() {
@@ -93,7 +97,7 @@ function login() {
 
 function avvia() {
   $('#hb').innerHTML = '<button id="esci">Esci</button>';
-  $('#esci').onclick = () => { togli('hub_pin'); togli('hub_D'); clearInterval(timer); if (map) { map.remove(); map = null; } login(); };
+  $('#esci').onclick = () => { ULTIMO = null; togli('hub_pin'); togli('hub_D'); clearInterval(timer); if (map) { map.remove(); map = null; } login(); };
   $('#app').innerHTML = `<div class="kpi">
       <div><span>Fuori adesso</span><b id="k1">-</b></div><div><span>Consegne oggi</span><b id="k2">-</b></div>
       <div><span>Media consegna</span><b id="k3">-</b></div><div><span>💶 Contanti incassati</span><b id="k4">-</b><small id="k4b" style="font-weight:800"></small></div><div><span>💳 SumUp</span><b id="k5">-</b></div></div>
@@ -108,7 +112,13 @@ function avvia() {
   map = L.map('mappa', { attributionControl: true });
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
   livello = L.layerGroup().addTo(map);
-  primoFit = true; aggiorna(true); aggiorna(); clearInterval(timer); timer = setInterval(() => aggiorna(), 15000);
+  primoFit = true; aggiorna(true); aggiorna(); clearInterval(timer); timer = setInterval(() => aggiorna(), 120000);
+  /* tempo reale: i giri arrivano appena un rider tocca qualcosa, le posizioni appena si muove */
+  if (window.FB && !inAscolto) {
+    inAscolto = true;
+    FB.ascolta('hub/dati', d => { if (PIN && map) aggiorna(false, d); }).catch(() => {});
+    FB.ascoltaTutti('posizioni', o => { POS = o; if (PIN && map && ULTIMO) aggiorna(false, ULTIMO, true); }).catch(() => {});
+  }
 }
 
 function decodifica(s) {
@@ -127,10 +137,17 @@ function ritardoSuOrario(eta, previsto) {
   return (e.getHours() * 60 + e.getMinutes()) - (h * 60 + m);
 }
 
-async function aggiorna(daMemoria) {
+async function aggiorna(daMemoria, dVivo, soloPos) {
   let d;
-  if (daMemoria) { try { d = JSON.parse(localStorage.getItem('hub_D') || 'null'); } catch (e) {} if (!d) return; }
-  else { try { d = await chiama('hubDati', PIN); } catch (e) { return; } try { localStorage.setItem('hub_D', JSON.stringify(d)); } catch (e) {} }
+  if (dVivo) d = soloPos ? dVivo : JSON.parse(JSON.stringify(dVivo));
+  else if (daMemoria) { try { d = JSON.parse(localStorage.getItem('hub_D') || 'null'); } catch (e) {} if (!d) return; }
+  else { try { d = await chiama('hubDati', PIN); } catch (e) { return; } }
+  if (!soloPos) {
+    if (ULTIMO && d.ora && ULTIMO.ora && d.ora < ULTIMO.ora) return; // dato più vecchio di quello a schermo
+    if (!dVivo && d.chi) CHI = d.chi; else d.chi = CHI || d.chi;
+    ULTIMO = d; try { localStorage.setItem('hub_D', JSON.stringify(d)); } catch (e) {}
+  }
+  (d.attivi || []).forEach(g => { const p = POS[g.rider]; if (g.partenza && p && (!g.pos || p.ora > g.pos.ora)) g.pos = p; });
   $('#sotto').textContent = 'Aggiornato alle ' + hhmm(d.ora) + ' · ' + d.chi;
   const tot = d.stat.reduce((a, s) => a + s.consegne, 0), min = d.stat.reduce((a, s) => a + s.minuti, 0);
   $('#k1').textContent = d.attivi.filter(g => g.partenza).length;
