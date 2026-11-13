@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ALP Rider">
-<meta name="theme-color" content="#cbd300">
+<meta name="theme-color" content="#ccd231">
 <title>Amo la Pizza Rider</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icone/icona-180.png">
@@ -26,7 +26,7 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .top .chi { flex:1; font-weight:800; font-size:17px; line-height:1.15; } .top .chi small { display:block; font-weight:700; font-size:12px; opacity:.75; }
   .top button { background:rgba(255,255,255,.65); border:0; border-radius:999px; padding:8px 12px; font-weight:800; color:var(--ink); }
   .pag { padding:14px; max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
-  .card { background:#fff; border-radius:22px; padding:16px; box-shadow:0 4px 18px rgba(31,26,23,.07); display:flex; flex-direction:column; gap:10px; }
+  .card { background:#fff; border-radius:22px; padding:16px; box-shadow:0 4px 18px rgba(48,47,49,.07); display:flex; flex-direction:column; gap:10px; }
   h2 { margin:0; font-size:22px; font-weight:800; }
   .muto { color:var(--muto); font-size:14px; }
   .contatore { background:var(--ink); color:#fff; border-radius:22px; padding:16px; display:flex; justify-content:space-between; align-items:flex-end; }
@@ -434,7 +434,7 @@ async function calcola(nuova) {
     const passi = st.map((s, i) => { const x = istruzione(s), nx = st[i + 1]; return { t: x.t, m: x.f, d: s.distance, s: s.duration, a: [s.maneuver.location[1], s.maneuver.location[0]], b: nx ? [nx.maneuver.location[1], nx.maneuver.location[0]] : NAV.dest }; });
     NAV = Object.assign(NAV, { passi, linea: decodifica(r.routes[0].geometry), dur: r.routes[0].duration, dist: r.routes[0].distance, arrivo: NAV.dest, passo: 0, annunci: {}, arrivato: false });
     if (lineaNav) lineaNav.remove();
-    lineaNav = L.layerGroup([L.polyline(NAV.linea, { color: '#fff', weight: 11, opacity: .95 }), L.polyline(NAV.linea, { color: '#c42a23', weight: 7 })]).addTo(map);
+    lineaNav = L.layerGroup([L.polyline(NAV.linea, { color: '#fff', weight: 11, opacity: .95 }), L.polyline(NAV.linea, { color: '#b8372f', weight: 7 })]).addTo(map);
     if (!mioPunto) map.fitBounds(NAV.linea, { paddingTopLeft: [20, 130], paddingBottomRight: [20, 220] });
     parla((nuova ? '' : 'Percorso ricalcolato. ') + (passi[1] ? passi[1].t : passi[0].t));
     aggiornaNav();
@@ -485,7 +485,7 @@ function decodifica(s) {
 }
 function disegnaTappe(seq) {
   const lv = map._liv; lv.clearLayers();
-  L.marker(ALP.CASA, { icon: L.divIcon({ className: 'casa-i', html: '<img src="../img/marchio.png" alt="">', iconSize: [34, 34] }) }).addTo(lv);
+  L.marker(ALP.CASA, { icon: L.divIcon({ className: 'casa-i', html: '<img src="../img/marchio.png" alt="" style="width:22px;height:auto;max-width:22px">', iconSize: [34, 34] }) }).addTo(lv);
   seq.forEach((c, i) => { if (c.lat) L.marker([c.lat, c.lng], { icon: L.divIcon({ className: 'num-i', html: String(i + 1), iconSize: [30, 30] }) }).addTo(lv); });
 }
 function smontaMappa() { if (map) { map.remove(); map = null; } lineaNav = null; segnaposto = null; NAV = null; fermaGps(); }
