@@ -90,7 +90,7 @@ let CONS = [], RIDER = [], POS = {}, VERS = [], TURNI = [], GIRI = [], KM = [], 
 
 /* ---------- accesso con PIN (solo qui si chiama lo script Google) ---------- */
 function login() {
-  $('#ui').innerHTML = `<div class="pinbox vetro"><img src="../img/logo.png" alt="Amo la Pizza" style="width:170px"><b style="font-size:20px">Centrale consegne</b>
+  $('#ui').innerHTML = `<div class="pinbox vetro"><div style="background:var(--lime);border-radius:22px;padding:14px 18px"><img src="../img/logo.png" alt="Amo la Pizza" style="width:150px;display:block"></div><b style="font-size:20px">Centrale consegne</b>
     <input id="p" type="password" inputmode="numeric" maxlength="4" placeholder="PIN"><button class="btn p" id="ok">Entra</button></div>`;
   const go = async () => {
     ALP.toast('Entro…');

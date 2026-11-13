@@ -95,7 +95,7 @@ function login() {
   $('#chi').innerHTML = 'Rider<small>Amo la Pizza</small>'; $('#topbtn').innerHTML = '';
   let p = '';
   $('#app').innerHTML = `<div class="pag"><div class="card" style="align-items:center;text-align:center">
-    <img src="../img/logo.png" alt="Amo la Pizza" style="width:180px;margin:6px auto">
+    <div style="background:var(--lime);border-radius:22px;padding:14px 18px;margin:4px auto"><img src="../img/logo.png" alt="Amo la Pizza" style="width:160px;display:block"></div>
     <div class="muto">Scrivi il tuo PIN</div><div class="punti">${'<i></i>'.repeat(4)}</div>
     <div class="pin" style="width:100%">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(n => `<button ${n === '' ? 'style="visibility:hidden"' : ''}>${n}</button>`).join('')}</div></div></div>`;
   tutti('.pin button').forEach(b => b.onclick = async () => {
