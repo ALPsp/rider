@@ -5,15 +5,59 @@ service cloud.firestore {
     function acc() { return get(/databases/$(db)/documents/accessi/$(request.auth.uid)).data; }
     function dentro() { return request.auth != null && exists(/databases/$(db)/documents/accessi/$(request.auth.uid)); }
     function hub() { return dentro() && acc().ruolo == 'hub'; }
-    function sono(nome) { return dentro() && acc().ruolo == 'rider' && acc().nome == nome; }
+    function rider() { return dentro() && acc().ruolo == 'rider'; }
+    function io() { return acc().nome; }
+    function sono(nome) { return rider() && io() == nome; }
+    function scambioPerMe(id) {
+      return exists(/databases/$(db)/documents/scambi/$(id)) && get(/databases/$(db)/documents/scambi/$(id)).data.a == io();
+    }
 
     match /accessi/{u} { allow read: if request.auth != null && request.auth.uid == u; }
+    // versione precedente dell'app (resta finché non si spegne)
     match /stato/{nome} { allow read: if hub() || sono(nome); }
     match /hub/{doc} { allow read: if hub(); }
+
+    match /config/{d} { allow read: if dentro(); }
+    match /segreti/{d} { allow read: if dentro(); allow write: if hub(); }
+
+    match /consegne/{id} {
+      allow read: if hub() || (rider() && (resource.data.rider == io() || scambioPerMe(id)));
+      allow create, delete: if hub();
+      allow update: if hub() || (rider()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato', 'giro', 'n', 'nFatto', 'partita', 'consegnata', 'agg', 'rider', 'storia'])
+        && ((resource.data.rider == io() && request.resource.data.rider == io())
+            || (scambioPerMe(id) && request.resource.data.rider == io())));
+    }
+    match /giri/{id} {
+      allow read: if hub() || (rider() && resource.data.rider == io());
+      allow create, update: if hub() || (rider() && request.resource.data.rider == io());
+    }
+    match /turni/{id} {
+      allow read: if hub() || (rider() && resource.data.rider == io());
+      allow create, update: if hub() || (rider() && request.resource.data.rider == io());
+    }
+    match /versamenti/{id} {
+      allow read: if hub() || (rider() && resource.data.rider == io());
+      allow create: if hub() || (rider() && request.resource.data.rider == io() && request.resource.data.stato == 'attesa');
+      allow update, delete: if hub();
+    }
+    match /rider/{nome} {
+      allow read: if dentro();
+      allow write: if hub() || sono(nome);
+    }
+    match /km/{chi} {
+      allow read: if dentro();
+      allow write: if hub() || sono(chi) || (rider() && chi == 'FURGONE');
+    }
+    match /scambi/{id} {
+      allow read: if hub() || (rider() && (resource.data.a == io() || resource.data.da == io()));
+      allow create: if rider() && request.resource.data.da == io();
+      allow delete: if hub() || (rider() && (resource.data.a == io() || resource.data.da == io()));
+    }
     match /posizioni/{nome} {
       allow read: if hub() || sono(nome);
       allow write: if sono(nome)
-        && request.resource.data.keys().hasOnly(['lat', 'lng', 'acc', 'ora', 'giro'])
+        && request.resource.data.keys().hasOnly(['lat', 'lng', 'acc', 'ora', 'giro', 'dir'])
         && request.resource.data.lat is number && request.resource.data.lng is number;
     }
   }
