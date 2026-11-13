@@ -131,9 +131,19 @@ function geocodificaMancanti() {
   CONS.filter(c => !c.lat && c.via && c.stato !== 'annullata' && !cercati.has(c.id + c.via + c.paese)).forEach(async c => {
     cercati.add(c.id + c.via + c.paese);
     const p = await ALP.geocodifica(c.via, c.paese);
-    if (p) FB.cambia('consegne/' + c.id, { lat: p[0], lng: p[1], agg: Date.now() }).catch(() => {});
-    else ALP.toast('Non trovo sulla mappa: ' + c.via + ', ' + c.paese, 1);
+    if (!p) return ALP.toast('Non trovo sulla mappa: ' + c.via + ', ' + c.paese, 1);
+    const min = ALP.minuti(ALP.CASA, p);
+    FB.cambia('consegne/' + c.id, { lat: p[0], lng: p[1], lontano: min > LONTANO ? min : 0, agg: Date.now() }).catch(() => {});
+    if (min > LONTANO) controllaLontano(Object.assign({}, c, { lontano: min }));
   });
+}
+
+/** indirizzo a più di 20 minuti: probabilmente paese sbagliato → conferma o correzione */
+const LONTANO = 20;
+function controllaLontano(c) {
+  ALP.suono(true);
+  if (confirm('Attenzione: ' + c.via + ', ' + c.paese + ' risulta a circa ' + c.lontano + ' minuti dalla pizzeria.\n\nOK = l\'indirizzo è giusto\nAnnulla = lo correggo')) FB.cambia('consegne/' + c.id, { lontanoOk: true, agg: Date.now() });
+  else schedaConsegna(CONS.find(x => x.id === c.id) || c);
 }
 
 /* ---------- calcoli istantanei per ogni rider ---------- */
@@ -209,6 +219,7 @@ function cardRider(o) {
 function cardConsegna(c) {
   return `<div class="ca" data-c="${c.id}"><div class="r1"><b>${esc(c.via)}</b>${c.previsto ? `<span class="ora">${esc(c.previsto)}</span>` : ''}</div>
     <span>${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}${c.lat ? '' : ' · 📍 cerco…'}</span>
+    ${c.lontano && !c.lontanoOk ? `<span style="color:#b3261e;font-weight:800">⚠️ ${c.lontano} min dalla pizzeria: controlla il paese</span>` : ''}
     <span class="soldi"><b style="font-size:15px">${c.importo ? euro(c.importo) : '—'}</b> · ${c.pagamento === 'SumUp' ? 'SumUp' : 'Contanti'}</span></div>`;
 }
 
@@ -278,6 +289,7 @@ async function assegna(id, nome, giaChiesto) {
   const c = CONS.find(x => x.id === id), r = RIDER.find(x => x.nome === nome); if (!c || !r || c.rider === nome) return;
   const forzata = c.stato === 'consegnata';
   if (!giaChiesto) {
+    if (c.lontano && !c.lontanoOk && !confirm(c.via + ', ' + c.paese + ' è a ' + c.lontano + ' minuti dalla pizzeria: l\'indirizzo è giusto?')) return schedaConsegna(c);
     if (forzata && !confirm('Consegna già fatta da ' + c.rider + '. Forzo il cambio a ' + nome + '? Portafoglio e report si ricalcolano.')) return;
     if (!forzata && c.stato === 'partita' && !confirm(c.rider + ' è già in giro con le pizze: le ha passate di persona a ' + nome + '?')) return;
   }
@@ -310,7 +322,7 @@ function schedaConsegna(c) {
       ${nuova ? '' : `<button class="mini" id="elim" style="color:var(--rosso2)">Elimina</button>`}</div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
       ${nuova ? `<button class="btn n" id="foto">📷 Foto comanda + scontrino</button><input type="file" accept="image/*" capture="environment" id="file" hidden><div class="muto" id="st" style="text-align:center;font-size:14px"></div>` : ''}
-      <div id="avvisi"></div>
+      <div id="avvisi">${c.lontano && !c.lontanoOk ? `<div class="avv err">⚠️ Questo indirizzo risulta a ${c.lontano} minuti dalla pizzeria: controlla via e paese.</div>` : ''}</div>
       <div class="grid2"><label class="c">Via e numero<input id="f_via" value="${esc(c.via)}" placeholder="Via Roma 14"></label><label class="c">Paese<input id="f_paese" value="${esc(c.paese)}"></label></div>
       <div class="grid2"><label class="c">Cliente<input id="f_cli" value="${esc(c.cliente)}"></label><label class="c">Telefono<input id="f_tel" inputmode="tel" value="${esc(c.telefono)}"></label></div>
       <div class="grid3"><label class="c">Orario PER LE<input id="f_ora" type="time" value="${esc(c.previsto)}"></label><label class="c">Totale €<input id="f_imp" inputmode="decimal" value="${c.importo ? String(c.importo).replace('.', ',') : ''}"></label>
@@ -355,7 +367,7 @@ function schedaConsegna(c) {
         const g = ALP.ls.get('geo:' + (via + ', ' + paese + ', BG').replace(/\s+/g, ' ').toLowerCase()); if (g) { const p = JSON.parse(g); d.lat = p[0]; d.lng = p[1]; }
         FB.scrivi('consegne/' + id, d).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
       } else {
-        if (via !== c.via || paese !== c.paese) { d.lat = null; d.lng = null; }
+        if (via !== c.via || paese !== c.paese) { d.lat = null; d.lng = null; d.lontano = 0; d.lontanoOk = false; }
         FB.cambia('consegne/' + id, d).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
         if (a !== (c.rider || '') && a) setTimeout(() => assegna(id, a), 50);
       }
