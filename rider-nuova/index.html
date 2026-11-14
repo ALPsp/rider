@@ -245,7 +245,7 @@ function cardPortafoglio() {
 
 function rigaConsegna(c, i, mostraPassa) {
   const sc = MIEI_SCAMBI.find(s => s.consegna === c.id);
-  return `<div class="tappa"><div class="n">${i + 1}</div><div class="t"><b>${esc(c.via)}</b><span class="muto">${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}</span><div>
+  return `<div class="tappa" data-apri="${c.id}"><div class="n">${i + 1}</div><div class="t"><b>${esc(c.via)}</b><span class="muto">${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}</span><div>
     ${c.previsto ? `<span class="bdg b-o">⏰ PER LE ${esc(c.previsto)}</span>` : ''}<span class="bdg ${c.pagamento === 'SumUp' ? 'b-s' : 'b-c'}">${c.pagamento === 'SumUp' ? '💳 SumUp' : '💶 Contanti'} ${c.importo ? euro(c.importo) : ''}</span>
     ${sc ? `<span class="bdg b-a">⇄ in attesa di ${esc(sc.a)}</span>` : ''}</div>${c.note ? `<div class="muto">📝 ${esc(c.note)}</div>` : ''}</div>
     ${mostraPassa ? (sc ? `<button class="mini" data-annulla="${c.id}">Annulla</button>` : `<button class="mini" data-passa="${c.id}">⇄ Passa</button>`) : ''}</div>`;
@@ -260,17 +260,89 @@ function preparaGiro() {
       ${seq.length ? `<div class="muto">Ordine calcolato dalla pizzeria, il più veloce.</div>${seq.map((c, i) => rigaConsegna(c, i, true)).join('')}
         <button class="btn v" id="parti">🛵 Parti (${seq.length} ${seq.length === 1 ? 'consegna' : 'consegne'})</button>`
       : `<div class="muto">Le consegne le assegna la cassa: appena arrivano senti un suono.</div>`}
+      <button class="btn s" id="agg">📷 Aggiungi una consegna</button>
     </div>
     ${cardPortafoglio()}
     ${!seq.length ? `<button class="btn s" id="fine">🏁 Fine servizio</button>` : ''}</div>`;
   agganciComuni();
+  if ($('#agg')) $('#agg').onclick = () => nuovaConsegna();
   if ($('#parti')) $('#parti').onclick = () => parti(seq);
   if ($('#fine')) $('#fine').onclick = () => turno(true);
 }
 function agganciComuni() {
   if ($('#versa')) $('#versa').onclick = versa;
-  tutti('[data-passa]').forEach(b => b.onclick = () => passa(b.dataset.passa));
-  tutti('[data-annulla]').forEach(b => b.onclick = () => FB.togli('scambi/' + b.dataset.annulla));
+  tutti('[data-passa]').forEach(b => b.onclick = e => { e.stopPropagation(); passa(b.dataset.passa); });
+  tutti('[data-annulla]').forEach(b => b.onclick = e => { e.stopPropagation(); FB.togli('scambi/' + b.dataset.annulla); });
+  tutti('[data-apri]').forEach(b => b.onclick = () => scheda(b.dataset.apri));
+}
+
+/** tocca una consegna: dettagli, passala a un collega, correggila */
+function scheda(id) {
+  const c = C.find(x => x.id === id); if (!c) return;
+  bloccato = true;
+  $('#extra').innerHTML = `<div class="velo" id="v"><div class="foglio">
+    <div class="maniglia"></div><h2 style="margin:0 0 4px">${esc(c.via)}</h2>
+    <div class="muto">${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}</div>
+    <div style="margin:10px 0">${c.previsto ? `<span class="bdg b-o">⏰ PER LE ${esc(c.previsto)}</span>` : ''}
+      <span class="bdg ${c.pagamento === 'SumUp' ? 'b-s' : 'b-c'}">${c.pagamento === 'SumUp' ? '💳 SumUp' : '💶 Contanti'} ${c.importo ? euro(c.importo) : ''}</span>
+      ${c.pizze ? `<span class="bdg b-a">${c.pizze} pizze</span>` : ''}${c.burger ? `<span class="bdg b-a">${c.burger} burger</span>` : ''}</div>
+    ${c.note ? `<div class="avv" style="margin-bottom:10px">📝 ${esc(c.note)}</div>` : ''}
+    ${c.telefono ? `<a class="btn s" style="margin-bottom:8px;text-decoration:none" href="tel:${esc(c.telefono)}">📞 Chiama ${esc(c.telefono)}</a>` : ''}
+    <a class="btn s" style="margin-bottom:8px;text-decoration:none" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.via + ', ' + c.paese)}&travelmode=driving" target="_blank">🗺️ Apri in Maps</a>
+    <button class="btn l" style="margin-bottom:8px" id="sPassa">⇄ Passa a un collega</button>
+    <button class="btn s" id="sChiudi">Chiudi</button></div></div>`;
+  const chiudi = () => { $('#extra').innerHTML = ''; bloccato = false; schermo = ''; disegna(); mostraScambi(); };
+  $('#sChiudi').onclick = chiudi; $('#v').onclick = e => { if (e.target.id === 'v') chiudi(); };
+  $('#sPassa').onclick = () => { chiudi(); passa(id); };
+}
+
+/** il rider aggiunge una consegna con la foto della comanda (si vede subito) */
+function nuovaConsegna() {
+  bloccato = true;
+  $('#extra').innerHTML = `<div class="velo" id="v"><div class="foglio"><div class="maniglia"></div><h2 style="margin:0">Aggiungi una consegna</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+      <button class="btn n" id="foto">📷 Foto comanda + scontrino</button><input type="file" accept="image/*" capture="environment" id="file" hidden>
+      <div class="muto" id="st" style="text-align:center"></div>
+      <label class="c">Via e numero<input id="n_via" placeholder="Via Roma 14"></label>
+      <label class="c">Paese<input id="n_paese" value="San Paolo d'Argon"></label>
+      <label class="c">Cliente<input id="n_cli"></label>
+      <label class="c">Telefono<input id="n_tel" inputmode="tel"></label>
+      <label class="c">Orario PER LE<input id="n_ora" type="time"></label>
+      <label class="c">Totale €<input id="n_imp" inputmode="decimal"></label>
+      <div class="seg" id="n_pag"><button data-p="Contanti">💶 Contanti</button><button data-p="SumUp">💳 SumUp</button></div>
+      <button class="btn p" id="n_ok">Aggiungi al mio giro</button>
+      <button class="btn s" id="n_no">Annulla</button></div></div></div>`;
+  let pag = 'Contanti', letto = {};
+  const segna = () => tutti('#n_pag button').forEach(b => b.classList.toggle('on', b.dataset.p === pag));
+  segna();
+  tutti('#n_pag button').forEach(b => b.onclick = () => { pag = b.dataset.p; segna(); });
+  const chiudi = () => { $('#extra').innerHTML = ''; bloccato = false; schermo = ''; disegna(); };
+  $('#n_no').onclick = chiudi; $('#v').onclick = e => { if (e.target.id === 'v') chiudi(); };
+  $('#foto').onclick = () => $('#file').click();
+  $('#file').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const t0 = Date.now(); $('#st').textContent = 'Leggo la comanda… intanto puoi scrivere';
+    try {
+      const o = await ALP.leggiFoto(await ALP.comprimi(f, 1600), 'ordine', SEG.gemini, SEG.modello);
+      const m = (id, v) => { if (v && !$(id).value) $(id).value = v; };
+      m('#n_via', o.via); if (o.paese) $('#n_paese').value = o.paese; m('#n_cli', o.cliente); m('#n_tel', o.telefono); m('#n_ora', o.previsto);
+      if (o.importo) $('#n_imp').value = String(o.importo).replace('.', ',');
+      if (o.pagamento) { pag = /sum/i.test(o.pagamento) ? 'SumUp' : 'Contanti'; segna(); }
+      letto = o;
+      $('#st').textContent = 'Letta in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓ · controlla';
+    } catch (er) { $('#st').textContent = SEG.gemini ? 'Lettura non riuscita: scrivi a mano' : 'Lettura foto non attiva: scrivi a mano'; }
+  };
+  $('#n_ok').onclick = () => {
+    const via = $('#n_via').value.trim(); if (!via) return ALP.toast('Manca la via', 1);
+    const ora = Date.now(), id = ALP.id();
+    FB.scrivi('consegne/' + id, { id, data: OGGI(), servizio: ALP.servizio(), tipo: 'DOMICILIO', via, paese: $('#n_paese').value.trim() || "San Paolo d'Argon",
+      cliente: $('#n_cli').value.trim(), telefono: $('#n_tel').value.replace(/\s/g, ''), previsto: $('#n_ora').value, importo: ALP.num($('#n_imp').value),
+      pizze: Math.round(Number(letto.pizze) || 0), burger: Math.round(Number(letto.burger) || 0), numero: letto.numero || '', cassiere: letto.cassiere || '',
+      pagamento: pag, note: letto.note || '', rider: NOME, stato: inGiro() ? 'partita' : 'assegnata', giro: inGiro() ? R.giro : '',
+      creata: ora, creataDa: NOME, lat: null, lng: null, storia: [], agg: ora })
+      .catch(er => ALP.toast('Non salvato: ' + er.message, 1));
+    chiudi(); ALP.toast('Consegna aggiunta al tuo giro');
+  };
 }
 
 function parti(seq) {
@@ -403,6 +475,7 @@ function navigazione() {
       <div class="azioni"><a class="btn s q" style="font-size:13px" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ALP.PIZZERIA)}&travelmode=driving" target="_blank">Maps</a>
       <button class="btn p" id="rientro">🏠 Sono rientrato</button></div>`;
   tutti('[data-passa]').forEach(b => b.onclick = () => confirm('Hai già le pizze con te: le passi davvero a un altro rider?') && passa(b.dataset.passa));
+  if (prossima) { const t = $('#sotto .cli'); if (t) t.onclick = () => scheda(prossima.id); }
   if (prossima) $('#fatto').onclick = () => {
     if (!confirm('Consegnato a ' + (prossima.cliente || prossima.via) + (prossima.importo ? ' e incassato ' + euro(prossima.importo) + '?' : '?'))) return;
     const ora = Date.now(), ops = [['update', 'consegne/' + prossima.id, { stato: 'consegnata', consegnata: ora, nFatto: nF + 1, agg: ora }]];
