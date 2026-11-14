@@ -218,8 +218,9 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
   <p class="sub">È il vecchio foglio di carta delle fasce da 15 minuti, ma si riempie da solo.</p>
   <div class="card">
     <h3>La cosa più importante</h3>
-    <p>La fascia <b>non è l'ora del cliente</b>: è l'ora in cui la pizza <b>deve uscire dal forno</b>.</p>
-    <p style="font-weight:900;font-size:18px;margin-top:10px">Fascia = orario del cliente − minuti di strada − 3 minuti di sosta</p>
+    <p>La consegna va nella fascia <b>dell'orario scritto sulla comanda</b>.</p>
+    <p style="font-weight:900;font-size:18px;margin-top:10px">"PER LE 19:00" → fascia 19:00–19:15</p>
+    <p>I 15 minuti sono il margine. La strada la calcoliamo noi: se il cliente è lontano, la pizza si prepara e parte <b>prima</b>.</p>
     <p class="mute">Consegne e asporti si sommano: il forno è uno solo. Burger contati a parte.</p>
   </div>
   <div class="card">
@@ -240,7 +241,7 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
   </div>
   <div class="card">
     <h3>💬 "Che orario dico?"</h3>
-    <p>Sulla destra del foglio scrivi quante pizze, quanti burger e il paese: l'app ti dà la prima fascia libera e <b>la frase pronta</b> da dire al cliente al telefono.</p>
+    <p>Sulla destra del foglio scrivi quante pizze, quanti burger e il paese: l'app ti dà la prima fascia libera, l'orario da dire al cliente e verso che ora deve partire il rider.</p>
     <p>Ogni fascia mostra 4 caselle con il nome corto della via ("Via del Convento 38/A" diventa "Convento"). Se sono di più compare <span class="pill pl">+N</span>: toccalo per vedere la fascia intera.</p>
   </div>
 </section>
@@ -359,9 +360,9 @@ vai(location.hash.slice(1));
 /* ---- calcolatore fascia ---- */
 for (let m = 18 * 60; m <= 22 * 60; m += 15) $('#cOra').insertAdjacentHTML('beforeend', `<option value="${m}" ${m === 19 * 60 + 30 ? 'selected' : ''}>${hm(m)}</option>`);
 function calc() {
-  const ora = +$('#cOra').value, strada = +$('#cMin').value, esce = ora - strada - 3, fascia = Math.floor(esce / 15) * 15;
+  const ora = +$('#cOra').value, strada = +$('#cMin').value, parte = ora - strada, fascia = ora;
   $('#cMinT').textContent = strada;
-  $('#cEsito').innerHTML = `${hm(ora)} − ${strada} min di strada − 3 di sosta = esce dal forno alle ${hm(esce)}<br>La pizza va nella fascia <b>${hm(fascia)}–${hm(fascia + 15)}</b>`;
+  $('#cEsito').innerHTML = `Sul foglio va nella fascia <b>${hm(fascia)}–${hm(fascia + 15)}</b><br>Con ${strada} min di strada il rider deve partire verso le <b>${hm(parte)}</b>: la pizza dev'essere pronta prima.`;
 }
 $('#cOra').onchange = calc; $('#cMin').oninput = calc; calc();
 
@@ -429,7 +430,7 @@ function voto() {
 const Q = [
   ['Il cliente vuole la pizza "PER LE 19:00". Quando sei in ritardo?', ['Dalle 19:01', 'Dopo le 19:15', 'Dopo le 19:30'], 1, 'Arrivare tra le 19:00 e le 19:15 va bene. Prima è anche meglio.'],
   ['Cosa vuol dire la freccia vuota con la casetta sulla mappa?', ['Il rider è fermo', 'Il rider sta rientrando in pizzeria', 'Il rider è in ritardo'], 1, 'Piena = va dal cliente, vuota con casetta = rientra, alone rosso = ritardo.'],
-  ['La fascia del foglio ORARI CONSEGNE indica…', ['L\'ora in cui arriva il cliente', 'L\'ora in cui la pizza deve uscire dal forno', 'L\'ora in cui il cliente ha chiamato'], 1, 'Fascia = orario del cliente − minuti di strada − 3 di sosta.'],
+  ['Comanda "PER LE 20:30" a 15 minuti di strada. In che fascia va sul foglio?', ['20:15–20:30', '20:30–20:45', '20:00–20:15'], 1, 'Sempre l\'orario della comanda. La strada la calcoliamo noi: si parte prima.'],
   ['A fine turno quanto versi in contanti?', ['Solo l\'incassato', 'Tutto: fondo da 80,05 € più l\'incassato', 'Solo il fondo'], 1, 'Si versa tutto, fondo compreso.'],
   ['Il navigatore non risponde. Cosa fai?', ['Chiamo la pizzeria', 'Uso il tasto Maps', 'Aspetto che torni'], 1, 'Nelle ore di punta può succedere: c\'è sempre il tasto Maps.'],
   ['Quante consegne servono per entrare nella classifica della challenge?', ['10', '20', '50'], 1, 'Almeno 20 consegne nel mese, e bisogna aver toccato "Partecipo".']

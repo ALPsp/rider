@@ -378,11 +378,11 @@ function confermaVersamento(id) {
 const vive = c => c.stato !== 'annullata';
 /** minuti di strada stimati verso la consegna (dalle coordinate, altrimenti un valore prudente) */
 function strada(c) { return c.lat ? ALP.minuti(ALP.CASA, [c.lat, c.lng]) : STRADA_DEF; }
-/** fascia in cui la pizza deve uscire dal forno */
+/** fascia della consegna: l'orario scritto sulla comanda ("PER LE 19:00" → fascia 19:00–19:15).
+    La strada la calcola chi lavora: i 15 minuti della fascia sono il margine. */
 function fasciaForno(c) {
   const p = c.previsto || '';
-  if (!p) return '';
-  return ALP.fascia(c.tipo === 'ASPORTO' ? p : ALP.meno(p, strada(c) + ALP.SOSTA));
+  return p ? ALP.fascia(p) : '';
 }
 function perFascia() {
   const m = {};
@@ -468,21 +468,20 @@ function consiglio(m) {
   tutti('#tipoQ button').forEach(b => b.classList.toggle('on', b.dataset.t === Q.tipo));
   const g = ALP.ls.get('geo:' + ('x, ' + Q.paese + ', BG').replace(/\s+/g, ' ').toLowerCase());
   const min = Q.tipo === 'ASPORTO' ? 0 : (CONS.filter(c => c.lat && (c.paese || '').toLowerCase() === Q.paese.toLowerCase()).map(strada)[0] || STRADA_DEF);
-  const fasce = ALP.fasce(SERV), adesso = ALP.fascia(ALP.hhmm(Date.now() + 10 * 60000));
+  const fasce = ALP.fasce(SERV), adesso = ALP.fascia(ALP.hhmm(Date.now() + (10 + min) * 60000));
   const libere = fasce.filter(f => f >= adesso).map(f => {
     const d = m[f] || { c: [], a: [] }, t = conta(d.c.concat(d.a));
     return { f, p: t.p, b: t.b, resta: MAX - t.p, ok: t.p + Q.p <= MAX && t.b + Q.b <= MAX };
   });
   const tre = libere.slice(0, 3), prima = libere.find(x => x.ok);
   $('#slots').innerHTML = tre.map(x => {
-    const cons = Q.tipo === 'ASPORTO' ? x.f : ALP.hhmm(new Date('2000-01-01T' + x.f + ':00').getTime() + (min + ALP.SOSTA) * 60000);
-    return `<button class="slot ${x.ok ? 'ok' : 'no'}">${esc(cons)}<small>${x.ok ? x.resta + ' libere' : 'pieno'}</small></button>`;
+    return `<button class="slot ${x.ok ? 'ok' : 'no'}">${esc(x.f)}<small>${x.ok ? x.resta + ' libere' : 'pieno'}</small></button>`;
   }).join('') || '<span class="muto" style="font-size:13px">Servizio finito</span>';
   if (!prima) { $('#sugg').textContent = 'Tutte le fasce rimaste sono piene: decidi tu.'; return; }
-  const arrivo = Q.tipo === 'ASPORTO' ? prima.f : ALP.hhmm(new Date('2000-01-01T' + prima.f + ':00').getTime() + (min + ALP.SOSTA) * 60000);
-  let liberi = inServizio().map(info).filter(o => o.stato === 'pizzeria' || (o.rientro && ALP.hhmm(o.rientro) <= arrivo));
-  if (!liberi.length) liberi = ALP.attesi(90).filter(x => x.da <= arrivo).map(x => ({ n: x.nome }));
-  $('#sugg').innerHTML = `💡 Di' <b>${esc(arrivo)}</b>${Q.tipo === 'ASPORTO' ? ' per il ritiro' : `: forno alle ${esc(prima.f)}, ${min} min di strada`}.`
+  const arrivo = prima.f, parte = ALP.meno(arrivo, min);
+  let liberi = inServizio().map(info).filter(o => o.stato === 'pizzeria' || (o.rientro && ALP.hhmm(o.rientro) <= parte));
+  if (!liberi.length) liberi = ALP.attesi(90).filter(x => x.da <= parte).map(x => ({ n: x.nome }));
+  $('#sugg').innerHTML = `💡 Di' <b>${esc(arrivo)}</b>${Q.tipo === 'ASPORTO' ? ' per il ritiro' : ` (arrivo tra le ${esc(arrivo)} e le ${esc(ALP.hhmm(new Date('2000-01-01T' + arrivo + ':00').getTime() + 15 * 60000))}). Circa ${min} min di strada: il rider parte verso le ${esc(parte)}`}.`
     + (Q.tipo === 'ASPORTO' ? '' : ` Rider: ${liberi.length ? '<b>' + liberi.map(o => esc(o.n)).join(', ') + '</b>' : '<b style="color:#b3261e">nessuno libero a quell\'ora</b>'}.`);
 }
 
