@@ -111,12 +111,21 @@
       return Math.round((d.getHours() * 60 + d.getMinutes()) - (h * 60 + m));
     },
 
-    /** Indirizzo → coordinate (OpenStreetMap, gratis). Una richiesta per volta, in coda, e ricorda i risultati. */
+    /** Indirizzo → coordinate (OpenStreetMap, gratis). Prima la memoria del dispositivo, poi l'archivio comune su Firebase
+        (un indirizzo trovato da un dispositivo vale per tutti), solo alla fine i servizi esterni, una richiesta per volta. */
     geocodifica(via, paese) {
-      const k = 'geo:' + ((via || '') + ', ' + (paese || "San Paolo d'Argon") + ', BG').replace(/\s+/g, ' ').trim().toLowerCase();
+      const q = ((via || '') + ', ' + (paese || "San Paolo d'Argon") + ', BG').replace(/\s+/g, ' ').trim(), k = 'geo:' + q.toLowerCase();
       const c = A.ls.get(k); if (c) return Promise.resolve(JSON.parse(c));
-      A._coda = (A._coda || Promise.resolve()).then(() => new Promise(r => setTimeout(r, 1100))).then(() => A._geo(via, paese));
-      return A._coda;
+      const id = k.slice(4).replace(/[\/.#$\[\]]/g, '_').slice(0, 300);
+      const comune = window.FB ? Promise.race([FB.leggi('indirizzi/' + id), new Promise(r => setTimeout(() => r(null), 2500))]).catch(() => null) : Promise.resolve(null);
+      return comune.then(d => {
+        if (d && typeof d.lat === 'number') { const p = [d.lat, d.lng]; A.ls.set(k, JSON.stringify(p)); return p; }
+        A._coda = (A._coda || Promise.resolve()).then(() => { const att = 1100 - (Date.now() - (A._ultima || 0)); return att > 0 ? new Promise(r => setTimeout(r, att)) : null; })
+          .then(() => A._geo(via, paese)).then(p => { A._ultima = Date.now();
+            if (p && window.FB) FB.scrivi('indirizzi/' + id, { lat: p[0], lng: p[1], q: q.slice(0, 300), t: Date.now() }).catch(() => {});
+            return p; });
+        return A._coda;
+      });
     },
     async _geo(via, paese) {
       const q = (via + ', ' + (paese || "San Paolo d'Argon") + ', BG').replace(/\s+/g, ' ').trim(), k = 'geo:' + q.toLowerCase();

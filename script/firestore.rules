@@ -23,6 +23,13 @@ service cloud.firestore {
       allow read: if dentro() && (io() == 'Andrea' || io() == 'Meris Bertuletti');
     }
 
+    // archivio comune degli indirizzi già trovati sulla mappa (vale per tutti i dispositivi)
+    match /indirizzi/{k} {
+      allow read: if dentro();
+      allow create, update: if dentro() && request.resource.data.keys().hasOnly(['lat', 'lng', 'q', 't'])
+        && request.resource.data.lat is number && request.resource.data.lng is number && request.resource.data.q is string;
+    }
+
     match /accessi/{u} { allow read: if request.auth != null && request.auth.uid == u; }
     // versione precedente dell'app (resta finché non si spegne)
     match /stato/{nome} { allow read: if hub() || sono(nome); }
