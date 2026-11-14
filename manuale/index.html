@@ -441,8 +441,8 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
 <!-- ================= QUIZ ================= -->
 <section id="quiz">
   <h2>✅ Mettiti alla prova</h2>
-  <p class="sub">Scegli il tuo quiz: 8 domande veloci sul tuo lavoro.</p>
-  <div class="sx-sw" id="qTipo" style="max-width:560px;margin-bottom:6px"><button class="on" data-q="cassa">🧾 Cassa</button><button data-q="centrale">🗺️ Centrale</button><button data-q="rider">🛵 Rider</button></div>
+  <p class="sub">Scegli il tuo quiz: Responsabili (cassa e Centrale, 12 domande) o Rider (8 domande).</p>
+  <div class="sx-sw" id="qTipo" style="max-width:560px;margin-bottom:6px"><button class="on" data-q="responsabili">🧾 Responsabili</button><button data-q="rider">🛵 Rider</button></div>
   <div class="card" id="qBox"></div>
 </section>
 
@@ -537,7 +537,7 @@ function voto() {
 
 /* ---- quiz ---- */
 const QQ = {
- cassa: [
+ responsabili: [
   ['Un cliente al telefono vuole la consegna. Come sai che orario dirgli?', ['Guardo l\'orologio e aggiungo mezz\'ora', 'Premo "Al telefono: che orario dico?" negli Orari consegne', 'Chiedo al primo rider che passa'], 1, 'Ti propone le prime fasce libere, già dette come al cliente, con chi è libero per portarla.'],
   ['Comanda "PER LE 20:30" a 15 minuti di strada. In che fascia va?', ['20:15–20:30', '20:00–20:15', '20:30–20:45'], 2, 'Sempre la fascia dell\'orario scritto sulla comanda. La strada la calcoliamo noi: il rider parte prima.'],
   ['Il modo più veloce per inserire una consegna?', ['"+ Consegna" e foto della comanda con lo scontrino', 'Scrivere tutto a mano', 'Dirla a voce al rider'], 0, 'L\'app legge da sola indirizzo, orario, pizze, burger, totale e pagamento. Poi controlli i campi.'],
@@ -545,15 +545,9 @@ const QQ = {
   ['Nella fascia la barra delle pizze è gialla. Cosa vuol dire?', ['Ci sono già 15 pizze o più: la fascia si sta riempiendo', 'La fascia è chiusa', 'C\'è un errore'], 0, 'Gialla da 15, rossa da 20. È un avviso, non un blocco: se puoi, proponi la fascia dopo.'],
   ['Il cliente vuole "PER LE 19:00". Da quando il rider è in ritardo?', ['Dalle 19:01', 'Dopo le 19:30', 'Dopo le 19:15'], 2, 'Arrivare tra le 19:00 e le 19:15 va bene. Prima è anche meglio.'],
   ['Un rider ti lascia i contanti durante il turno. Cosa fai?', ['Li metto in cassa e basta', 'Li conto e premo ✓ Conferma sulla sua scheda', 'Gli dico di tenerli'], 1, 'Solo con la tua conferma i soldi escono dal suo portafoglio.'],
-  ['Con che PIN si entra nella Centrale sull\'iPad della cassa?', ['Con il PIN della cassa', 'Con il PIN di un rider', 'Senza PIN'], 0, 'iPad e iPhone della cassa usano il PIN della cassa. I rider usano il loro solo sul loro telefono.']
- ],
- centrale: [
   ['Come dai una consegna a un rider?', ['Tocco due volte il rider', 'Tengo premuta la consegna e la trascino sul rider', 'Lo chiamo al telefono'], 1, 'In "Da assegnare": tieni premuto e trascina. Un tocco invece apre la consegna per modificarla.'],
   ['Sulla mappa vedi una freccia vuota con la casetta. Cosa vuol dire?', ['Il rider è fermo', 'Il rider sta rientrando in pizzeria', 'Il rider ha finito il turno'], 1, 'Piena = va dal cliente, vuota con casetta = rientra.'],
   ['E l\'alone rosso attorno a una freccia?', ['Il rider è in ritardo su una consegna', 'Il rider ha la batteria scarica', 'Il rider è nuovo'], 0, 'Lo vedi anche nella colonna: riquadro rosso con i minuti di ritardo.'],
-  ['Nella colonna "Rider in servizio" chi è in cima?', ['Chi ha fatto più consegne', 'Il primo rider libero', 'In ordine alfabetico'], 1, 'Così sai subito a chi dare la prossima consegna.'],
-  ['"Di turno, non ancora accesi": chi sono?', ['Rider in ferie', 'Rider che dovrebbero essere in turno ma non hanno aperto l\'app', 'Rider in ritardo su una consegna'], 1, 'Gli orari sono indicativi: se c\'è una sostituzione, controlla chi c\'è davvero.'],
-  ['La fascia arriva a 20 pizze (barra rossa). L\'app blocca le consegne?', ['Sì, non si può più inserire niente', 'No, è solo un avviso', 'Sì, ma solo le pizze'], 1, 'La fascia piena è un avviso: decidi tu se proporre un altro orario.'],
   ['A fine serata, dove vedi quanti contanti ha ancora in tasca ogni rider?', ['In "Fine turno e totali"', 'Nella mappa', 'Lo chiedo a ognuno'], 0, 'Lì trovi consegne, contanti, SumUp, in tasca, km del mese, stelle e note.'],
   ['Quanto è il fondo cassa che ogni rider ha a inizio turno?', ['50 €', 'Dipende dal rider', '80,05 €, uguale per tutti'], 2, 'A fine turno il rider versa tutto: fondo più incassato.']
  ],
@@ -568,15 +562,15 @@ const QQ = {
   ['Quante consegne servono per entrare nella classifica della challenge?', ['10', '20', '50'], 1, 'Almeno 20 consegne nel mese, e bisogna aver toccato "Partecipo alla challenge".']
  ]
 };
-let Q = QQ.cassa;
+let Q = QQ.responsabili;
 document.addEventListener('click', e => { const b = e.target.closest('#qTipo button'); if (!b) return;
   $$('#qTipo button').forEach(x => x.classList.toggle('on', x === b)); Q = QQ[b.dataset.q]; qi = 0; punti = 0; $('#qBox').dataset.fatto = '0'; quiz(); });
 let qi = 0, punti = 0;
 function quiz() {
   const box = $('#qBox');
   if (qi >= Q.length) {
-    box.innerHTML = `<div style="text-align:center"><div style="font-size:56px">${punti === Q.length ? '🏆' : punti >= 6 ? '👏' : '📖'}</div>
-      <div class="dom">${punti} su ${Q.length}</div><p>${punti === Q.length ? 'Perfetto, sei pronto!' : punti >= 6 ? 'Molto bene! Ripassa quelle sbagliate.' : 'Rileggi il manuale e riprova.'}</p>
+    box.innerHTML = `<div style="text-align:center"><div style="font-size:56px">${punti === Q.length ? '🏆' : punti >= Q.length * .75 ? '👏' : '📖'}</div>
+      <div class="dom">${punti} su ${Q.length}</div><p>${punti === Q.length ? 'Perfetto, sei pronto!' : punti >= Q.length * .75 ? 'Molto bene! Ripassa quelle sbagliate.' : 'Rileggi il manuale e riprova.'}</p>
       <button class="btnfinto n" id="qRe" style="border:0;font-size:16px;padding:12px 20px;margin-top:8px">Rifai il quiz</button></div>`;
     $('#qRe').onclick = () => { qi = 0; punti = 0; quiz(); }; return;
   }
