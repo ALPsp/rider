@@ -22,7 +22,8 @@ service cloud.firestore {
 
     match /consegne/{id} {
       allow read: if hub() || (rider() && (resource.data.rider == io() || scambioPerMe(id)));
-      allow create, delete: if hub();
+      allow create: if hub() || (rider() && request.resource.data.rider == io());
+      allow delete: if hub();
       allow update: if hub() || (rider()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato', 'giro', 'n', 'nFatto', 'partita', 'consegnata', 'agg', 'rider', 'storia'])
         && ((resource.data.rider == io() && request.resource.data.rider == io())
