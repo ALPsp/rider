@@ -447,10 +447,10 @@ function cardPortafoglio() {
   const p = portafoglio(); if (!p.n && !p.versato) return '';
   return `<div class="card wallet"><h2>👛 Portafoglio di oggi</h2>
     <div class="tot"><div><span>💶 Contanti</span><b>${euro(p.contanti)}</b></div><div><span>💳 SumUp</span><b>${euro(p.sumup)}</b></div></div>
-    <div class="tasca"><span>In tasca da lasciare in cassa</span><span>${euro(p.inTasca)}</span></div>
+    <div class="tasca"><span>In tasca · si versa a fine turno</span><span>${euro(p.inTasca)}</span></div>
     ${p.attesa ? `<div class="muto" style="color:#e8e1d6">⏳ ${euro(p.attesa)} in attesa di conferma della cassa</div>` : ''}
     ${p.versato ? `<div class="muto" style="color:#e8e1d6">✓ Già lasciati in cassa: ${euro(p.versato)}</div>` : ''}
-    ${p.inTasca > 0 && !p.attesa ? `<button class="btn l" id="versa">💶 Lascio ${euro(p.inTasca)} in cassa</button>` : ''}</div>`;
+    </div>`;
 }
 
 function rigaConsegna(c, i, mostraPassa) {

@@ -266,7 +266,7 @@ function disegna() {
   $('#na').textContent = 'Da assegnare · ' + da.length;
   $('#carte').innerHTML = da.length ? da.map(cardConsegna).join('') : '<div class="vuoto">Nessuna consegna in attesa. Premi “+ Consegna”.</div>';
   const va = VERS.filter(v => v.stato === 'attesa');
-  $('#vers').innerHTML = va.map(v => `<div class="vetro">💶 ${esc(v.rider)} lascia <b>${euro(v.contanti)}</b> in cassa <button data-v="${v.id}">✓ Conferma</button></div>`).join('');
+  $('#vers').innerHTML = va.map(v => `<div class="vetro">${v.fine ? '🏁' : '💶'} ${esc(v.rider)} ${v.fine ? 'ha chiuso il turno: versa' : 'lascia'} <b>${euro(v.contanti)}</b> in cassa · contali e <button data-v="${v.id}">✓ Conferma</button></div>`).join('');
   tutti('[data-v]').forEach(b => b.onclick = () => confermaVersamento(b.dataset.v));
   mappa(ri, da);
 }

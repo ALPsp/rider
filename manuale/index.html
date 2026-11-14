@@ -301,6 +301,10 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
   </div></details>
 
 
+  <details><summary><span>🏁</span> Fine turno del rider: conferma i contanti</summary><div>
+    <p>Quando un rider chiude il servizio dalla sua app, in alto nella Centrale compare <b>🏁 … ha chiuso il turno: versa … in cassa</b>. <b>Conta i soldi e premi ✓ Conferma</b>: finché non confermi, risultano ancora in tasca al rider.</p>
+  </div></details>
+
   <details><summary><span>📊</span> Fine serata: totali</summary><div>
     <p>Tocca <span class="btnfinto s">Fine turno e totali</span>: contanti, SumUp, chi ha ancora soldi in tasca, km del mese, stelle e note dei rider.</p>
     <p>In fondo ci sono le <b>Impostazioni</b>: fondo cassa del rider (80,05 €) e valore del buono Amazon della challenge.</p>
@@ -563,6 +567,7 @@ const QQ = {
   ['Sulla mappa vedi una freccia vuota con la casetta. Cosa vuol dire?', ['Il rider sta rientrando in pizzeria', 'Il rider è fermo', 'Il rider ha finito il turno'], 0, 'Piena = va dal cliente, vuota con casetta = rientra.'],
   ['E l\'alone rosso attorno a una freccia?', ['Il rider ha la batteria scarica', 'Il rider è nuovo', 'Il rider è in ritardo su una consegna'], 2, 'Lo vedi anche nella colonna: riquadro rosso con i minuti di ritardo.'],
   ['"Di turno, non ancora accesi": chi sono?', ['Rider in ferie', 'Rider che dovrebbero essere in turno ma non hanno aperto l\'app', 'Rider in ritardo'], 1, 'Gli orari sono indicativi: se c\'è una sostituzione, controlla chi c\'è davvero.'],
+  ['Un rider chiude il turno e ti versa i contanti. Cosa fai?', ['Li metto in cassa e basta', 'Li conto e premo ✓ Conferma nella Centrale', 'Li lascio al responsabile'], 1, 'Finché la cassa non conferma, quei soldi risultano ancora in tasca al rider.'],
   ['A fine serata, dove vedi quanti contanti ha ancora in tasca ogni rider?', ['In "Fine turno e totali"', 'Nella mappa', 'Lo chiedo a ognuno'], 0, 'Lì trovi consegne, contanti, SumUp, in tasca, km del mese, stelle e note.'],
   ['Quanto è il fondo cassa che ogni rider ha a inizio turno?', ['50 €', 'Dipende dal rider', '80,05 €, uguale per tutti'], 2, 'A fine turno il rider versa tutto: fondo più incassato.'],
   ['Con che PIN si entra nella Centrale sull\'iPad della cassa?', ['Con il PIN della cassa', 'Con il PIN di un rider', 'Senza PIN'], 0, 'iPad e iPhone della cassa usano il PIN della cassa. I rider usano il loro solo sul loro telefono.']
@@ -742,7 +747,7 @@ quiz();
       <div style="display:flex;gap:8px"><div class="sx-b s" style="flex:1">Indietro</div><div class="sx-b n" style="flex:1">Avanti</div></div></div>`,
       n: ['Il fine turno ha <b>5 passi</b>: km, SumUp, contanti, foto del furgone (solo se usato), voto. Prova la simulazione nella scheda 🏁 Fine turno.',
           'L\'app ti dice quanto <b>dovresti avere</b>: fondo cassa 80,05 € più i contanti incassati. Si versa tutto.',
-          'Se torna premi il verde. Se non torna, scrivi <b>quanto hai davvero</b>: la differenza va nel report.'] },
+          'Se torna premi il verde. Se non torna, scrivi <b>quanto hai davvero</b>: la differenza va nel report. Poi consegni i soldi in cassa, che li conta e conferma dalla Centrale.'] },
 
     { t: '🏆 Challenge', h: `${ORA}${top('Claudio', 'Challenge di novembre', '')}<div class="sx-pag">
       <div class="sx-card" style="background:#302f31;color:#fff"><div style="font-size:12px;opacity:.8">Chi vince riceve un</div><b style="font-size:22px;position:relative">Buono Amazon 🎁 ${H(1)}</b></div>
@@ -760,7 +765,7 @@ quiz();
     <div style="position:relative;grid-column:1;grid-row:1;overflow:hidden">${mappa(610, 384,
       `<path d="M300 200 C 260 150, 200 120, 150 90" stroke="#b8b2a8" stroke-width="6" fill="none"/><path d="M150 90 C 120 70, 100 60, 80 50" stroke="#b8372f" stroke-width="5" fill="none" stroke-dasharray="2 12" stroke-linecap="round"/>
        <path d="M300 200 C 380 230, 450 260, 520 300" stroke="#b8b2a8" stroke-width="6" fill="none"/>
-       ${pizzeria(300, 200)}${casa(80, 50, 1)}${casa(470, 110, 2)}${freccia(150, 92, -60, true, false, 'Claudio')}${freccia(430, 250, -110, false, false, 'Duca')}${freccia(520, 160, 30, true, true, 'Filippo')}`)}${hs[0] || ''}</div>
+       ${pizzeria(300, 200)}${casa(80, 50, 1)}${casa(470, 110, 2)}${freccia(150, 92, -60, true, false, 'Claudio')}${freccia(430, 250, -110, false, false, 'Duca')}${freccia(520, 160, 30, true, true, 'Filippo')}`)}${hs[0] || ''}<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);border-radius:14px;padding:6px 8px 6px 11px;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.15);white-space:nowrap;display:flex;align-items:center;gap:6px">🏁 Simone ha chiuso il turno: versa <b>192,55 €</b> · contali e <span class="sx-b v" style="min-height:26px;padding:0 10px;font-size:11px">✓ Conferma</span>${hs[3] || ''}</div></div>
     <div class="sx-col"><b style="font-size:13px;position:relative;display:inline-block;align-self:flex-start">Rider in servizio${hs[1] || ''}</b>
       <div class="sx-rid"><div style="display:flex;justify-content:space-between"><b>Simone</b><span class="sx-pill piz">IN PIZZERIA</span></div><span class="sx-mu">libero</span></div>
       <div class="sx-rid"><div style="display:flex;justify-content:space-between"><b>Claudio</b><span class="sx-pill and">→ IN ANDATA</span></div><span class="sx-mu">1/2 · In pizzeria alle 19:40</span></div>
@@ -780,10 +785,11 @@ quiz();
       <div class="sx-in" style="text-align:center;letter-spacing:8px">•••</div><div class="sx-b p">Entra ${H(1)}</div></div></div>`,
       n: ['iPad della cassa, iPad di Andrea e iPhone della cassa entrano con il <b>PIN della cassa</b>. Un dispositivo = un accesso.'] },
 
-    { t: '🗺️ Mappa e rider', h: BASE('', [hsAt(1, 'top:14px;left:14px'), H(2), H(3), '', H(4), H(5)]),
+    { t: '🗺️ Mappa e rider', h: BASE('', [hsAt(1, 'top:14px;left:14px'), H(2), H(3), H(4), H(5), H(6)]),
       n: ['La <b>mappa</b>: ogni rider è una freccia. <b>Piena</b> = va dal cliente, <b>vuota con casetta</b> = rientra, <b>alone rosso</b> = è in ritardo. Strada fatta grigia, quella che manca a trattini.',
           '<b>Rider in servizio</b>: il primo libero è sempre in cima. Per ognuno vedi lo stato e quando torna in pizzeria.',
           'Riquadro rosso: il rider è <b>in ritardo</b> su una consegna rispetto all\'orario.',
+          'Un rider ha <b>chiuso il turno</b>: conta i contanti che ti versa e premi <b>✓ Conferma</b>. Finché non confermi, risultano ancora in tasca a lui.',
           '<b>Di turno ma non ancora acceso</b>: dovrebbe esserci (orari del turno) ma non ha aperto l\'app.',
           '<b>Da assegnare</b>: tieni premuta una consegna e <b>trascinala sul rider</b>. Un tocco per modificarla.'] },
 
