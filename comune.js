@@ -168,15 +168,17 @@
           '"pizze":numero dopo PIZ:,"burger":numero dopo BUR:,' +
           '"pagamento":"Contanti" oppure "SumUp","cassiere":"nome dopo OP.","note":"citofono, scala, piano se scritti"}. ' +
           'Regole: "PONY POS" o "Carte di credito" = SumUp; un codice "PIENISSIMO" in fondo = ordine dall\'app, quindi SumUp; "PONY CONTANTI" o altro = Contanti; se il pagamento non è scritto da nessuna parte = Contanti. Numeri non leggibili = 0, testi non leggibili = "". Rispondi SEMPRE con il JSON, anche se alcuni dati mancano.';
-      const prova = async mod => {
-        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + mod + ':generateContent?key=' + encodeURIComponent(chiave), {
+      const prova = async (mod, senzaThink) => {
+        const gc = { temperature: 0, responseMimeType: 'application/json' };
+        if (!senzaThink) gc.thinkingConfig = { thinkingBudget: 0 };
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + mod.replace(/^models\//, '') + ':generateContent?key=' + encodeURIComponent(chiave), {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: dataUrl.split(',')[1] } }] }],
             safetySettings: ['HARASSMENT', 'HATE_SPEECH', 'SEXUALLY_EXPLICIT', 'DANGEROUS_CONTENT'].map(c => ({ category: 'HARM_CATEGORY_' + c, threshold: 'BLOCK_NONE' })),
-            generationConfig: { temperature: 0, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } } })
+            generationConfig: gc })
         });
         const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error((j.error && j.error.message) || ('errore ' + r.status));
+        if (!r.ok) { const e = new Error((j.error && j.error.message) || ('errore ' + r.status)); e.status = r.status; throw e; }
         const parti = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
         if (!parti) throw new Error('risposta vuota' + (j.candidates && j.candidates[0] ? ' (' + j.candidates[0].finishReason + ')' : ''));
         const t = parti.map(p => p.text || '').join('');
@@ -185,12 +187,33 @@
         for (const k in o) if (o[k] === null) o[k] = '';
         return o;
       };
-      const mod = modello || 'gemini-2.5-flash';
-      try { return await prova(mod); }
-      catch (e) { // secondo tentativo automatico (stesso modello, poi uno di riserva)
-        try { return await prova(mod); }
-        catch (e2) { if (mod !== 'gemini-2.5-flash') return await prova('gemini-2.5-flash'); throw e2; }
+      // modello: quello salvato che ha funzionato, altrimenti quello delle impostazioni
+      let mod; try { mod = localStorage.getItem('alp_gemini_ok'); } catch (e) {}
+      mod = mod || modello || 'gemini-flash-latest';
+      const usa = async m => {
+        try { return await prova(m); }
+        catch (e) { if (/think/i.test(e.message)) return await prova(m, true); throw e; }
+      };
+      // trova da solo il modello "flash" più recente disponibile per questa chiave
+      const cercaModello = async () => {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(chiave));
+        const j = await r.json();
+        const ver = n => parseFloat((n.match(/gemini-(\d+(\.\d+)?)/) || [0, 0])[1]);
+        const ok = (j.models || []).filter(x => (x.supportedGenerationMethods || []).includes('generateContent'))
+          .map(x => x.name.replace(/^models\//, ''))
+          .filter(n => /^gemini-.*flash/.test(n) && !/lite|image|tts|live|audio|thinking|exp|8b/.test(n))
+          .sort((x, y) => ver(y) - ver(x) || (/preview/.test(x) - /preview/.test(y)) || x.length - y.length);
+        return ok[0] || 'gemini-flash-latest';
+      };
+      let o;
+      try { o = await usa(mod); }
+      catch (e) {
+        if (e.status === 404 || e.status === 400 || /no longer|not found|not supported|deprecat/i.test(e.message)) {
+          mod = await cercaModello(); o = await usa(mod);
+        } else o = await usa(mod); // secondo tentativo
       }
+      try { localStorage.setItem('alp_gemini_ok', mod); } catch (e) {}
+      return o;
     },
 
     /** suono breve + vibrazione (nuova consegna, rider libero…) */
