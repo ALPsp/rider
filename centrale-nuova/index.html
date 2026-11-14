@@ -245,8 +245,12 @@ function disegna() {
   $('#ora').textContent = new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric' }) + ' · ' + ALP.servizio() + ' · ' + hhmm(Date.now());
   const ri = inServizio().map(info).sort((a, b) => a.chiave - b.chiave);
   $('#nr').textContent = ri.length ? ri.length + ' · primo libero in alto' : '';
-  $('#lista').innerHTML = ri.length ? ri.map(cardRider).join('') : '<div class="vuoto">Nessun rider in servizio. Si accendono quando iniziano il turno dalla loro app.</div>';
-  tutti('.rc').forEach(el => el.onclick = () => schedaRider(el.dataset.rider));
+  const dentro = new Set(ri.map(o => o.n));
+  const manca = ALP.attesi().filter(x => !dentro.has(x.nome));
+  $('#lista').innerHTML = (ri.length ? ri.map(cardRider).join('') : '<div class="vuoto">Nessun rider in servizio. Si accendono quando iniziano il turno dalla loro app.</div>')
+    + (manca.length ? '<div style="font:800 11px Nunito,sans-serif;letter-spacing:.06em;color:var(--muto);padding:6px 4px 0">DI TURNO, NON ANCORA ACCESI</div>'
+      + manca.map(x => `<div class="rc" style="opacity:.6"><span class="pal" style="background:${ALP.colore(x.nome)}"></span><div class="t"><div class="r1"><b class="nome">${esc(x.nome)}</b><span class="pill p-off">${x.tra > 0 ? 'tra ' + x.tra + ' min' : 'in ritardo'}</span></div><span class="riga">Turno ${esc(x.da)}–${esc(x.a)}</span></div></div>`).join('') : '');
+  tutti('.rc[data-rider]').forEach(el => el.onclick = () => schedaRider(el.dataset.rider));
   const da = daAssegnare();
   $('#na').textContent = 'Da assegnare · ' + da.length;
   $('#carte').innerHTML = da.length ? da.map(cardConsegna).join('') : '<div class="vuoto">Nessuna consegna in attesa. Premi “+ Consegna”.</div>';
@@ -468,7 +472,8 @@ function consiglio(m) {
   }).join('') || '<span class="muto" style="font-size:13px">Servizio finito</span>';
   if (!prima) { $('#sugg').textContent = 'Tutte le fasce rimaste sono piene: decidi tu.'; return; }
   const arrivo = Q.tipo === 'ASPORTO' ? prima.f : ALP.hhmm(new Date('2000-01-01T' + prima.f + ':00').getTime() + (min + ALP.SOSTA) * 60000);
-  const liberi = inServizio().map(info).filter(o => o.stato === 'pizzeria' || (o.rientro && ALP.hhmm(o.rientro) <= arrivo));
+  let liberi = inServizio().map(info).filter(o => o.stato === 'pizzeria' || (o.rientro && ALP.hhmm(o.rientro) <= arrivo));
+  if (!liberi.length) liberi = ALP.attesi(90).filter(x => x.da <= arrivo).map(x => ({ n: x.nome }));
   $('#sugg').innerHTML = `💡 Di' <b>${esc(arrivo)}</b>${Q.tipo === 'ASPORTO' ? ' per il ritiro' : `: forno alle ${esc(prima.f)}, ${min} min di strada`}.`
     + (Q.tipo === 'ASPORTO' ? '' : ` Rider: ${liberi.length ? '<b>' + liberi.map(o => esc(o.n)).join(', ') + '</b>' : '<b style="color:#b3261e">nessuno libero a quell\'ora</b>'}.`);
 }

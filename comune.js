@@ -5,7 +5,27 @@
   const RISERVA = ['#1d5fd1', '#d97100', '#6d35d6', '#0f7a68', '#c2185b', '#7a5c00', '#00838f', '#5d4037'];
   const due = n => String(n).padStart(2, '0');
 
+  /* Orari invernali dei rider, dai PDF di Andrea (0=domenica … 6=sabato) */
+  const ORARI = {
+    Claudio: { 1: [['17:00', '22:00']], 6: [['18:15', '22:15']], 0: [['18:00', '20:30']] },
+    Camozzi: { 1: [['11:30', '14:30']], 2: [['11:30', '14:30'], ['17:30', '22:00']], 3: [['11:30', '14:30']], 4: [['11:30', '14:30']], 5: [['11:30', '14:30']], 0: [['17:30', '21:30']] },
+    Simone: { 3: [['17:30', '22:00']], 6: [['18:00', '22:00']], 0: [['18:30', '22:00']] },
+    Duca: { 4: [['18:00', '21:00']], 5: [['18:30', '21:30']], 6: [['18:00', '22:30']], 0: [['18:00', '22:00']] },
+    Filippo: { 4: [['17:30', '22:00']], 5: [['17:30', '22:00']], 6: [['18:30', '21:30']], 0: [['18:30', '21:30']] },
+    Daniel: { 6: [['18:30', '22:00']], 0: [['18:00', '21:30']] }
+  };
+
   const A = window.ALP = {
+    ORARI,
+    /** chi è di turno adesso (o sta per iniziare): [{nome, da, a, tra}] */
+    attesi(quanti) {
+      const d = new Date(), g = d.getDay(), m = d.getHours() * 60 + d.getMinutes(), anticipo = quanti == null ? 30 : quanti, out = [];
+      Object.keys(ORARI).forEach(n => (ORARI[n][g] || []).forEach(([da, a]) => {
+        const i = Number(da.slice(0, 2)) * 60 + Number(da.slice(3)), f = Number(a.slice(0, 2)) * 60 + Number(a.slice(3));
+        if (m >= i - anticipo && m <= f) out.push({ nome: n, da, a, tra: Math.max(0, i - m) });
+      }));
+      return out.sort((x, y) => x.da.localeCompare(y.da));
+    },
     FONDO: 80.05, CASA, PIZZERIA: "Via Francesco Baracca 2, 24060 San Paolo d'Argon BG", SOSTA: 3, VEL: 35, GPS_OGNI: 15,
     colore: n => COLORI[n] || RISERVA[[...String(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % RISERVA.length],
     $: s => document.querySelector(s),
