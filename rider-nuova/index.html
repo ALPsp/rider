@@ -112,9 +112,17 @@ function login() {
 let stop = [];
 async function avvia() {
   stop.forEach(f => { try { f(); } catch (e) {} }); stop = [];
-  const ok = await FB.leggi('accessi/' + await FB.uid()).catch(() => null);
+  const uid = await FB.uid();
+  const ok = await FB.leggi('accessi/' + uid).catch(() => null);
   if (!ok || ok.nome !== NOME) { ALP.ls.del('rider_nome'); NOME = null; return login(); }
   const L = async p => stop.push(await p);
+  L(FB.doc('accessi/' + uid, d => {
+    if (d && d.ruolo === 'rider' && d.nome === NOME) return;
+    stop.forEach(f => { try { f(); } catch (e) {} }); stop = [];
+    ALP.ls.del('rider_nome'); NOME = null;
+    alert('Su questo telefono è stata aperta un\'altra app di Amo la Pizza e il tuo accesso è decaduto.\n\nRifai il tuo PIN.');
+    login();
+  }));
   L(FB.doc('rider/' + NOME, d => { R = d || { nome: NOME }; collega(); disegna(); }));
   L(FB.lista('consegne', [['rider', '==', NOME], ['data', '==', OGGI()]], d => { avvisaNuove(d); C = d; coerenza(); disegna(); }));
   L(FB.lista('scambi', [['a', '==', NOME]], d => { X = d; mostraScambi(); }));

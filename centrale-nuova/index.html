@@ -136,7 +136,15 @@ async function avvia() {
   const a = await FB.leggi('accessi/' + await FB.uid()).catch(() => null);
   if (!a || a.ruolo !== 'hub') { ALP.ls.del('hub_nome'); return login(); }
   struttura();
-  const oggi = ALP.oggi(), L = async p => stop.push(await p);
+  const oggi = ALP.oggi(), uid = await FB.uid(), L = async p => stop.push(await p);
+  // se su questo dispositivo qualcuno entra con l'app rider, questo accesso decade: lo diciamo e richiediamo il PIN
+  L(FB.doc('accessi/' + uid, d => {
+    if (d && d.ruolo === 'hub') return;
+    stop.forEach(f => { try { f(); } catch (e) {} }); stop = [];
+    ALP.ls.del('hub_nome');
+    alert('Su questo dispositivo è stata aperta l\'app di un rider, e l\'accesso della cassa è decaduto.\n\nRifai il PIN della cassa. Meglio non usare le due app sullo stesso dispositivo.');
+    login();
+  }));
   let noteLibere = null;
   L(FB.lista('consegne', [['data', '==', oggi]], d => { CONS = d; geocodificaMancanti(); presto(); }));
   L(FB.lista('rider', [], d => {
