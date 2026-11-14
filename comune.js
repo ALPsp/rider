@@ -22,6 +22,32 @@
           set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
           del: k => { try { localStorage.removeItem(k); } catch (e) {} } },
 
+    /** "Via del Convento 38/A" -> "Convento" · "Via Aldo Moro 6" -> "Moro" */
+    corto(via) {
+      const stop = /^(via|viale|v\.le|v\.|piazza|p\.za|p\.zza|largo|corso|c\.so|vicolo|strada|localita|localit\u00e0|loc\.|contrada|borgo|salita|str\.)$/i;
+      const w = String(via || '').replace(/[,.;].*$/, '').split(/\s+/)
+        .filter(x => x && !stop.test(x) && !/^\d+[a-z]?(\/[a-z0-9]+)?$/i.test(x) && !/^(n|snc|int|sc|scala)$/i.test(x));
+      return (w[w.length - 1] || String(via || '').trim() || '—').replace(/[^0-9A-Za-z\u00C0-\u017F'\-]/g, '');
+    },
+    /** fascia da 15 minuti: "20:07" -> "20:00" */
+    fascia(hhmm) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm || '')); if (!m) return '';
+      const t = Number(m[1]) * 60 + Math.floor(Number(m[2]) / 15) * 15;
+      return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+    },
+    /** toglie minuti a un orario "20:15" */
+    meno(hhmm, min) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm || '')); if (!m) return '';
+      let t = Number(m[1]) * 60 + Number(m[2]) - min; if (t < 0) t += 1440;
+      return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+    },
+    /** elenco delle fasce del servizio */
+    fasce(servizio) {
+      const [da, a] = servizio === 'Pranzo' ? [11 * 60 + 45, 14 * 60 + 15] : [18 * 60 + 15, 22 * 60];
+      const out = []; for (let t = da; t <= a; t += 15) out.push(String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'));
+      return out;
+    },
+
     /** distanza in km in linea d'aria */
     km(a, b) {
       const R = 6371, r = Math.PI / 180, dLa = (b[0] - a[0]) * r, dLo = (b[1] - a[1]) * r;
@@ -103,9 +129,10 @@
       const prompt = tipo === 'km'
         ? 'Foto del cruscotto di uno scooter o di un furgone. Leggi il CONTACHILOMETRI TOTALE (il numero più grande, non il parziale/trip). Rispondi solo JSON: {"km": numero intero oppure null}'
         : 'Foto di una comanda e di uno scontrino della pizzeria Amo la Pizza (San Paolo d\'Argon, BG), affiancati. Estrai i dati e rispondi solo JSON con queste chiavi: ' +
-          '{"tipo":"DOMICILIO" o "ASPORTO" o "","numero":"numero ordine","cliente":"nome cliente","via":"via e numero civico","paese":"paese","telefono":"","previsto":"orario PER LE in formato HH:MM","importo":numero totale da incassare (dallo scontrino),' +
-          '"pagamento":"Contanti" oppure "SumUp","cassiere":"nome dopo OP. in basso a destra","note":"citofono, scala, piano se scritti"}. ' +
-          'Regole: "Carte di credito" sullo scontrino = SumUp; un codice "PIENISSIMO" in fondo alla comanda = ordine dall\'app, quindi SumUp; altrimenti Contanti. Campi non leggibili = "".';
+          '{"tipo":"DOMICILIO" o "ASPORTO" o "","numero":"numero ordine dopo N:","cliente":"nome cliente","via":"via e numero civico","paese":"paese (la riga sotto la via, prima del trattino)","telefono":"","previsto":"orario PER LE in formato HH:MM","importo":numero dopo "Totale:",' +
+          '"pizze":numero dopo PIZ:,"burger":numero dopo BUR:,' +
+          '"pagamento":"Contanti" oppure "SumUp","cassiere":"nome dopo OP.","note":"citofono, scala, piano se scritti"}. ' +
+          'Regole: "PONY POS" o "Carte di credito" = SumUp; un codice "PIENISSIMO" in fondo = ordine dall\'app, quindi SumUp; "PONY CONTANTI" o altro = Contanti. Numeri non leggibili = 0, testi non leggibili = "".';
       const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + (modello || 'gemini-2.5-flash') + ':generateContent?key=' + encodeURIComponent(chiave), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: dataUrl.split(',')[1] } }] }],

@@ -74,6 +74,33 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .pinbox { max-width:340px; margin:14vh auto 0; position:relative; z-index:900; border-radius:28px; padding:22px; display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center; }
   .pinbox input { font-size:30px; text-align:center; letter-spacing:12px; }
   @media (max-width:820px) { .col { width:46vw; } .vass { right:calc(46vw + 32px); } .aiuto { display:none; } }
+  /* ---- ORARI CONSEGNE ---- */
+  #orari { position:fixed; inset:0; z-index:750; background:#fff; display:none; flex-direction:column; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 14px 12px; }
+  #orari.on { display:flex; }
+  .og { flex:1; display:grid; grid-template-columns:1fr 318px; gap:12px; min-height:0; }
+  .tab { border:1px solid #e4ded5; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+  .rg { display:grid; grid-template-columns:48px 74px 74px 1fr 1fr; gap:10px; align-items:center; padding:5px 10px; border-bottom:1px solid #f0ece5; }
+  .tab .rg.h { background:var(--ink); color:#fff; font:800 11px -apple-system,sans-serif; letter-spacing:.04em; padding:7px 10px; border:0; }
+  .tab .corpo { flex:1; overflow:auto; }
+  .rg.pas { background:#f4f2ee; opacity:.5; } .rg.now { box-shadow:inset 4px 0 0 var(--rosso2); } .rg.alt { background:#fbfaf7; }
+  .rg b.f { font-size:15px; }
+  .bar { display:flex; align-items:center; gap:5px; } .bar i { flex:1; height:8px; border-radius:999px; background:#e9e4dc; overflow:hidden; display:block; }
+  .bar i u { display:block; height:100%; } .bar b { width:18px; text-align:right; font-size:13px; }
+  .cel { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; min-width:0; }
+  .cel > div { border-radius:8px; padding:4px 6px; font-size:13px; font-weight:700; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:26px; }
+  .cel .c { background:#fdeae8; border:1px solid #f3c7c2; } .cel .a { background:#ece8e1; border:1px solid #ddd7cd; }
+  .cel .v { border:1px dashed #e8e2d9; } .cel .p { background:var(--ink); color:#fff; } .cel .x { background:#fff4d6; border:1px solid #e8cf8a; }
+  .lat { display:flex; flex-direction:column; gap:10px; min-height:0; overflow:auto; }
+  .box { background:var(--sfondo); border-radius:18px; padding:12px; display:flex; flex-direction:column; gap:9px; }
+  .box.sel { background:#fff; border:2px solid var(--ink); }
+  .cnt { background:#fff; border-radius:14px; padding:6px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .cnt span { font:800 11px -apple-system,sans-serif; color:var(--muto); }
+  .cnt div { display:flex; align-items:center; gap:6px; } .cnt button { width:44px; height:44px; border-radius:999px; border:1px solid #ddd5ca; background:#fff; font:800 19px -apple-system,sans-serif; }
+  .cnt button.pi { border:0; background:var(--rosso2); color:#fff; } .cnt b { font-size:24px; min-width:28px; text-align:center; }
+  .slot { height:46px; border-radius:11px; border:1px solid #ddd5ca; background:#fff; font:800 14px -apple-system,sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.15; }
+  .slot small { font-size:10px; font-weight:700; }
+  .slot.ok { border:0; background:var(--verde); color:#fff; } .slot.no { border:2px solid var(--rosso2); color:var(--rosso2); }
+  .sugg { background:#eef6d2; border-radius:12px; padding:9px 11px; font-size:13px; line-height:19px; }
 </style>
 </head>
 <body>
@@ -87,6 +114,8 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
 const { $, tutti, esc, euro, hhmm } = ALP;
 let HUB = ALP.ls.get('hub_nome');
 let CONS = [], RIDER = [], POS = {}, VERS = [], TURNI = [], GIRI = [], KM = [], SEG = {}, map = null, livello = null, primaVolta = true;
+let VISTA = 'mappa', SERV = ALP.servizio(), SELE = null, Q = { p: 4, b: 0, tipo: 'DOMICILIO', paese: "San Paolo d'Argon" };
+const MAX = 20, GIALLO = 15, STRADA_DEF = 10;
 
 /* ---------- accesso con PIN (solo qui si chiama lo script Google) ---------- */
 function login() {
@@ -128,7 +157,7 @@ let rid = 0; function presto() { if (!rid) rid = requestAnimationFrame(() => { r
 /** indirizzi ancora senza coordinate: li cerca la centrale (una volta sola per consegna) */
 const cercati = new Set();
 function geocodificaMancanti() {
-  CONS.filter(c => !c.lat && c.via && c.stato !== 'annullata' && !cercati.has(c.id + c.via + c.paese)).forEach(async c => {
+  CONS.filter(c => !c.lat && c.via && c.tipo !== 'ASPORTO' && c.stato !== 'annullata' && !cercati.has(c.id + c.via + c.paese)).forEach(async c => {
     cercati.add(c.id + c.via + c.paese);
     const p = await ALP.geocodifica(c.via, c.paese);
     if (!p) return ALP.toast('Non trovo sulla mappa: ' + c.via + ', ' + c.paese, 1);
@@ -148,7 +177,7 @@ function controllaLontano(c) {
 
 /* ---------- calcoli istantanei per ogni rider ---------- */
 const inServizio = () => RIDER.filter(r => r.turno && r.stato && r.stato !== 'fuori' && TURNI.some(t => t.id === r.turno && !t.fine));
-const daAssegnare = () => CONS.filter(c => !c.rider && c.stato !== 'annullata' && c.stato !== 'consegnata').sort((a, b) => (a.previsto || '99').localeCompare(b.previsto || '99'));
+const daAssegnare = () => CONS.filter(c => c.tipo !== 'ASPORTO' && !c.rider && c.stato !== 'annullata' && c.stato !== 'consegnata').sort((a, b) => (a.previsto || '99').localeCompare(b.previsto || '99'));
 const posFresca = r => { const p = POS[r.nome]; return p && r.giro && p.giro === r.giro && Date.now() - new Date(p.ora).getTime() < 3 * 60000 ? p : null; };
 function info(r) {
   const n = r.nome, ora = Date.now();
@@ -171,10 +200,28 @@ function info(r) {
 function struttura() {
   $('#ui').innerHTML = `
     <div class="testa vetro"><img src="../img/marchio.png" alt="Amo la Pizza"><b>Centrale</b><span class="ora" id="ora"></span>
-      <button class="b-s" id="fine">Fine turno e totali</button><button class="b-p" id="nuova">+ Consegna</button></div>
+      <button class="b-s" id="vOrari">Orari consegne</button><button class="b-s" id="fine">Fine turno e totali</button><button class="b-p" id="nuova">+ Consegna</button></div>
     <div class="vers" id="vers"></div>
     <div class="col vetro"><h3>Rider in servizio <small id="nr"></small></h3><div class="lista" id="lista"></div></div>
-    <div class="vass vetro"><h3><span id="na">Da assegnare</span><small>Tieni premuto e trascina sul rider · tocca per modificare</small></h3><div class="carte" id="carte"></div></div>`;
+    <div class="vass vetro"><h3><span id="na">Da assegnare</span><small>Tieni premuto e trascina sul rider · tocca per modificare</small></h3><div class="carte" id="carte"></div></div>
+    <div id="orari"><div style="display:flex;align-items:center;gap:10px">
+      <img src="../img/marchio.png" alt="Amo la Pizza" style="height:30px">
+      <b style="font-size:19px">ORARI CONSEGNE</b><span class="muto" id="oraTesta" style="font-size:13px;font-weight:700"></span>
+      <div style="flex:1"></div>
+      <div class="seg" id="serv" style="width:210px"><button data-s="Pranzo">Pranzo</button><button data-s="Cena">Cena</button></div>
+      <button class="mini" id="nuova2" style="height:34px">+ Consegna</button>
+      <button class="mini" id="vMappa" style="height:34px">Mappa rider</button></div>
+      <div class="og"><div class="tab"><div class="rg h"><span>FASCIA</span><span>PIZZE</span><span>BURGER</span><span>CONS · consegne</span><span>VAP · asporto</span></div><div class="corpo" id="fasce"></div></div>
+      <div class="lat"><div id="dett"></div>
+        <div class="box"><b style="font-size:17px">Al telefono: che orario dico?</b>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="cnt"><span>PIZZE</span><div><button data-q="p-1" aria-label="Meno pizze">−</button><b id="qp">4</b><button class="pi" data-q="p1" aria-label="Più pizze">+</button></div></div>
+            <div class="cnt"><span>BURGER</span><div><button data-q="b-1" aria-label="Meno burger">−</button><b id="qb">0</b><button class="pi" data-q="b1" aria-label="Più burger">+</button></div></div></div>
+          <div class="seg" id="tipoQ"><button data-t="DOMICILIO">🛵 Domicilio</button><button data-t="ASPORTO">🥡 Asporto</button></div>
+          <input id="qpaese" placeholder="Paese (per il tempo di strada)" value="San Paolo d'Argon">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px" id="slots"></div>
+          <div class="sugg" id="sugg"></div></div>
+      </div></div></div>`;
   $('#nuova').onclick = () => schedaConsegna();
   $('#fine').onclick = fineTurno;
   if (!map) {
@@ -187,6 +234,7 @@ function struttura() {
 
 function disegna() {
   if (!$('#lista')) return;
+  if (VISTA === 'orari') disegnaOrari();
   $('#ora').textContent = new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric' }) + ' · ' + ALP.servizio() + ' · ' + hhmm(Date.now());
   const ri = inServizio().map(info).sort((a, b) => a.chiave - b.chiave);
   $('#nr').textContent = ri.length ? ri.length + ' · primo libero in alto' : '';
@@ -306,6 +354,118 @@ function confermaVersamento(id) {
   ALP.toast('Contanti di ' + v.rider + ' confermati ✓');
 }
 
+
+/* ---------- ORARI CONSEGNE (il foglio, che si riempie da solo) ---------- */
+const vive = c => c.stato !== 'annullata';
+/** minuti di strada stimati verso la consegna (dalle coordinate, altrimenti un valore prudente) */
+function strada(c) { return c.lat ? ALP.minuti(ALP.CASA, [c.lat, c.lng]) : STRADA_DEF; }
+/** fascia in cui la pizza deve uscire dal forno */
+function fasciaForno(c) {
+  const p = c.previsto || '';
+  if (!p) return '';
+  return ALP.fascia(c.tipo === 'ASPORTO' ? p : ALP.meno(p, strada(c) + ALP.SOSTA));
+}
+function perFascia() {
+  const m = {};
+  CONS.filter(vive).forEach(c => { const f = fasciaForno(c); if (!f) return; (m[f] = m[f] || { c: [], a: [] })[c.tipo === 'ASPORTO' ? 'a' : 'c'].push(c); });
+  return m;
+}
+const conta = l => l.reduce((o, c) => ({ p: o.p + (Number(c.pizze) || 0), b: o.b + (Number(c.burger) || 0) }), { p: 0, b: 0 });
+const colore = v => v >= MAX ? '#b8372f' : (v >= GIALLO ? '#d99a00' : '#1d8f4e');
+function barra(v) {
+  const c = colore(v);
+  return `<span class="bar"><i><u style="width:${Math.round(Math.min(v, MAX) / MAX * 100)}%;background:${c}"></u></i><b style="color:${v >= GIALLO ? c : 'var(--ink)'}">${v}</b></span>`;
+}
+function celle(l, cl) {
+  let h = '';
+  for (let k = 0; k < 4; k++) {
+    if (k < l.length && (k < 3 || l.length === 4)) {
+      const c = l[k], nome = cl === 'c' ? ALP.corto(c.via) : (String(c.cliente || '').trim().split(/\s+/)[0] || '—');
+      const pr = c.lontano && !c.lontanoOk;
+      h += `<div class="${pr ? 'x' : cl}" data-o="${c.id}" title="${esc(c.via || c.cliente)}">${esc(nome)}${pr ? ' ⚠️' : ''}</div>`;
+    } else if (k === 3 && l.length > 4) h += `<div class="p" data-f="${l[0] ? fasciaForno(l[0]) : ''}">+${l.length - 3}</div>`;
+    else h += '<div class="v"></div>';
+  }
+  return `<div class="cel">${h}</div>`;
+}
+function disegnaOrari() {
+  const m = perFascia(), fasce = ALP.fasce(SERV), ora = ALP.hhmm(Date.now()), adesso = ALP.fascia(ora);
+  $('#oraTesta').textContent = new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + ora + ' · si riempie da solo con le comande';
+  tutti('#serv button').forEach(b => b.classList.toggle('on', b.dataset.s === SERV));
+  $('#fasce').innerHTML = fasce.map((f, i) => {
+    const d = m[f] || { c: [], a: [] }, t = conta(d.c.concat(d.a));
+    const cl = f < adesso ? 'pas' : (f === adesso ? 'now' : (i % 2 ? 'alt' : ''));
+    return `<div class="rg ${cl}"><b class="f">${f}</b>${barra(t.p)}${barra(t.b)}${celle(d.c, 'c')}${celle(d.a, 'a')}</div>`;
+  }).join('');
+  tutti('#fasce [data-o]').forEach(e => e.onclick = () => { SELE = e.dataset.o; disegnaOrari(); });
+  tutti('#fasce [data-f]').forEach(e => e.onclick = () => apriFascia(e.dataset.f, m));
+  dettaglio();
+  consiglio(m);
+}
+function dettaglio() {
+  const c = CONS.find(x => x.id === SELE);
+  if (!c) { $('#dett').innerHTML = '<div class="box"><span class="muto" style="font-size:13px">Tocca una casella per vedere l\'ordine: indirizzo, pizze, totale, pagamento.</span></div>'; return; }
+  const r = c.rider ? RIDER.find(x => x.nome === c.rider) : null;
+  $('#dett').innerHTML = `<div class="box sel">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:17px">${esc(c.tipo === 'ASPORTO' ? (c.cliente || 'Asporto') : ALP.corto(c.via))}</b>
+      <span class="muto" style="font-size:13px">${esc(c.previsto || '')}${c.numero ? ' · N. ' + esc(c.numero) : ''}</span></div>
+    <div style="font-size:14px">${c.tipo === 'ASPORTO' ? '🥡 Ritiro del cliente' : '🛵 ' + esc(c.via) + ', ' + esc(c.paese)}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${c.pizze ? `<span class="pill p-off">${c.pizze} pizze</span>` : ''}${c.burger ? `<span class="pill p-off">${c.burger} burger</span>` : ''}
+      ${c.importo ? `<span class="pill" style="background:${c.pagamento === 'SumUp' ? '#dde8ff;color:#123f8c' : '#e2f3e8;color:#1d7a3d'}">${euro(c.importo)} ${c.pagamento === 'SumUp' ? 'SumUp' : 'contanti'}</span>` : ''}
+      ${c.tipo !== 'ASPORTO' ? `<span class="pill p-off">${strada(c)} min di strada</span>` : ''}</div>
+    ${c.cliente || c.telefono ? `<span class="muto" style="font-size:12px">${esc(c.cliente)}${c.telefono ? ' · ' + esc(c.telefono) : ''}${c.cassiere ? ' · cassa ' + esc(c.cassiere) : ''}</span>` : ''}
+    ${c.rider ? `<span class="muto" style="font-size:12px">Rider: <b style="color:var(--ink)">${esc(c.rider)}</b>${c.stato === 'consegnata' ? ' · consegnata' : ''}</span>` : ''}
+    <div style="display:flex;gap:6px"><button class="btn s" id="dMod" style="min-height:40px;font-size:13px">Apri e modifica</button>
+      ${c.tipo === 'ASPORTO' ? '' : `<button class="btn p" id="dAss" style="min-height:40px;font-size:13px">${c.rider ? 'Cambia rider' : 'Assegna rider'}</button>`}</div></div>`;
+  $('#dMod').onclick = () => schedaConsegna(c);
+  if ($('#dAss')) $('#dAss').onclick = () => scegliRider(c);
+}
+function scegliRider(c) {
+  const ri = inServizio(); if (!ri.length) return ALP.toast('Nessun rider in servizio', 1);
+  apri(`<div class="maniglia"></div><h2 style="margin:0">${esc(c.via)} → a chi?</h2>
+    <div class="chips" style="margin-top:12px">${ri.map(r => `<button data-a="${esc(r.nome)}"><i style="background:${ALP.colore(r.nome)}"></i>${esc(r.nome)}</button>`).join('')}</div>
+    <button class="btn s" style="margin-top:14px" id="chiudi">Annulla</button>`, () => {
+    $('#chiudi').onclick = chiudi;
+    tutti('[data-a]').forEach(b => b.onclick = () => { assegna(c.id, b.dataset.a); chiudi(); });
+  });
+}
+function apriFascia(f, m) {
+  const d = m[f] || { c: [], a: [] }, l = d.c.concat(d.a); if (!l.length) return;
+  const t = conta(l);
+  apri(`<div class="maniglia"></div><h2 style="margin:0">Fascia ${f} · ${t.p} pizze, ${t.b} burger</h2>
+    ${l.map(c => `<div class="riga-c"><span style="font-size:18px">${c.tipo === 'ASPORTO' ? '🥡' : '🛵'}</span>
+      <div class="t"><b>${esc(c.tipo === 'ASPORTO' ? (c.cliente || 'Asporto') : c.via)}</b>
+      <div class="muto" style="font-size:13px">per le ${esc(c.previsto || '')} · ${c.pizze || 0}P ${c.burger || 0}B${c.importo ? ' · ' + euro(c.importo) : ''}${c.rider ? ' · ' + esc(c.rider) : ''}</div></div>
+      <button class="mini" data-o="${c.id}">Apri</button></div>`).join('')}
+    <button class="btn s" style="margin-top:14px" id="chiudi">Chiudi</button>`, () => {
+    $('#chiudi').onclick = chiudi;
+    tutti('[data-o]').forEach(b => b.onclick = () => { SELE = b.dataset.o; chiudi(); disegnaOrari(); });
+  });
+}
+/** quali fasce sono libere per l'ordine che stiamo prendendo al telefono */
+function consiglio(m) {
+  $('#qp').textContent = Q.p; $('#qb').textContent = Q.b;
+  tutti('#tipoQ button').forEach(b => b.classList.toggle('on', b.dataset.t === Q.tipo));
+  const g = ALP.ls.get('geo:' + ('x, ' + Q.paese + ', BG').replace(/\s+/g, ' ').toLowerCase());
+  const min = Q.tipo === 'ASPORTO' ? 0 : (CONS.filter(c => c.lat && (c.paese || '').toLowerCase() === Q.paese.toLowerCase()).map(strada)[0] || STRADA_DEF);
+  const fasce = ALP.fasce(SERV), adesso = ALP.fascia(ALP.hhmm(Date.now() + 10 * 60000));
+  const libere = fasce.filter(f => f >= adesso).map(f => {
+    const d = m[f] || { c: [], a: [] }, t = conta(d.c.concat(d.a));
+    return { f, p: t.p, b: t.b, resta: MAX - t.p, ok: t.p + Q.p <= MAX && t.b + Q.b <= MAX };
+  });
+  const tre = libere.slice(0, 3), prima = libere.find(x => x.ok);
+  $('#slots').innerHTML = tre.map(x => {
+    const cons = Q.tipo === 'ASPORTO' ? x.f : ALP.hhmm(new Date('2000-01-01T' + x.f + ':00').getTime() + (min + ALP.SOSTA) * 60000);
+    return `<button class="slot ${x.ok ? 'ok' : 'no'}">${esc(cons)}<small>${x.ok ? x.resta + ' libere' : 'pieno'}</small></button>`;
+  }).join('') || '<span class="muto" style="font-size:13px">Servizio finito</span>';
+  if (!prima) { $('#sugg').textContent = 'Tutte le fasce rimaste sono piene: decidi tu.'; return; }
+  const arrivo = Q.tipo === 'ASPORTO' ? prima.f : ALP.hhmm(new Date('2000-01-01T' + prima.f + ':00').getTime() + (min + ALP.SOSTA) * 60000);
+  const liberi = inServizio().map(info).filter(o => o.stato === 'pizzeria' || (o.rientro && ALP.hhmm(o.rientro) <= arrivo));
+  $('#sugg').innerHTML = `💡 Di' <b>${esc(arrivo)}</b>${Q.tipo === 'ASPORTO' ? ' per il ritiro' : `: forno alle ${esc(prima.f)}, ${min} min di strada`}.`
+    + (Q.tipo === 'ASPORTO' ? '' : ` Rider: ${liberi.length ? '<b>' + liberi.map(o => esc(o.n)).join(', ') + '</b>' : '<b style="color:#b3261e">nessuno libero a quell\'ora</b>'}.`);
+}
+
 /* ---------- fogli ---------- */
 function apri(html, dopo) {
   $('#extra').innerHTML = `<div class="velo" id="velo"><div class="foglio">${html}</div></div>`;
@@ -315,23 +475,33 @@ function apri(html, dopo) {
 function chiudi() { $('#extra').innerHTML = ''; }
 
 function schedaConsegna(c) {
-  const nuova = !c; c = c || { pagamento: 'Contanti', paese: "San Paolo d'Argon" };
-  let pag = c.pagamento || 'Contanti', a = c.rider || '';
+  const nuova = !c; c = c || { pagamento: 'Contanti', paese: "San Paolo d'Argon", tipo: 'DOMICILIO' };
+  let pag = c.pagamento || 'Contanti', a = c.rider || '', tipo = c.tipo === 'ASPORTO' ? 'ASPORTO' : 'DOMICILIO';
   const ri = inServizio();
   apri(`<div class="maniglia"></div><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${nuova ? 'Nuova consegna' : 'Consegna'}</h2>
       ${nuova ? '' : `<button class="mini" id="elim" style="color:var(--rosso2)">Elimina</button>`}</div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
       ${nuova ? `<button class="btn n" id="foto">📷 Foto comanda + scontrino</button><input type="file" accept="image/*" capture="environment" id="file" hidden><div class="muto" id="st" style="text-align:center;font-size:14px"></div>` : ''}
       <div id="avvisi">${c.lontano && !c.lontanoOk ? `<div class="avv err">⚠️ Questo indirizzo risulta a ${c.lontano} minuti dalla pizzeria: controlla via e paese.</div>` : ''}</div>
-      <div class="grid2"><label class="c">Via e numero<input id="f_via" value="${esc(c.via)}" placeholder="Via Roma 14"></label><label class="c">Paese<input id="f_paese" value="${esc(c.paese)}"></label></div>
+      <div class="seg" id="tipo" style="max-width:360px"><button data-t="DOMICILIO">🛵 Domicilio</button><button data-t="ASPORTO">🥡 Asporto (ritira lui)</button></div>
+      <div class="grid2" id="rigaVia"><label class="c">Via e numero<input id="f_via" value="${esc(c.via)}" placeholder="Via Roma 14"></label><label class="c">Paese<input id="f_paese" value="${esc(c.paese)}"></label></div>
       <div class="grid2"><label class="c">Cliente<input id="f_cli" value="${esc(c.cliente)}"></label><label class="c">Telefono<input id="f_tel" inputmode="tel" value="${esc(c.telefono)}"></label></div>
       <div class="grid3"><label class="c">Orario PER LE<input id="f_ora" type="time" value="${esc(c.previsto)}"></label><label class="c">Totale €<input id="f_imp" inputmode="decimal" value="${c.importo ? String(c.importo).replace('.', ',') : ''}"></label>
         <label class="c">Pagamento<div class="seg" id="pag"><button data-p="Contanti">Contanti</button><button data-p="SumUp">SumUp</button></div></label></div>
+      <div class="grid3"><label class="c">Pizze (PIZ)<input id="f_piz" inputmode="numeric" value="${c.pizze || ''}"></label><label class="c">Burger (BUR)<input id="f_bur" inputmode="numeric" value="${c.burger || ''}"></label>
+        <label class="c">N. ordine<input id="f_num" value="${esc(c.numero)}"></label></div>
       <label class="c">Note per il rider<input id="f_note" value="${esc(c.note)}" placeholder="citofono, scala, piano…"></label>
       <div><div class="c" style="font-size:12px;font-weight:800;color:var(--muto);margin-bottom:6px">ASSEGNA A (facoltativo)</div><div class="chips" id="chips">
         <button data-a="" class="${a ? '' : 'on'}">Dopo</button>${ri.map(r => `<button data-a="${esc(r.nome)}" class="${a === r.nome ? 'on' : ''}"><i style="background:${ALP.colore(r.nome)}"></i>${esc(r.nome)}</button>`).join('')}</div></div>
       <div style="display:flex;gap:10px"><button class="btn s" id="annulla">Annulla</button><button class="btn p" id="salva">Salva</button></div></div>`, () => {
-    const segna = () => { tutti('#pag button').forEach(b => b.classList.toggle('on', b.dataset.p === pag)); tutti('#chips button').forEach(b => b.classList.toggle('on', b.dataset.a === a)); };
+    const segna = () => {
+      tutti('#pag button').forEach(b => b.classList.toggle('on', b.dataset.p === pag));
+      tutti('#chips button').forEach(b => b.classList.toggle('on', b.dataset.a === a));
+      tutti('#tipo button').forEach(b => b.classList.toggle('on', b.dataset.t === tipo));
+      $('#rigaVia').style.display = tipo === 'ASPORTO' ? 'none' : '';
+      $('#chips').parentElement.style.display = tipo === 'ASPORTO' ? 'none' : '';
+    };
+    tutti('#tipo button').forEach(b => b.onclick = () => { tipo = b.dataset.t; if (tipo === 'ASPORTO') a = ''; segna(); });
     tutti('#pag button').forEach(b => b.onclick = () => { pag = b.dataset.p; segna(); });
     tutti('#chips button').forEach(b => b.onclick = () => { a = b.dataset.a; segna(); }); segna();
     $('#annulla').onclick = chiudi;
@@ -346,32 +516,39 @@ function schedaConsegna(c) {
           const metti = (id, v) => { if (v && !$(id).value) $(id).value = v; };
           metti('#f_via', o.via); if (o.paese) $('#f_paese').value = o.paese; metti('#f_cli', o.cliente); metti('#f_tel', o.telefono); metti('#f_ora', o.previsto);
           if (o.importo) $('#f_imp').value = String(o.importo).replace('.', ','); metti('#f_note', o.note);
-          if (o.pagamento) { pag = /sum/i.test(o.pagamento) ? 'SumUp' : 'Contanti'; segna(); }
-          c.numero = o.numero || ''; c.cassiere = o.cassiere || ''; c.tipo = o.tipo || '';
-          $('#avvisi').innerHTML = o.tipo === 'ASPORTO' ? '<div class="avv err">⛔ Sulla comanda c\'è ASPORTO: il cliente ritira lui.</div>' : '';
+          if (o.pizze) $('#f_piz').value = o.pizze; if (o.burger) $('#f_bur').value = o.burger; metti('#f_num', o.numero);
+          if (o.pagamento) pag = /sum/i.test(o.pagamento) ? 'SumUp' : 'Contanti';
+          if (/asporto/i.test(o.tipo || '')) { tipo = 'ASPORTO'; a = ''; }
+          segna();
+          c.cassiere = o.cassiere || '';
+          $('#avvisi').innerHTML = tipo === 'ASPORTO' ? '<div class="avv">🥡 Comanda di ASPORTO: va nella colonna VAP, senza rider.</div>' : '';
           $('#st').textContent = 'Letta in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓ · controlla i campi';
         } catch (er) { $('#st').textContent = SEG.gemini ? 'Lettura non riuscita: scrivi a mano' : 'Lettura foto non ancora attiva (Fine turno › Impostazioni): scrivi a mano'; }
       };
     }
     $('#salva').onclick = async () => {
-      const via = $('#f_via').value.trim(), paese = $('#f_paese').value.trim() || "San Paolo d'Argon";
-      if (!via) return ALP.toast('Manca la via', 1);
-      if (c.tipo === 'ASPORTO' && !confirm('È un ASPORTO: la salvo lo stesso come consegna?')) return;
+      const asp = tipo === 'ASPORTO';
+      const via = asp ? '' : $('#f_via').value.trim(), paese = asp ? '' : ($('#f_paese').value.trim() || "San Paolo d'Argon");
+      const cliente = $('#f_cli').value.trim();
+      if (!asp && !via) return ALP.toast('Manca la via', 1);
+      if (asp && !cliente) return ALP.toast('Manca il nome del cliente', 1);
+      if (!$('#f_ora').value) return ALP.toast("Manca l'orario PER LE", 1);
       const ora = Date.now(), r = RIDER.find(x => x.nome === a), id = c.id || ALP.id();
-      const d = { via, paese, cliente: $('#f_cli').value.trim(), telefono: $('#f_tel').value.replace(/\s/g, ''), previsto: $('#f_ora').value, importo: ALP.num($('#f_imp').value),
+      const d = { tipo, via, paese, cliente, telefono: $('#f_tel').value.replace(/\s/g, ''), previsto: $('#f_ora').value, importo: ALP.num($('#f_imp').value),
+        pizze: Math.round(ALP.num($('#f_piz').value)), burger: Math.round(ALP.num($('#f_bur').value)), numero: $('#f_num').value.trim(),
         pagamento: pag, note: $('#f_note').value.trim(), agg: ora };
       if (nuova) {
-        Object.assign(d, { id, data: ALP.oggi(), servizio: ALP.servizio(), creata: ora, creataDa: HUB, numero: c.numero || '', cassiere: c.cassiere || '', tipo: c.tipo || '',
-          rider: a, stato: a ? (r && r.giro ? 'partita' : 'assegnata') : 'attesa', giro: a && r && r.giro ? r.giro : '', lat: null, lng: null,
+        Object.assign(d, { id, data: ALP.oggi(), servizio: ALP.servizio(), creata: ora, creataDa: HUB, cassiere: c.cassiere || '',
+          rider: a, stato: asp ? 'asporto' : (a ? (r && r.giro ? 'partita' : 'assegnata') : 'attesa'), giro: a && r && r.giro ? r.giro : '', lat: null, lng: null,
           storia: a ? [{ t: ora, da: '', a, chi: HUB, tipo: 'assegnata dalla cassa' }] : [] });
-        const g = ALP.ls.get('geo:' + (via + ', ' + paese + ', BG').replace(/\s+/g, ' ').toLowerCase()); if (g) { const p = JSON.parse(g); d.lat = p[0]; d.lng = p[1]; }
+        if (!asp) { const g = ALP.ls.get('geo:' + (via + ', ' + paese + ', BG').replace(/\s+/g, ' ').toLowerCase()); if (g) { const p = JSON.parse(g); d.lat = p[0]; d.lng = p[1]; } }
         FB.scrivi('consegne/' + id, d).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
       } else {
         if (via !== c.via || paese !== c.paese) { d.lat = null; d.lng = null; d.lontano = 0; d.lontanoOk = false; }
         FB.cambia('consegne/' + id, d).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
         if (a !== (c.rider || '') && a) setTimeout(() => assegna(id, a), 50);
       }
-      chiudi(); ALP.toast(nuova ? 'Consegna salvata' + (a ? ' e assegnata a ' + a : '') : 'Modifiche salvate');
+      SELE = id; chiudi(); ALP.toast(nuova ? (asp ? 'Asporto salvato' : 'Consegna salvata' + (a ? ' e assegnata a ' + a : '')) : 'Modifiche salvate');
     };
   });
 }
