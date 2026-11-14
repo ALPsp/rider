@@ -6,7 +6,7 @@
   const due = n => String(n).padStart(2, '0');
 
   const A = window.ALP = {
-    CASA, PIZZERIA: "Via Francesco Baracca 2, 24060 San Paolo d'Argon BG", SOSTA: 3, VEL: 35, GPS_OGNI: 15,
+    FONDO: 80.05, CASA, PIZZERIA: "Via Francesco Baracca 2, 24060 San Paolo d'Argon BG", SOSTA: 3, VEL: 35, GPS_OGNI: 15,
     colore: n => COLORI[n] || RISERVA[[...String(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % RISERVA.length],
     $: s => document.querySelector(s),
     tutti: s => [...document.querySelectorAll(s)],

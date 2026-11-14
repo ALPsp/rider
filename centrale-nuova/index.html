@@ -608,13 +608,19 @@ function fineTurno() {
     <div class="chips">${kmMese.length ? kmMese.map(k => `<button disabled style="opacity:1">${k.id === 'FURGONE' ? '🚐 Furgone' : '<i style="background:' + ALP.colore(k.id) + '"></i>' + esc(k.id)} · <b>${Math.round(k.km)} km</b></button>`).join('') : '<span class="muto">Ancora nessun km questo mese</span>'}</div>
     <details style="margin-top:18px"><summary style="font-weight:800">Impostazioni</summary>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
-        <label class="c">Chiave Gemini per leggere le foto<input id="k" type="password" placeholder="${SEG.gemini ? 'già inserita · scrivi per cambiarla' : 'incolla qui la chiave'}"></label>
-        <label class="c">Modello<input id="mod" value="${esc(SEG.modello || 'gemini-2.5-flash')}"></label>
+        <div class="avv" style="${SEG.gemini ? 'background:#e2f3e8;color:#1d7a3d' : ''}">${SEG.gemini ? '✓ Lettura delle foto attiva' : '⚠️ Lettura delle foto non attiva'}<button class="mini" id="cambiak" style="margin-left:auto">Sostituisci chiave</button></div>
+        <label class="c" id="rigak" style="display:none">Nuova chiave Gemini<input id="k" type="password" placeholder="incolla qui la chiave"></label>
+        <label class="c">Fondo cassa del rider €<input id="fondo" inputmode="decimal" value="${String(Number(SEG.fondo) || ALP.FONDO).replace('.', ',')}"></label>
         <button class="btn s" id="salvak">Salva impostazioni</button>
         <button class="btn s" id="esci">Esci da questo dispositivo</button></div></details>
     <button class="btn n" style="margin-top:14px" id="chiudi">Chiudi</button>`, () => {
     $('#chiudi').onclick = chiudi;
-    $('#salvak').onclick = () => { const d = { modello: $('#mod').value.trim() || 'gemini-2.5-flash' }; if ($('#k').value.trim()) d.gemini = $('#k').value.trim(); FB.scrivi('segreti/app', d, true).then(() => ALP.toast('Salvato ✓'), e => ALP.toast('Non salvato: ' + e.message, 1)); };
+    $('#cambiak').onclick = () => { $('#rigak').style.display = ''; $('#k').focus(); };
+    $('#salvak').onclick = () => {
+      const d = { fondo: ALP.num($('#fondo').value) || ALP.FONDO };
+      if ($('#k').value.trim()) d.gemini = $('#k').value.trim();
+      FB.scrivi('segreti/app', d, true).then(() => ALP.toast('Salvato ✓'), e => ALP.toast('Non salvato: ' + e.message, 1));
+    };
     $('#esci').onclick = () => { if (confirm('Esco da questo dispositivo?')) { ALP.ls.del('hub_nome'); location.reload(); } };
   });
 }
