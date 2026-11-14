@@ -35,7 +35,7 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .spunta input { width:28px; height:28px; accent-color:var(--rosso2); flex:none; }
   .spunta small { display:block; font-weight:600; color:var(--muto); font-size:13px; }
   .tappa { display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-top:1px solid #efe9e0; } .tappa:first-of-type { border-top:0; }
-  .n { width:34px; height:34px; border-radius:50%; background:var(--rosso2); color:#fff; display:grid; place-items:center; font-weight:800; flex:none; }
+  .numtappa { width:34px; height:34px; border-radius:50%; background:var(--rosso2); color:#fff; display:grid; place-items:center; font-weight:800; flex:none; }
   .tappa .t { flex:1; min-width:0; } .tappa b { display:block; font-size:17px; }
   .bdg { display:inline-block; border-radius:999px; padding:3px 9px; font-size:13px; font-weight:800; margin:4px 4px 0 0; }
   .b-c { background:#e2f3e8; color:var(--verde); } .b-s { background:#e3ebfd; color:var(--blu); } .b-o { background:#f1f2c4; color:var(--ink); } .b-a { background:#ffe2c2; color:#7a3d00; }
@@ -419,7 +419,7 @@ function cardPortafoglio() {
 
 function rigaConsegna(c, i, mostraPassa) {
   const sc = MIEI_SCAMBI.find(s => s.consegna === c.id);
-  return `<div class="tappa" data-apri="${c.id}"><div class="n">${i + 1}</div><div class="t"><b>${esc(c.via)}</b><span class="muto">${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}</span><div>
+  return `<div class="tappa" data-apri="${c.id}"><div class="numtappa">${i + 1}</div><div class="t"><b>${esc(c.via)}</b><span class="muto">${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}</span><div>
     ${c.previsto ? `<span class="bdg b-o">⏰ PER LE ${esc(c.previsto)}</span>` : ''}<span class="bdg ${c.pagamento === 'SumUp' ? 'b-s' : 'b-c'}">${c.pagamento === 'SumUp' ? '💳 SumUp' : '💶 Contanti'} ${c.importo ? euro(c.importo) : ''}</span>
     ${sc ? `<span class="bdg b-a">⇄ in attesa di ${esc(sc.a)}</span>` : ''}</div>${c.note ? `<div class="muto">📝 ${esc(c.note)}</div>` : ''}</div>
     ${mostraPassa ? (sc ? `<button class="mini" data-annulla="${c.id}">Annulla</button>` : `<button class="mini" data-passa="${c.id}">⇄ Passa</button>`) : ''}</div>`;
