@@ -1,324 +1,630 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ALP Rider">
+<meta name="theme-color" content="#ccd231">
 <title>Amo la Pizza Rider</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icone/icona-180.png">
 <link rel="icon" href="icone/icona-192.png">
-<script src="../fb.js"></script>
-<script>window.API_URL = "https://script.google.com/macros/s/AKfycbwzKqDFmwR66rYvYyHV4Ih1mdb4jtuXlwYGJskz69RNnCKwuONjjDLgIU8nRQBmYwJf/exec";
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});</script>
-<script>window.onerror=function(m,u,l,c,e){try{var d=document.getElementById('errbox')||document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#C6413C;color:#fff;font:600 13px -apple-system,sans-serif;padding:10px;border-radius:12px;white-space:pre-wrap';d.textContent+='Errore: '+m+' (riga '+l+':'+c+')\n';(document.body||document.documentElement).appendChild(d);}catch(x){}};</script>
-<meta name="theme-color" content="#CCD231">
+<link rel="stylesheet" href="../stile.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../fb2.js"></script>
+<script src="../comune.js"></script>
+<script>window.API_URL = "https://script.google.com/macros/s/AKfycbwzKqDFmwR66rYvYyHV4Ih1mdb4jtuXlwYGJskz69RNnCKwuONjjDLgIU8nRQBmYwJf/exec";
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga ' + l + ')', 1); } catch (e) {} };</script>
 <style>
-  :root { --lime:#CCD231; --rosso:#C6413C; --scuro:#302F31; --grigio:#7a7a7e; --sfondo:#f4f5ec; --verde:#2e9e4f; --blu:#2563eb; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",Roboto,sans-serif; background:var(--sfondo); color:var(--scuro); }
-  .top { background:var(--lime); padding:calc(10px + env(safe-area-inset-top)) 14px 10px; display:flex; align-items:center; gap:10px; position:sticky; top:0; z-index:500; }
-  .top img { height:38px; }
-  .top .chi { flex:1; font-weight:800; font-size:17px; }
-  .top .chi small { display:block; font-weight:600; font-size:12px; opacity:.75; }
-  .top button { background:rgba(255,255,255,.6); border:0; border-radius:999px; padding:8px 12px; font-weight:700; color:var(--scuro); }
-  .pag { padding:14px; max-width:560px; margin:0 auto; }
-  .card { background:#fff; border-radius:20px; padding:16px; margin-bottom:12px; box-shadow:0 4px 18px rgba(48,47,49,.08); }
-  h2 { margin:4px 0 10px; font-size:22px; font-weight:900; }
-  .muto { color:var(--grigio); font-size:14px; }
-  .btn { display:block; width:100%; border:0; border-radius:16px; padding:17px; font-size:18px; font-weight:800; margin-top:10px; cursor:pointer; }
-  .btn.p { background:var(--rosso); color:#fff; box-shadow:0 6px 16px rgba(198,65,60,.35); }
-  .btn.l { background:var(--lime); color:var(--scuro); }
-  .btn.s { background:#fff; color:var(--scuro); border:2px solid #e3e4da; }
-  .btn.v { background:var(--verde); color:#fff; }
-  .btn:disabled { opacity:.5; }
-  .riga { display:flex; gap:10px; } .riga > * { flex:1; }
-  .pin { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
-  .pin button { font-size:26px; font-weight:800; padding:16px 0; border-radius:16px; border:0; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-  .punti { display:flex; justify-content:center; gap:12px; margin:14px 0; }
-  .punti i { width:16px; height:16px; border-radius:50%; background:#dfe0d2; } .punti i.on { background:var(--rosso); }
-  label { display:block; font-size:12px; font-weight:800; color:var(--grigio); text-transform:uppercase; margin:10px 0 4px; }
-  input, select { width:100%; font-size:17px; padding:12px; border-radius:12px; border:2px solid #e3e4da; background:#fff; font-family:inherit; }
-  .toggle { display:flex; background:#eef0e4; border-radius:14px; padding:4px; }
-  .toggle button { flex:1; border:0; background:transparent; padding:12px; border-radius:11px; font-weight:800; font-size:16px; color:var(--grigio); }
-  .toggle button.on { background:#fff; color:var(--scuro); box-shadow:0 2px 6px rgba(0,0,0,.08); }
-  .ordine { display:flex; gap:12px; align-items:center; padding:12px 0; border-top:1px solid #eef0e4; }
-  .ordine:first-child { border-top:0; }
-  .num { width:34px; height:34px; border-radius:50%; background:var(--rosso); color:#fff; display:grid; place-items:center; font-weight:900; flex:none; }
-  .ordine .t { flex:1; } .ordine b { display:block; font-size:16px; }
-  .x { border:0; background:#f3e2e1; color:var(--rosso); border-radius:10px; padding:8px 10px; font-weight:800; }
-  .badge { display:inline-block; border-radius:999px; padding:4px 10px; font-size:13px; font-weight:800; }
-  .b-cont { background:#e3f4e8; color:var(--verde); } .b-sum { background:#e4ecfd; color:var(--blu); } .b-ora { background:#eef0b3; color:var(--scuro); }
-  .wallet { background:var(--scuro); color:#fff; }
-  .wallet .tot { display:flex; gap:10px; margin-top:10px; }
-  .wallet .tot div { flex:1; background:rgba(255,255,255,.08); border-radius:14px; padding:12px; }
-  .wallet .tot span { display:block; font-size:12px; font-weight:800; opacity:.7; text-transform:uppercase; }
-  .wallet .tot b { font-size:24px; font-weight:900; }
-  .wallet .tasca { margin-top:10px; background:var(--lime); color:var(--scuro); border-radius:14px; padding:10px 12px; font-weight:800; display:flex; justify-content:space-between; }
-  .wallet details { margin-top:10px; font-size:14px; } .wallet summary { font-weight:800; opacity:.85; }
-  .wallet .voce { display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid rgba(255,255,255,.1); }
-  .avv { background:#fff4e0; color:#8a5300; border-radius:12px; padding:10px 12px; font-size:14px; font-weight:600; margin-top:8px; }
-  .err { background:#fde8e7; color:var(--rosso); }
-  #mappa { position:fixed; top:calc(58px + env(safe-area-inset-top)); left:0; right:0; bottom:0; z-index:1; }
-  .foglio { position:fixed; left:0; right:0; bottom:0; z-index:600; background:#fff; border-radius:24px 24px 0 0; padding:10px 16px calc(16px + env(safe-area-inset-bottom));
-            box-shadow:0 -8px 30px rgba(0,0,0,.18); max-height:72vh; overflow:auto; }
-  .maniglia { width:44px; height:5px; border-radius:3px; background:#dcdcd4; margin:0 auto 10px; }
-  .tappa { font-size:13px; font-weight:800; color:var(--rosso); text-transform:uppercase; letter-spacing:.5px; }
-  .cliente { font-size:24px; font-weight:900; margin:2px 0; }
-  .via { font-size:17px; color:var(--scuro); }
-  .incasso { margin:12px 0 4px; padding:14px; border-radius:16px; font-size:20px; font-weight:900; text-align:center; }
-  .incasso.c { background:#e3f4e8; color:var(--verde); } .incasso.s { background:#e4ecfd; color:var(--blu); }
-  .tempo { display:flex; justify-content:space-between; margin-top:8px; font-weight:700; }
-  .icone { display:flex; gap:10px; margin-top:6px; } .icone a, .icone button { flex:1; text-align:center; text-decoration:none; }
-  .banner { position:fixed; top:calc(66px + env(safe-area-inset-top)); left:10px; right:10px; z-index:560; background:var(--scuro); color:#fff; border-radius:18px; padding:12px 14px; display:flex; gap:12px; align-items:center; box-shadow:0 8px 24px rgba(0,0,0,.3); }
-  .banner .fr { width:54px; height:54px; border-radius:14px; background:var(--lime); color:var(--scuro); display:grid; place-items:center; font-size:32px; font-weight:900; flex:none; }
-  .banner .bt b { display:block; font-size:26px; font-weight:900; } .banner .bt span { font-size:16px; font-weight:600; opacity:.9; display:block; line-height:1.25; }
-  .navbar { position:fixed; right:10px; top:calc(160px + env(safe-area-inset-top)); z-index:555; display:flex; flex-direction:column; gap:8px; }
-  .navbar button { width:46px; height:46px; border-radius:50%; border:0; background:#fff; font-size:20px; box-shadow:0 2px 10px rgba(0,0,0,.2); }
-  .navbar button.on { background:var(--rosso); color:#fff; }
-  .arrivo { position:fixed; left:10px; bottom:200px; z-index:555; background:#fff; border-radius:14px; padding:8px 12px; box-shadow:0 2px 10px rgba(0,0,0,.2); }
-  .arrivo b { display:block; font-size:20px; font-weight:900; color:var(--verde); } .arrivo span { font-size:12px; font-weight:700; color:var(--grigio); }
-  .foglio.basso { max-height:40vh; padding-top:14px; } .foglio.evid { box-shadow:0 -8px 30px rgba(46,158,79,.55); }
-  .riga1 { display:flex; gap:10px; align-items:center; } .riga1 > div:first-child { flex:1; min-width:0; }
-  .riga1 .cliente { font-size:21px; } .riga1 .via { font-size:15px; color:var(--grigio); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .top { position:sticky; top:0; z-index:500; display:flex; align-items:center; gap:10px; padding:calc(8px + env(safe-area-inset-top)) 14px 8px; background:var(--lime); }
+  .top img { height:34px; }
+  .top .chi { flex:1; font-weight:800; font-size:17px; line-height:1.15; } .top .chi small { display:block; font-weight:700; font-size:12px; opacity:.75; }
+  .top button { background:rgba(255,255,255,.65); border:0; border-radius:999px; padding:8px 12px; font-weight:800; color:var(--ink); }
+  .pag { padding:14px; max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+  .card { background:#fff; border-radius:22px; padding:16px; box-shadow:0 4px 18px rgba(48,47,49,.07); display:flex; flex-direction:column; gap:10px; }
+  h2 { margin:0; font-size:22px; font-weight:800; }
+  .muto { color:var(--muto); font-size:14px; }
+  .contatore { background:var(--ink); color:#fff; border-radius:22px; padding:16px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .contatore b { display:block; font-size:38px; font-weight:800; line-height:1.05; } .contatore span { font-size:13px; color:#d9d2c8; }
+  .spunta { display:flex; align-items:center; gap:12px; background:#fff; border:2px solid var(--lime); border-radius:18px; padding:14px; font-weight:800; }
+  .spunta input { width:28px; height:28px; accent-color:var(--rosso2); flex:none; }
+  .spunta small { display:block; font-weight:600; color:var(--muto); font-size:13px; }
+  .tappa { display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-top:1px solid #efe9e0; } .tappa:first-of-type { border-top:0; }
+  .numtappa { width:34px; height:34px; border-radius:50%; background:var(--rosso2); color:#fff; display:grid; place-items:center; font-weight:800; flex:none; }
+  .tappa .t { flex:1; min-width:0; } .tappa b { display:block; font-size:17px; }
+  .bdg { display:inline-block; border-radius:999px; padding:3px 9px; font-size:13px; font-weight:800; margin:4px 4px 0 0; }
+  .b-c { background:#e2f3e8; color:var(--verde); } .b-s { background:#e3ebfd; color:var(--blu); } .b-o { background:#f1f2c4; color:var(--ink); } .b-a { background:#ffe2c2; color:#7a3d00; }
+  .mini { border:1px solid #ddd5ca; background:#fff; border-radius:999px; padding:8px 12px; font-weight:800; font-size:13px; color:var(--ink); }
+  .wallet { background:var(--ink); color:#fff; } .wallet .tot { display:flex; gap:10px; }
+  .wallet .tot div { flex:1; background:rgba(255,255,255,.08); border-radius:14px; padding:12px; } .wallet .tot span { display:block; font-size:12px; font-weight:800; opacity:.7; text-transform:uppercase; }
+  .wallet .tot b { font-size:24px; } .wallet .tasca { background:var(--lime); color:var(--ink); border-radius:14px; padding:10px 12px; font-weight:800; display:flex; justify-content:space-between; }
+  .nuova { background:var(--lime); border-radius:18px; padding:12px 14px; font-weight:800; display:flex; gap:10px; align-items:center; animation:su .3s; }
+  .scambio { position:fixed; left:10px; right:10px; top:calc(62px + env(safe-area-inset-top)); z-index:2500; border-radius:22px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  #mappa { position:fixed; top:calc(50px + env(safe-area-inset-top)); left:0; right:0; bottom:0; z-index:1; }
+  .banner { position:fixed; top:calc(60px + env(safe-area-inset-top)); left:10px; right:10px; z-index:560; background:var(--ink); color:#fff; border-radius:20px; padding:12px 14px; display:flex; gap:12px; align-items:center; box-shadow:0 8px 24px rgba(0,0,0,.3); }
+  .banner .fr { width:54px; height:54px; border-radius:14px; background:var(--lime); color:var(--ink); display:grid; place-items:center; font-size:32px; font-weight:900; flex:none; }
+  .banner b { display:block; font-size:26px; } .banner span { font-size:16px; opacity:.9; display:block; line-height:1.25; }
+  .nb { position:fixed; right:10px; top:calc(150px + env(safe-area-inset-top)); z-index:555; display:flex; flex-direction:column; gap:8px; }
+  .nb button { width:48px; height:48px; border-radius:50%; border:0; font-size:20px; }
+  .nb button.on { background:var(--rosso2) !important; color:#fff; }
+  .arrivo { position:fixed; left:10px; z-index:555; border-radius:16px; padding:8px 12px; }
+  .arrivo b { display:block; font-size:20px; color:var(--verde); } .arrivo span { font-size:12px; font-weight:700; color:var(--muto); }
+  .sotto { position:fixed; left:0; right:0; bottom:0; z-index:600; background:#fff; border-radius:26px 26px 0 0; padding:12px 16px calc(14px + env(safe-area-inset-bottom)); box-shadow:0 -8px 30px rgba(0,0,0,.18); max-height:46vh; overflow:auto; }
+  .sotto.arr { box-shadow:0 -8px 30px rgba(29,143,78,.55); }
+  .r1 { display:flex; gap:10px; align-items:center; } .r1 > div:first-child { flex:1; min-width:0; }
+  .cli { font-size:21px; font-weight:800; } .via { font-size:15px; color:var(--muto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .eti { font-size:12px; font-weight:800; color:var(--rosso2); text-transform:uppercase; letter-spacing:.04em; }
   .chip { border-radius:16px; padding:8px 12px; text-align:center; min-width:96px; } .chip b { display:block; font-size:19px; } .chip small { font-weight:800; font-size:11px; text-transform:uppercase; }
-  .chip.c { background:#e3f4e8; color:var(--verde); } .chip.s { background:#e4ecfd; color:var(--blu); }
-  .btn.pic { flex:none !important; width:58px; padding:16px 0; text-align:center; text-decoration:none; color:var(--scuro); }
-  .io-wrap { background:transparent; border:0; }
-  .io { width:28px; height:28px; border-radius:50%; background:var(--blu); border:4px solid #fff; box-shadow:0 0 0 6px rgba(37,99,235,.25), 0 2px 6px rgba(0,0,0,.3); color:#fff; font-size:11px; display:grid; place-items:center; line-height:1; }
-  #mappa.nav { top:58px; }
-  .gps { position:fixed; top:66px; left:10px; z-index:550; background:#fff; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,.15); }
-  .attesa { position:fixed; inset:0; background:rgba(255,255,255,.85); z-index:2000; display:none; place-items:center; text-align:center; font-weight:800; }
-  .attesa.on { display:grid; }
-  .giro { width:46px; height:46px; border:5px solid var(--lime); border-top-color:var(--rosso); border-radius:50%; animation:g 0.9s linear infinite; margin:0 auto 12px; }
-  @keyframes g { to { transform:rotate(360deg); } }
-  .ok { font-size:56px; text-align:center; }
-  .num-icon { background:var(--rosso); color:#fff; border:3px solid #fff; border-radius:50%; width:30px !important; height:30px !important; display:grid !important; place-items:center; font-weight:900; box-shadow:0 2px 6px rgba(0,0,0,.3); }
-  .casa-icon { background:var(--lime); border:3px solid #fff; border-radius:50%; width:30px !important; height:30px !important; display:grid !important; place-items:center; font-size:15px; box-shadow:0 2px 6px rgba(0,0,0,.3); }
-  .leaflet-control-attribution { font-size:9px !important; opacity:.7; }
-  .leaflet-control-attribution a[href*="leaflet"], .leaflet-attribution-flag { display:none !important; }
+  .chip.c { background:#e2f3e8; color:var(--verde); } .chip.s { background:#e3ebfd; color:var(--blu); }
+  .azioni { display:flex; gap:8px; margin-top:10px; } .azioni .btn { min-height:52px; } .azioni .q { flex:none; width:56px; padding:0; }
+  .io { width:30px; height:30px; border-radius:50%; background:var(--blu); border:4px solid #fff; box-shadow:0 0 0 6px rgba(29,95,209,.25),0 2px 6px rgba(0,0,0,.3); color:#fff; font-size:11px; display:grid; place-items:center; }
+  .num-i { background:var(--rosso2); color:#fff; border:3px solid #fff; border-radius:50%; display:grid !important; place-items:center; font-weight:800; box-shadow:0 2px 6px rgba(0,0,0,.3); }
+  .casa-i { background:#fff; border:3px solid var(--lime); border-radius:50%; display:grid !important; place-items:center; box-shadow:0 2px 6px rgba(0,0,0,.3); }
+  .casa-i img { width:22px; }
+  .pin { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; } .pin button { font-size:26px; font-weight:800; min-height:62px; border-radius:18px; border:0; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); color:var(--ink); }
+  .punti { display:flex; justify-content:center; gap:12px; } .punti i { width:16px; height:16px; border-radius:50%; background:#e2dbd0; } .punti i.on { background:var(--rosso2); }
 </style>
 </head>
 <body>
-<div class="top"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANwAAADABAMAAACdYBBSAAABJWlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGBSSCwoyGESYGDIzSspCnJ3UoiIjFJgf8nAysDEIMIgymCZmFxc4BgQ4MPAwMAAo1HBt2sMjCD6si7ILEx5vIArJbU4mYGB4Q8DA0N2ckFRCQMDYwYDA4NyeUkBiN3DwMAgkpQNZi8AsYsiIqMYGBi3gNjpEPYJsBoI+w5YTUiQMwMD4wcGBga+JDCbCWQXXzqELQBiQ+0FAUHHlPykVAWQ7zUMLS0tNEn0A0FQklpRAqKd8wsqizLTM0oUHAsKclIVPPOS9XQUjAyMTBkYQOEOUf05EByejGJnEGIIgBCbI8HA4L+UgYHlD0LMpJeBYYEOAwP/VISYmiEDg4A+A8O+OcmlRWVQYxiZjBkYCPEBQiJKaWyoSIAAAAAkUExURf////7+/v3+++jppdDSQszSMcvSMczSMM+sTsZBPMZBO8Q8N5z01+4AABqESURBVHja7XxtjBzHmd5TtbvcHducruqRbIun7e3uoagvazQ7Q1H23UWmSBm4HzmElM8JkASOLeN8PgSI4AiIv2DHZ8OhdYZs5wwDFx+0NnA/Apwdi3/uzoBF0kjgWEtrZ3Z1OImUOd3Vs45ImZyu6t7Y3OVy682Pnv2gOBTXs/QBATx/drZ7u5996/2oqud9utkH8E/54fgt3G/hfgv3W7j/j+FG3+xkCACI/inguA9YpQEZwqrfMFwIO0cGGgCLZCW8VYCjg8E6WpuNQeRB57CvflNwITqxTg2TG0c6nG6r3xIXjtz/Rp8Fa61XXtal0sTmsdJ4jPNN/RuwLsSLusUkCreJ/lEmezEO3wIHjr4hHDtxT0nScEMAsAr9IWXlFqo7d+DotWgv6pYUOqyuo1QoVYWNzJkDdox3DZz/fC+ROqzK5sahtfmKjgpAMQf/VlrHX5yTjqkGzS2FhDcxJ/uAYg6Ho1sWmXzyx4zy5rvui7bEIOnsvnCiNLEMABNqeYfxuQUuOHFmPG8cLsfX/gVpXQ1/dWYCAMbV6oPm1sDxSydl3jgcDbidzn6+UsTnuHrr3eaW+G7yean3r/uG+9fMBd5skYiS7T5XvyWhwlsLTrUarU88ERnJN+YCykDVP159VkkWnXhU3QK4yVmRPewpACHmNMgA8hyr1BEBICOWvuLj9m+1mGhXyjuH4ycTp1FTAPfntI42Cuglt4GIt0EHvIhVjp3+LHZ33h/tNFT4nS2M/FEM8MlW9LKRpeIz8dp5nNf3m5+vLH1WA5ez+/f9fenCDqJz3bpTCXvIAnzyZItJ0ugXaIk0Cs3BWdrnKQCUPFxfcF48uFPrJlvsLY/H4JMnW/Ly8pUg3LOn5FxYXpkAK11O3v2DK/+ln975+/+W7crrZkfW8Xbi7LWAd6IltbvvqHAFxXTxuUgzAYQKu7x+ONqlqYS1wp1Z5/2YLf3rGOHc/xam+uS/uUNcPp/JPXdW96fjF0qYXNMP1Jf7F6w8cHxi1+iw3hstci5xGhb8akfqd39kKjVF7YIbTsff0ol4PX9i4/Y2ANjQ3uMA4KUidxW8E4m+5yPleOPWaZRUjxF7wDDv2qvKP9oBHLcLCGvgrQXnnqfK1wwTRVdUQGrfGy/r+Tuwri2oAkz2RP4GNIDHqLTxxGbdYjEARC8NDzcZIReKtxf0w951IZBKpCPO5u8sFQDKqT80HCVgNXg9Z+SJ66pv+XgmcPvU5gHvOwDAWkNbx9uCGuB2wbz7+uLrKPaACTZtZleSwqkvDQvnp+Cuwikx8uT12bRqAlKPbx6XLZDWGmUzLNyaQVbHZEoHnOtPx6i0t7iO7f42mTAMNBsuNkcBSoS0nBL2xIB5c8YVr49NbZwIftxtfkCCvtXK+XBwPAZJoCXe4V0P55ms9t1N17Ezf33M9QEcm/38fHk464wgV/mzVBlgHCXcmn+/AefEn/TTCAA7YE15ON+lyAVskn/o+rPsVQqQi43fTbVcrNQo84dyHocPsBpvY5c3AC4VlfbWgpmuG5qLeLjIXDOQQOoEA0K7fJyLdN/AC48MmwgZCXgGTwyAEyZ7wLiDF3pDJToHGVQUsdwZcPZKElByAzvEUNbxGABIsakBJ2OSMXMGXnjcmqGsM8gFb9NAD80Inu6auqUklRVMIBVygIc8kwsTDLyuDBh/OOvgATg6KBoSdsNIMVgbxjoPACZNLgYn+Y0iRYANNZhkEACM0QA4LSrtG0QKJRguVBgBpDAgIJznmEjZ4EhZxXBwpDACYGzAOcdkZTO4pvB4+KWR6MYUDExyNmXEYCNSARqarTWDhobHFJB5fCBc+fiQ1rUBgIRrBiV5pc0H1yon2cFgYiBZUjZcpMyXGJQiBkNlwiiJG80nTsIfOIuIhSDzhv9HfkkMZ92oBgOQDbDgZ5CUOH8aiA9IFoL0luHebYacEvqbZSbs9UnuyBis3EErYLcfFe6mleFPEjE0nIF/dtCp78M1QWoAJ0LnhVCOHRUsBCgTZ2YEhsoDjBoAdtDFnslFjQeGTNpnkE77Eh+QwIVnErGjvbkZnOSX2qwJzIUammLARsAc95FmAgAqQ7BHo0U4s0FJTnOuSCHRBDrGLSBho02KesjBHPjJQqvSFGBBLJioNLE2Hxoyqdk5BScWrzth3/4J/V1KFSgCWBCfY2KkDtsODJlY7ADuBtcyGTZT84vj2haQcMUlyJE6bFu0BcCHzruBmxlKU7AwPKDoryhVALMR4Mp6xJtX2xhuusNICfid5d7r/3zwaa0zd89jhx94OC85FwCJ1646pCv/NwOuPK6H29+ZNxuWTSMvPqdjKXqPKCiZFNl6a9uFm+wKmCuqB9Tr/7nYiUgz5NJoHY7dpCYVRk4VjrYBQP7wvVeJbRrpgNZryTBFBRxAz2fbXPAzMWREboFj259LyGzA8uF2QAJQNsA2lzrZBqwZnqTadlSvbk7irDbcoh0AZ/62tjPMAOs7dYZhB5PmgW2titlmHaHhGT8Hi2J1W3+dCgT9xelQeQAu+/G2nXVq+TiIFcvgIadYzgyQ+i5txxeOAVwFQA9aKW4LbhpgZKe3leerSZFunhkyMIsiFoOJmZuPDo8FslrRX5NDWscEQC8xoW8O58wAQZHlNDScAzjoios3d17ZgCoAeFvAVcPBdQVABi7dNDTZzxJwoQCkQ1ZMgMMFWM+btt++2R1Yr++6yaz4OQycnTZADO5HN4PzvoNiT01q2EgBB/MB56Vu+IvuTYx7NSlqCW8LGh5uxAGssdP2JqnAegJLPgAvxbCRAg7lGrCez/zT8uZj6QGwC8jF8BTcNIDopcVw7c/ETcaSFWM57GTXb8o8CJSNnRYv5G/yh/JZgfwgAL8/LQwL1y1Gc9Rfm7nxbdhuBQosgKsJqKKGh7ONKSB6SR3GbPuGeMHpDHlVAbxtdrDB4wAWQ4Ny6o027KdvhOee+ZygsFY0TpHtCM42psBaXD3q7/50Oxx0K3f3M6xvnF3YXK8MOQEthga7f+T9vGrWPtXi1xvolj+dCN2oAcApAQp2pgqge19bYfHvpfcun3f+ruuH17J8cs//+fOWpN95lwbgza0Ak7SzNv3S+JmJXXm9W1+OnXOvzPqhxHpb3r1jfPYbr0ha2r/PALwzP4Gl36Wd7c1tI01Yy611D6ElO52Ltx8VfZ0BxWeei4ykvFlTAL9zVoACT+1Q0bFYWRC7z9Xt4iFEzOl0Tvty7AiA70JHYFJX7zoUAfBOJAL5w2qn8hjbSOdFdOJwtHhIRjETFAEv9F0HMtW99QhA+GJbgIKa2rGSKn/wtZUJtdJIl+5bluPnl9cFMqWSXt5TvbMeAeCX/pEB+UOXB8d4oLe/e7Wj4SlRnsOhKGratqs32BpeFW7DRgDCtecTAQoHGBcCsCqMtr83j5qmLcpzdNhGvInOBmEqRwp1E8K1kwsCtDTAc2HHsHKcdW4uydukArqH0kSUW6iGUYRqoZbkfkG8FeLGtgDlD11vHD/X1rI8Dz7yyM28yjYf7uCXOhkoD8JGoQ4LtwjTQtvqJAKUNwZYMPX8gqBMgJb+yG6f6LD7MceY0yFdqcOqTQ1cCMyl6Q3ReGvB0UxoMEd5vwavEu3HCQmZRtVLsrJFTmTbOo2lgK7uHeidVOgwouqHPst6NxvNa2gc1cBcJpjsINTnJJgIIzLQpGMmoVk1bAxCm5ylez7++ue/4n/ha/GvxRrZbgOdREAijcB9YK5wH5PQqMqqHw1udrHPhP4+L542rPtrkVS2ux88YgJMrvfImQRII5T97BsYb07EP25obCq/mVTgDZyYVful7BXq3b4OmwzCipSNN5PSTykbxNthB95IwdmoGrQq6aYTWFARsuK/CVgxG8VDMn4R3485t98WkmCi4sO+Wblgm5xSPgTBaCPeBDoGAHM3ysqbforN2mo2oNmyDT7TRuDV9W/bocqyctGxZJ4ajj6125d8sikz83UFiG+Kke1R3/1I4BuJFa4fKEr1m34WRfZqF8Buc/Ml2igA7s2hGQHh2lyzX507WcMqhGtzGrISrkNvAIfrxTsEgIsLzswXIvd0Il1eKO83qPvo2uswCmDyhGbmUcXPxcZUC7V5DF1F2IlSBVemdQXAn8NIf/IJ50ylpgDwtXkArm9mP/eF3ozI1uYARqisGQAQZqSmuPdiVu3zu148CvBWizlqxJt8fh4RHlXA5KxChMNXO20pYTuG1xT4i7GRxQqbvxjHIcoAJk/2J/3ybOu/J8Lp+0Jv0Kyo4UTaLaTwbz+CxigwOSspc3oHzy1IoFWpKd5KJNASlxakBphcO4cy7pxNREc+qgBMziaiw44q8JMtSQaQYOVPWVk0UwAR9bl0qVE/15JOa+QRBfYv/sYcGLmf914Yz6l04a2LK3p5xVm+X3v/WHw7IzQPpHOh9KuV9+SdeWFk8nsa4OkLwsgLbxuHN8fASqUSADZeAlAsplipVCpNlEollC4vXVyhTOBeg11XH7r3xMj97FK2dOy9f++UYvKfjFbOr07PvTDuPxmtnJe6+onHfv/3X4tLF9428fOVzF+eGBkH2M9WsuCC8zYHzg/G3dKyuJxNgDgxmHeuyMvmyjtW9B3LcuL88p4L4+xXK/nUyoW3jaM5//DPbh8FDO1r2AeVNuwzdec/yBf/WSSyr/jOk5LuecrXkMc+1XY6R2ap4UTalAH/LIV+Oek90m2LfD8A0m2RH7KnZFMAgWFOxw0AuJCOoow1nJMOAIJVe0bhzcKN+JH/SiKvRXfXF5yTibPPiwJg6SteBGh+7E+yGIxX6j0NAGsGleZPkxiwCJoAsGYT1rx6KjvcD/feeP9xjZ/NM2SHbceYMrzW2B8+y0GZOQK4RmMM6D7lsJbIn1IA6ICn4AbCdv+j2f0jAKrfRMiYiKYLdRqsAuziYQPL/PV6pAp63EZKgADbFUh9dLFqMAoy3CEbFDy6nfj45yXd7SkoLD2hEEZpaOzdU8YQrcunyBSM7UuCMwNvDiM1/uA/gBRrOQaoYHJ2tGMAJjAvgAAQjIBE0P+qj/IYbEoVAhIG6IeJ8q8ocKJ9nnLPfA3v+LO4+8TX4kky9bN9lQSr9R+fMRw2AoNwAaAcEYAlv5V0rQH4UZoFqKI4Nzmg/227N8mhxRgANlV0AGmpbh72AAJ/QvELz0TR7ALstNmiybFCwmcOmcLWKOp0vOmCV4q0VsJPRbkV61TyVgIA3JsGvYSrv2SiyX1NgQG6oi8g0l+sfkH1+xLlZxMpy8/62DVFG+Szb0hw1RXo+QYMjEkZ88JxTAJB7eoCmBTIXaQiAxeeYr4D0P946P0/5WsGrkGhsSCQT7/6aAoJYAx4y4IwxF7tomgoFnz1mkHFxr5bKJZ5DMCZL2Z0bUC3ddtgjgZYbS0j32R1mzMiA6z91d+0ObL8Q2CAawCGK11k04ZrAQSGt5E1m6Y8I/Ijmzo7SnJBBpv799yxpisAZM1p5MJPRVZtCmrwluJCwMJ0BXo+QAacDAgObADAwP+qTzG8bwvANc73RXC48SBiUQxAd7OtFtsANA+QDTb7Y+wxW9jU2D+luKtSkVkEvJ2uD0URZ1P4BcOYAxjg1S7Az84DOALH0G2262YX+4stf12+4xF12VTZ9HtIZp0xWUso4KS4qyKR1ScNBaCKsrQ5FDwV+8ApAyu0SmszAt5Xi04WgQtlp4Fk6zSdioC3YVhfQqLgZEwUKR4ZXlUnRVabNBRYSiAyACa2wbq8khsSBjPH0RVgYDE77bpn11nwxKwvJMew3nTzDFVUWjZdsN76OjMXxXwaiaw2qSkAJbzaPSXy96pcTGbgTDjFrXiGx03ZWIGjgCAJ+7l0RmysHgXA/GuWx8QYAFjfRWyKMxR4pCxAhgJQgkq3LbL6ZIowBquRonk4VIjgOXIBB7Eg10BAwJl9euFNF3kqE5MZi+20oeJpCMqrRRA5GSrdtljy/RSBpYQqWkgeo2wWRb8Xx8EcrCYXQXcVPmflSGxq4sx1/JkCq5GCBvOLAHDcRg0n+jnhI0XgXV2gSreN3NckoAUsXLMON+bwGJSATaG/5THXrv43qxcArgV4DFAXZIsH9MLD3cn+Ja43mRVIAqlgnkFFaTDtTffTiFMApGSzfuUAc0yAVYAA5otrLOQAkCKAERBmUcAA6O5vRv7Jvoy/yluKCz8VrDZpKCTG4Jliu0L9dJEKI80m0N9OZNVmIVk2MLAGIAPC6qYCiSoq1To1AIMgWCB8sSXAAeRCpSKrrWXU5HECl1QmyGgN3s9SjOIo7D1fhlU4WqTGflw9CQDHP8iE6T3SbYNNKbM+mDYDUGkCAm6iAfA56F6/JeDW6DQF/JySUnVEfvCnYDWqAsyyfqKP5g4hTQGsdz5snz5IRXb06zGfPOtMgOuNwDFM2P0ArJo+JcBw508Ryb4aK+BXlayiI7IazVKAVFSw+BiAiAO9RxTAN+SeFFy7+zSCXFN+/uQCQoO0XxfXToHVoDYlNTyOYtl3L3fVSWEuPZ8V6ec8b6iibFH++lVz9O2AlABSMwaxpVEd/AJ0l4M5yOzDRn6z0DuwnhIVhHaOEabJNxAwTGg+3eYAshrNwpmD5JXuRYGOYQ4QdowwI0IYzgGMCgOtATBk17TCDXWx6C9I0D5POaYfWkYQ4+faADBSdwopAqvK97YBUAOUCEgge4RmASbBBP+hAcAet6D5MjDqGn7+OwDu+GDumK0defudD9JTn1Xgn1HsF4l0NAANCFf1IgC4XfUzM3uffxXglrvd14tH6fauy0y4mJxVAHh3csqYMjD676j8zQjAuN/98NZaFSD11cRT384+WlOsI7IywN1CzWkkAOodvLggGAB4kVesNro8BCB1VXkhAOYseDaRAGB8kfUeURh1jDASQAz79gxjoC6PMQaAvdpFes+fMD/G5JcoWONChQbM1mgWGkwoO30KvhX9FYRFANvgkhi/JGw3ZMK4k7zIb+YY5S7khQqOEinIrAIZAcQ2xLu7Zz6vIokY7quJIzoZbLUI+IztJ2pzsCkDBEC3cCEDFpsArAfFmwBAle5FLD2m1xTs9ClwgAusIgtDgwRSXCPUYKe7PrSGu/urYumgEMVWNeZkTPWxR/vKGr4+T3EQD4tJJnqp+AJrfAjWfAzohcV/OpqHrwDNqycpq3dGwjOAgMBqN3wF2P3MU6GGTD+VOAHI9uY0IFNjwRB5KJ9wMsRzqcg9FYBOlKMTjgHAxKWlNQ0AMs3mUvJt103iuVTkAEYuOt9gb6njNXr5ju/8g/PXK1f+QPs/KS8632C69POX92A5/Yu2zPdf+WUW4+Xz5/Gyea208gdGvLai7Ap2Lb9cuvIe4/zEUel4nMbnz58/T2dTHZ0/f/68iTTOTEwS3XOqvPzKxJ57DRjAnLsOds8mxdOgzm1H1dT3Mg3muLHQ3IdVUu9/tHvx1EYviu46qLzvF2lY/Ob/8IZd9+x9ZUx9LwPobg8YkaWJ/F2XmWjLUqlUmsj3EpYuK1mayBvlRF7WOpO6+i5N9772+oQuQZcom7ideGd+PJtg98YlvXr/ZeR0ZjybgF5eXl5eLhU/lpdXLi+XdPWgwdL4KyW9+rsEjGpgb03ZcLp4xG3vIwr2UKqAvc1zWSwB0tW9nsJilUNqCmM2ZXqPdFORTWXZIRj3tnrE/YvIpzIWMmJCw3UMcwxzDAC3qgDbMMbd6ylgpFEK77wM5PXlUnhH8R1LE7IU3vmr6sQEXVi+0rizpgC6f1kwnX/iov8vf5C/x4lM/aPHWWm5tLzL3Le7lS5PPfncSjDxlgmU3vIuYhNsz976ihuUbqsZAEv1ldvqMYDRQ/NNqwA7crjdXFsoSHa73843rIqq/nzVyD61ox78fizhHvmhAIEyPL4PzjklDDh6Leawu+DMgVuAUxoD1RG/uUE52cX+CwFGR5pRn1ds2sV1rjnijag4tklSTT6vJIDjbxXFkzWCTWWJhAR1Ulksa/p86xyTQI9tbTisU2yj0dYj0RtObyHieGtBaHCgp8B4B8y3IhNaGMiUkcEdq6QBqQEpSQMy+p/eDl7n4qdCV5s+sDojACPGbPcIqJq/u6EZ5c0GwBsjTV19d0PDVJsNUx70TNnoduGuLjj3POV3gHf+qyc5UgquGNewp03DfiLJjzXsPNix+fqffqxuZz93z1O+/UQS7+BlNTxG/hEvGhE4UmwsXRyXAG9E3S/qfY1ITWOMNzBe63QPiIoXdT9inJd2MJha7KrPPj0jcLzQNh2J09sBnHl6ZgwfWXv6zxOs0plPP/Hqx54Z8XuzT8/smxokzto+HAVrM9FssW0nk4sZYlNAL5pnoTgddb4KsGfbQjdX1ZEzXxend6CtLV694L6ayD4hEIN5ZpGLLiAvI/G+JAmANcwT7wEuV/+TH+8MjmCOpGJzZMcpI1UshGmsT+wAYGkKmI+FqpruCA7g4pdbRlauahhZLPzlpgiC/psBkh+c+fpH6zuD27rmdTK4Y02IdzLxS1yr70gVcK99Rn367wY+QLRtONqy1xNp/qGlL/d3XNj6nI0SEoQriczVDl8SVcbGs0IE5qRRFLOpguLeXPjzxw3g7lD1DYAJc/yTpEdE3xznywbsLwum7CIXCvcVisppMpSOkR7xd2RdF0h3fcE90LdiH9IoitXjonhI/GNB9cMAQDPjX5yqOqwRHhgsLd6279zk1e7Dx0Ic+WEAwKVEQhsJV98B+9W/+CT318BEdnbhwO0jy91jiu/sBV922ux+pht2VL9Ttwoy4rhvjCTgbCv0irVH+S+7VZ+e6d7oJVZsuy9FnPpeZkLRG1kbKSvAdeL8gcR1srUsq7edfJrm6/PTqYGu/vHq99vVD824Ed3tDQ/HL55yDBgxYo40GrLitTXABBkJDQgjDHMyoQEmNACZva88vO9sI0rkOlugJPS+6ZMSgJaSjAQgIWnpwQUJ9LdIcoAWY/tFbLEKVTRbqoeoharPGy2ANXuKN/rvReAPTfIWc0wQA+AP7ahm2v2oFNzLbd1DDLd53UMMYIGosIOs0Dmzg/CZRlVII8EODug4/j9JKbir6IXXVQAAAABJRU5ErkJggg==" alt="Amo la Pizza"><div class="chi" id="chi">Rider<small>Amo la Pizza</small></div><span id="topbtn"></span></div>
+<div class="top"><img src="../img/marchio.png" alt="Amo la Pizza"><div class="chi" id="chi">Rider<small>Amo la Pizza</small></div><span id="topbtn"></span></div>
 <div id="app"></div>
-<div class="attesa" id="attesa"><div><div class="giro"></div><div id="attesaTxt">Un attimo…</div></div></div>
+<div id="extra"></div>
 
 <script>
 (function () {
 "use strict";
+const { $, tutti, esc, euro, hhmm } = ALP;
 
-const $ = s => document.querySelector(s);
-const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const euro = v => (Number(v) || 0).toFixed(2).replace('.', ',') + ' €';
-const hhmm = d => d ? new Date(d).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
-const leggi = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const salva = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
-const togli = k => { try { localStorage.removeItem(k); } catch (e) {} };
-const UID = window.FB ? Promise.race([FB.uid(), new Promise(r => setTimeout(() => r(null), 4000))]) : Promise.resolve(null);
-async function chiama(fn, ...a) {
-  const u = fn === 'riderStato' ? await UID : undefined;
-  if (window.API_URL) return fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, a, u }) })
-    .then(r => r.json()).then(j => { if (!j.ok) throw j.e; return j.r; }, () => { throw 'Connessione assente: riprova'; });
-  return new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(e => ko(e && e.message ? e.message : String(e)))[fn](...a));
-}
-function attesa(txt) { $('#attesaTxt').textContent = txt || 'Un attimo…'; $('#attesa').classList.toggle('on', !!txt); }
-function memorizza() { try { if (S) localStorage.setItem('rider_S', JSON.stringify(S)); } catch (e) {} }
-/** Aggiorna subito lo schermo, salva sul server in sottofondo; se il server risponde con errore, ripristina e avvisa. */
-/* Database in tempo reale: lo stato del rider arriva da Firebase appena cambia (anche da un altro telefono). */
-let inVolo = 0, ascoltoDi = null;
-function ascoltaStato() {
-  if (!window.FB || !S || !S.nome || ascoltoDi === S.nome) return;
-  ascoltoDi = S.nome;
-  FB.ascolta('stato/' + S.nome, d => {
-    if (inVolo || !PIN || !d || d.nome !== S.nome || JSON.stringify(d) === JSON.stringify(S)) return;
-    S = d; memorizza(); disegna();
-  }).catch(() => { ascoltoDi = null; });
-}
-async function ottimista(cambia, fn, ...a) {
-  inVolo++; try { return await ottimista_(cambia, fn, ...a); } finally { inVolo--; }
-}
-async function ottimista_(cambia, fn, ...a) {
-  const prima = JSON.stringify(S);
-  try { cambia(S); disegna(); memorizza(); } catch (e) {}
-  for (let tentativo = 0; tentativo < 3; tentativo++) {
-    try { S = await chiama(fn, PIN, ...a); memorizza(); disegna(); return; }
-    catch (e) {
-      if (!/Connessione/.test(String(e)) || tentativo === 2) { S = JSON.parse(prima); disegna(); avviso(e); return; }
-      await new Promise(r => setTimeout(r, 2000 * (tentativo + 1)));
-    }
-  }
-}
-async function fai(txt, fn, ...a) {
-  attesa(txt); inVolo++;
-  try { S = await chiama(fn, PIN, ...a); memorizza(); attesa(); disegna(); return S; }
-  catch (e) { attesa(); avviso(e); throw e; }
-  finally { inVolo--; }
-}
-function avviso(e) { alert(String(e).replace(/^Error:\s*/, '')); }
+/* ---------- stato (arriva tutto da Firebase, in tempo reale) ---------- */
+let NOME = ALP.ls.get('rider_nome'), R = null, C = [], X = [], MIEI_SCAMBI = [], V = [], RIDER = [], KM = {}, SEG = {}, TURNO = null, GIRO = null, CH = null;
+let schermo = '', CHIUSURA = null, bloccato = false, noti = null, mioPunto = null, gpsWatch = null, wake = null, ultimoInvio = 0, prima = null, dir = null;
+const OGGI = () => ALP.oggi();
+const attive = () => C.filter(c => c.rider === NOME && c.stato !== 'consegnata' && c.stato !== 'annullata');
+const fatte = () => C.filter(c => c.rider === NOME && c.stato === 'consegnata');
+const inTurno = () => !!(R && R.turno && TURNO && TURNO.id === R.turno && !TURNO.fine);
+const inGiro = () => !!(R && R.giro && GIRO && GIRO.id === R.giro && !GIRO.rientro);
 
-let PIN = null, S = null, bozza = [], scheda = null, map = null, gpsWatch = null, ultimoInvio = 0, mioPunto = null, wake = null;
-
-/* ---------- login ---------- */
+/* ---------- accesso con PIN (solo qui si chiama lo script Google) ---------- */
 function login() {
-  fermaGps(); $('#chi').innerHTML = 'Rider<small>Amo la Pizza</small>'; $('#topbtn').innerHTML = '';
+  fermaGps(); schermo = 'login';
+  $('#chi').innerHTML = 'Rider<small>Amo la Pizza</small>'; $('#topbtn').innerHTML = '';
   let p = '';
-  $('#app').innerHTML = `<div class="pag"><div class="card" style="text-align:center"><h2>Ciao! 🍕</h2><div class="muto">Scrivi il tuo PIN</div>
-    <div class="punti">${'<i></i>'.repeat(4)}</div><div class="pin">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(n => `<button ${n === '' ? 'style="visibility:hidden"' : ''}>${n}</button>`).join('')}</div></div></div>`;
-  document.querySelectorAll('.pin button').forEach(b => b.onclick = async () => {
+  $('#app').innerHTML = `<div class="pag"><div class="card" style="align-items:center;text-align:center">
+    <div style="background:var(--lime);border-radius:22px;padding:14px 18px;margin:4px auto"><img src="../img/logo.png" alt="Amo la Pizza" style="width:160px;display:block"></div>
+    <div class="muto">Scrivi il tuo PIN</div><div class="punti">${'<i></i>'.repeat(4)}</div>
+    <div class="pin" style="width:100%">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(n => `<button ${n === '' ? 'style="visibility:hidden"' : ''}>${n}</button>`).join('')}</div></div></div>`;
+  tutti('.pin button').forEach(b => b.onclick = async () => {
     const v = b.textContent; if (v === '⌫') p = p.slice(0, -1); else if (p.length < 4) p += v;
-    document.querySelectorAll('.punti i').forEach((i, k) => i.classList.toggle('on', k < p.length));
-    if (p.length === 4) {
-      try { attesa('Entro…'); S = await chiama('riderStato', p); PIN = p; salva('rider_pin', p); attesa(); disegna(); ascoltaStato(); }
-      catch (e) { attesa(); avviso(e); p = ''; document.querySelectorAll('.punti i').forEach(i => i.classList.remove('on')); }
-    }
+    tutti('.punti i').forEach((i, k) => i.classList.toggle('on', k < p.length));
+    if (p.length < 4) return;
+    ALP.toast('Entro…');
+    try { const s = await ALP.pin('riderStato', p); NOME = s.nome; ALP.ls.set('rider_nome', NOME); avvia(); }
+    catch (e) { ALP.toast(String(e.message || e), 1); p = ''; tutti('.punti i').forEach(i => i.classList.remove('on')); }
   });
+}
+
+/* ---------- ascolto in tempo reale ---------- */
+let stop = [];
+async function avvia() {
+  stop.forEach(f => { try { f(); } catch (e) {} }); stop = [];
+  const uid = await FB.uid();
+  const ok = await FB.leggi('accessi/' + uid).catch(() => null);
+  if (!ok || ok.nome !== NOME) { ALP.ls.del('rider_nome'); NOME = null; return login(); }
+  const L = async p => stop.push(await p);
+  L(FB.doc('accessi/' + uid, d => {
+    if (d && d.ruolo === 'rider' && d.nome === NOME) return;
+    stop.forEach(f => { try { f(); } catch (e) {} }); stop = [];
+    ALP.ls.del('rider_nome'); NOME = null;
+    alert('Su questo telefono è stata aperta un\'altra app di Amo la Pizza e il tuo accesso è decaduto.\n\nRifai il tuo PIN.');
+    login();
+  }));
+  L(FB.doc('rider/' + NOME, d => { R = d || { nome: NOME }; collega(); disegna(); }));
+  L(FB.lista('consegne', [['rider', '==', NOME], ['data', '==', OGGI()]], d => { avvisaNuove(d); C = d; coerenza(); disegna(); }));
+  L(FB.lista('scambi', [['a', '==', NOME]], d => { X = d; mostraScambi(); }));
+  L(FB.lista('scambi', [['da', '==', NOME]], d => { MIEI_SCAMBI = d; disegna(); }));
+  L(FB.lista('versamenti', [['rider', '==', NOME], ['data', '==', OGGI()]], d => { V = d; disegna(); }));
+  L(FB.lista('rider', [], d => { RIDER = d; }));
+  L(FB.doc('km/' + NOME, d => { KM.mio = d; disegna(); }));
+  L(FB.doc('km/FURGONE', d => { KM.furgone = d; }));
+  L(FB.doc('segreti/app', d => { SEG = d || {}; }));
+  L(FB.doc('config/challenge', d => { CH = d; aggiornaChallenge(); }));
+}
+let ascTurno = null, ascGiro = null;
+function collega() {
+  if (R && R.turno && ascTurno !== R.turno) { ascTurno = R.turno; FB.doc('turni/' + R.turno, d => { TURNO = d; disegna(); }).then(f => stop.push(f)); }
+  if (R && R.giro && ascGiro !== R.giro) { ascGiro = R.giro; FB.doc('giri/' + R.giro, d => { GIRO = d; disegna(); }).then(f => stop.push(f)); }
+  if (R && !R.giro) GIRO = null;
+}
+function avvisaNuove(nuove) {
+  const ids = new Set(nuove.map(c => c.id));
+  if (noti) nuove.filter(c => !noti.has(c.id) && c.stato !== 'consegnata').forEach(c => {
+    ALP.suono(true); parla('Nuova consegna: ' + (c.via || ''));
+    $('#extra').innerHTML = `<div class="nuova" style="position:fixed;left:10px;right:10px;top:calc(60px + env(safe-area-inset-top));z-index:2400">🔔 Nuova consegna: ${esc(c.via)}, ${esc(c.paese)}</div>`;
+    setTimeout(() => { $('#extra').innerHTML = ''; mostraScambi(); }, 4000);
+  });
+  noti = ids;
+}
+/** tiene in ordine lo stato: consegne aggiunte durante il giro, rientro quando non ne restano */
+function coerenza() {
+  if (!R || !inGiro()) return;
+  const a = attive(), ops = [];
+  a.filter(c => c.giro !== R.giro).forEach(c => ops.push(['update', 'consegne/' + c.id, { stato: 'partita', giro: R.giro, agg: Date.now() }]));
+  if (a.length && R.stato !== 'andata') ops.push(['merge', 'rider/' + NOME, { stato: 'andata', agg: Date.now() }]);
+  if (!a.length && R.stato === 'andata') ops.push(['merge', 'rider/' + NOME, { stato: 'rientro', agg: Date.now() }]);
+  if (ops.length) FB.insieme(ops).catch(e => console.log(e));
 }
 
 /* ---------- schermate ---------- */
 function disegna() {
-  $('#chi').innerHTML = `${esc(S.nome)}<small>${S.turno ? 'In servizio dalle ' + hhmm(S.turno.inizio) : 'Fuori servizio'}${S.portafoglio && S.portafoglio.inTasca ? ' · 💶 in tasca ' + euro(S.portafoglio.inTasca) : ''}</small>`;
+  if (!NOME || bloccato) return;
+  const p = portafoglio();
+  $('#chi').innerHTML = `${esc(NOME)}<small>${inTurno() ? 'In servizio dalle ' + hhmm(TURNO.inizio) + (TURNO.furgone ? ' · furgone' : '') : 'Fuori servizio'}${p.inTasca > 0 ? ' · 💶 ' + euro(p.inTasca) : ''}</small>`;
   $('#topbtn').innerHTML = `<button id="esci">Esci</button>`;
-  $('#esci').onclick = () => { ascoltoDi = null; togli('rider_pin'); togli('rider_S'); PIN = null; S = null; login(); };
-  if (!S.turno) return inizioServizio();
-  if (S.giro && S.giro.partenza) return navigazione();
-  return preparaGiro();
+  $('#esci').onclick = () => { if (!confirm('Esci dall\'app?')) return; ALP.ls.del('rider_nome'); NOME = null; stop.forEach(f => f()); login(); };
+  if (!R) return;
+  if (!inTurno()) return turno(false);
+  if (CHIUSURA) return fineTurno(CHIUSURA.passo);
+  if (inGiro()) return navigazione();
+  preparaGiro();
 }
 
-function inizioServizio(fine) {
-  smontaMappa();
+function contatoreKm(furgone) {
+  const k = furgone ? KM.furgone : KM.mio, mese = ALP.mese();
+  const v = k && k.mese === mese ? Math.round(k.km) : 0;
+  return `<div class="contatore"><div><span>${furgone ? 'Furgone di Amo la Pizza · ' : 'I tuoi km di '}${new Date().toLocaleDateString('it-IT', { month: 'long' })}</span><b>${v} km</b></div><span>si azzera il 1° del mese</span></div>`;
+}
+
+/** inizio o fine servizio: foto del cruscotto oppure km a mano (e correggibili dopo la foto) */
+function turno(fine) {
+  if (schermo === 'turno' + fine) return;
+  schermo = 'turno' + fine; smontaMappa();
+  const furg = fine ? !!TURNO.furgone : false;
+  let letti = null;
   $('#app').innerHTML = `<div class="pag">
-    ${S.premio ? `<div class="card" style="background:var(--lime)"><b>🏆 Rider del mese (${esc(S.premio.mese)}): ${esc(S.premio.rider)}</b></div>` : ''}
-    <div class="card"><h2>${fine ? 'Fine servizio' : 'Inizia il servizio'}</h2>
-    <div class="muto">Fotografa il cruscotto: leggo i km da solo.</div>
-    <button class="btn p" id="foto">📷 Foto cruscotto</button>
-    ${fine ? '<button class="btn s" id="annulla">Indietro</button>' : ''}
-    <input type="file" accept="image/*" capture="environment" id="file" hidden></div></div>`;
+    ${fine ? '' : cardChallenge()}
+    <div id="cont">${contatoreKm(furg)}</div>
+    ${fine ? '' : `<label class="spunta"><input type="checkbox" id="furg"><span>USO IL FURGONE DI AMO LA PIZZA<small>I km vanno nel contatore del furgone, non nei tuoi</small></span></label>`}
+    <div class="card"><h2>${fine ? 'Km di fine servizio' : 'Km di inizio servizio'}</h2>
+      <button class="btn p" id="foto">📷 Foto del cruscotto</button>
+      <input type="file" accept="image/*" capture="environment" id="file" hidden>
+      <div class="muto" id="stato" style="text-align:center"></div>
+      <label class="c">Km sul cruscotto<input id="km" inputmode="numeric" placeholder="${ultimoKm(furg) ? 'ultima volta ' + ultimoKm(furg) : 'es. 48215'}"></label>
+      <div class="avv" id="avv">⚠️ Senza foto, o se correggi il numero letto, nel report compare "km inseriti a mano".</div>
+    </div>
+    <button class="btn n" id="ok">${fine ? '🏁 Chiudo il servizio' : 'Inizio servizio'}</button>
+    ${fine ? '<button class="btn s" id="no">Indietro</button>' : ''}</div>`;
+  agganciChallenge();
+  if (!fine) $('#furg').onchange = () => { $('#cont').innerHTML = contatoreKm($('#furg').checked); $('#km').placeholder = ultimoKm($('#furg').checked) ? 'ultima volta ' + ultimoKm($('#furg').checked) : 'es. 48215'; };
   $('#foto').onclick = () => $('#file').click();
-  if (fine) $('#annulla').onclick = disegna;
   $('#file').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
-    attesa('Leggo i km…');
+    const t0 = Date.now(); $('#stato').textContent = 'Leggo i km…';
     try {
-      const r = await chiama('riderFotoCruscotto', PIN, fine ? 'fine' : 'inizio', await comprimi(f, 1100));
-      attesa();
-      const km = prompt('Km sul cruscotto' + (r.ultimo ? ' (ultima volta: ' + r.ultimo + ')' : ''), r.proposta || '');
-      if (!km) return;
-      const s = await fai('Salvo…', 'riderConfermaKm', fine ? 'fine' : 'inizio', km, r.proposta || '', r.fotoId);
-      if (fine && s.chiuso) alert('Servizio chiuso: ' + s.chiuso.km + ' km' + (s.chiuso.kmGoogle != null ? ' (giri secondo Google: ' + s.chiuso.kmGoogle + ' km)' : ''));
-    } catch (er) { attesa(); avviso(er); }
+      const r = await ALP.leggiFoto(await ALP.comprimi(f, 1200), 'km', SEG.gemini, SEG.modello);
+      if (r.km) { letti = Math.round(r.km); $('#km').value = letti; $('#stato').textContent = 'Letto in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓ · controlla e correggi se serve'; }
+      else $('#stato').textContent = 'Non riesco a leggere: scrivili a mano';
+    } catch (er) { $('#stato').textContent = 'Lettura non riuscita: scrivili a mano'; }
+  };
+  if (fine) $('#no').onclick = () => { schermo = ''; disegna(); };
+  $('#ok').onclick = () => {
+    const km = Math.round(ALP.num($('#km').value));
+    if (!km) return ALP.toast('Scrivi i km del cruscotto', 1);
+    const manuale = letti === null, corretto = letti !== null && letti !== km, ora = Date.now();
+    if (!fine) {
+      const furgone = $('#furg').checked, id = ALP.id();
+      FB.insieme([
+        ['set', 'turni/' + id, { id, rider: NOME, data: OGGI(), servizio: ALP.servizio(), inizio: ora, kmInizio: km, kmLettiInizio: letti, manualeInizio: manuale, correttoInizio: corretto, furgone, agg: ora }],
+        ['merge', 'rider/' + NOME, { nome: NOME, turno: id, giro: null, stato: 'pizzeria', dal: ora, agg: ora }]
+      ]).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+      schermo = ''; ALP.toast('Buon servizio!');
+    } else {
+      if (km < TURNO.kmInizio) return ALP.toast('I km di fine sono meno di quelli di inizio (' + TURNO.kmInizio + ')', 1);
+      const fatti = km - TURNO.kmInizio, chi = TURNO.furgone ? 'FURGONE' : NOME, k = TURNO.furgone ? KM.furgone : KM.mio, mese = ALP.mese();
+      const tot = (k && k.mese === mese ? k.km : 0) + fatti;
+      FB.insieme([
+        ['update', 'turni/' + TURNO.id, { fine: ora, kmFine: km, kmLettiFine: letti, manualeFine: manuale, correttoFine: corretto, km: fatti, agg: ora }],
+        ['merge', 'km/' + chi, { mese, km: tot, ultimo: km, agg: ora }],
+        ['merge', 'rider/' + NOME, { turno: null, giro: null, stato: 'fuori', agg: ora }]
+      ]).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+      schermo = ''; alert('Servizio chiuso: ' + fatti + ' km' + (TURNO.furgone ? ' (furgone)' : '') + '. Grazie!');
+    }
   };
 }
+function ultimoKm(furgone) { const k = furgone ? KM.furgone : KM.mio; return k && k.ultimo ? k.ultimo : null; }
 
-function preparaGiro() {
-  smontaMappa();
-  const c = S.consegne;
-  $('#app').innerHTML = `<div class="pag">
-    <div class="card"><h2>${c.length ? 'Il tuo giro' : 'Nuovo giro'}</h2>
-      <div class="muto">Metti <b>comanda e scontrino uno accanto all'altro</b> e scatta una foto sola.</div>
-      <button class="btn p" id="scan">📷 Scansiona ordine</button>
-      <button class="btn s" id="mano">✍️ Scrivi a mano</button>
-      <input type="file" accept="image/*" capture="environment" id="file" hidden></div>
-    ${c.length ? `<div class="card">${c.map((x, i) => `<div class="ordine"><div class="num">${i + 1}</div><div class="t"><b>${esc(x.cliente || x.indirizzo.split(',')[0])}</b>
-        <span class="muto">${esc(x.indirizzo)}</span><div style="margin-top:4px">${x.previsto ? `<span class="badge b-ora">⏰ ${esc(x.previsto)}</span> ` : ''}
-        <span class="badge ${x.pagamento === 'Contanti' ? 'b-cont' : 'b-sum'}">${x.pagamento === 'Contanti' ? '💶 Contanti' : '💳 SumUp'} ${x.importo ? euro(x.importo) : ''}</span></div></div>
-        <button class="x" data-id="${x.id}">✕</button></div>`).join('')}
-      <button class="btn v" id="parti">🛵 Parti (${c.length} ${c.length === 1 ? 'consegna' : 'consegne'})</button></div>` : ''}
-    ${portafoglio()}
-    ${!c.length ? `<button class="btn s" id="fine">🏁 Fine servizio</button>` : ''}
-  </div>`;
-  if ($('#versa')) $('#versa').onclick = versa;
-  $('#scan').onclick = () => $('#file').click();
-  $('#mano').onclick = () => modulo({});
+
+/* ---------- FINE TURNO: km, SumUp, contanti, foto del furgone, due parole ---------- */
+const fondo = () => Number(SEG.fondo) || ALP.FONDO;
+const LATI = [['davanti', 'Davanti'], ['dietro', 'Dietro'], ['sx', 'Lato sinistro'], ['dx', 'Lato destro']];
+function fineTurno(passo) {
+  CHIUSURA = CHIUSURA || { passo: 1, foto: {} };
+  CHIUSURA.passo = passo; schermo = 'chiusura' + passo; smontaMappa();
+  const p = portafoglio();
+  if (passo === 1) return fineKm();
+  if (passo === 2) return fineSumUp(p);
+  if (passo === 3) return fineContanti(p);
+  if (passo === 4 && TURNO.furgone) return fineFurgone();
+  return fineNote(p);
+}
+const NP = () => TURNO.furgone ? 5 : 4;
+function testaPassi(n) {
+  const tot = NP();
+  return `<div style="display:flex;gap:6px">${Array.from({ length: tot }, (_, k) => `<div style="flex:1;height:6px;border-radius:3px;background:${k < n ? 'var(--rosso2)' : '#e2dbd0'}"></div>`).join('')}</div>
+    <div class="muto" style="text-align:center;font-size:13px">Passo ${n} di ${tot}</div>`;
+}
+/** 1 · km */
+function fineKm() {
+  let letti = null;
+  $('#app').innerHTML = `<div class="pag">${testaPassi(1)}
+    <div class="card"><h2>1 · I chilometri</h2>
+      <div class="muto">Inizio turno: <b style="color:var(--ink)">${TURNO.kmInizio}</b> km${TURNO.furgone ? ' · 🚐 furgone' : ''}</div>
+      <button class="btn p" id="foto">📷 Foto del cruscotto</button>
+      <input type="file" accept="image/*" capture="environment" id="file" hidden>
+      <div class="muto" id="stato" style="text-align:center"></div>
+      <label class="c">Km sul cruscotto adesso<input id="km" inputmode="numeric" placeholder="es. ${TURNO.kmInizio + 40}"></label>
+      <div id="calc"></div></div>
+    <button class="btn n" id="ok">Avanti</button>
+    <button class="btn s" id="no">Torna indietro</button></div>`;
+  const calcola = () => {
+    const v = Math.round(ALP.num($('#km').value));
+    if (!v) return $('#calc').innerHTML = '';
+    const f = v - TURNO.kmInizio;
+    $('#calc').innerHTML = f < 0
+      ? `<div class="avv err">⛔ Meno dei km di inizio (${TURNO.kmInizio}): controlla il numero.</div>`
+      : `<div class="avv" style="background:#e2f3e8;color:#1d7a3d">🛵 Hai fatto <b>${f} km</b>, da ${TURNO.kmInizio} a ${v}.${letti !== null && letti !== v ? ' La foto diceva ' + letti + ': la correzione finisce nel report.' : ''}${letti === null ? ' Scritti a mano: finisce nel report.' : ''}</div>`;
+  };
+  $('#km').oninput = calcola;
+  $('#foto').onclick = () => $('#file').click();
   $('#file').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
-    attesa('Leggo comanda e scontrino…');
-    try { const o = await chiama('riderScansiona', PIN, await comprimi(f, 1500)); attesa(); modulo(o); }
-    catch (er) { attesa(); avviso(er); }
+    const t0 = Date.now(); $('#stato').textContent = 'Leggo i km…';
+    try {
+      const d = await ALP.comprimi(f, 1200), r = await ALP.leggiFoto(d, 'km', SEG.gemini, SEG.modello);
+      CHIUSURA.fotoKm = d;
+      if (r.km) { letti = Math.round(r.km); $('#km').value = letti; $('#stato').textContent = 'Letto in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓'; calcola(); }
+      else $('#stato').textContent = 'Non riesco a leggere: scrivili a mano';
+    } catch (er) { $('#stato').textContent = 'Lettura non riuscita: scrivili a mano'; }
   };
-  document.querySelectorAll('.x').forEach(b => b.onclick = () => confirm('Tolgo questa consegna?') && ottimista(s => { s.consegne = s.consegne.filter(x => x.id !== b.dataset.id); }, 'riderTogli', b.dataset.id));
-  if ($('#parti')) $('#parti').onclick = () => { parla('Buon giro'); fai('Calcolo il percorso migliore…', 'riderParto'); };
-  if ($('#fine')) $('#fine').onclick = () => inizioServizio(true);
+  $('#no').onclick = () => { CHIUSURA = null; schermo = ''; disegna(); };
+  $('#ok').onclick = () => {
+    const v = Math.round(ALP.num($('#km').value));
+    if (!v) return ALP.toast('Scrivi i km del cruscotto', 1);
+    if (v < TURNO.kmInizio) return ALP.toast('I km sono meno di quelli di inizio', 1);
+    CHIUSURA.km = v; CHIUSURA.kmLetti = letti; CHIUSURA.kmManuale = letti === null; CHIUSURA.kmCorretto = letti !== null && letti !== v;
+    fineTurno(2);
+  };
+}
+/** 2 · SumUp */
+function fineSumUp(p) {
+  const atteso = Math.round(p.sumup * 100) / 100, n = fatte().filter(c => c.pagamento === 'SumUp').length;
+  $('#app').innerHTML = `<div class="pag">${testaPassi(2)}
+    <div class="card"><h2>2 · SumUp</h2>
+      <div class="contatore" style="border-radius:16px"><div><span>Secondo l'app</span><b>${euro(atteso)}</b><span>su ${n} ${n === 1 ? 'consegna' : 'consegne'}</span></div></div>
+      <div class="muto">Apri l'app SumUp e guarda il totale di oggi. Torna?</div>
+      <button class="btn v" id="si">✓ Sì, torna</button>
+      <div style="display:flex;align-items:center;gap:10px;color:var(--muto);font-size:13px"><span style="flex:1;height:1px;background:#e4ded5"></span>no<span style="flex:1;height:1px;background:#e4ded5"></span></div>
+      <label class="c">Quanto risulta su SumUp<input id="v" inputmode="decimal" placeholder="es. ${String(atteso).replace('.', ',')}"></label>
+      <button class="btn s" id="div">Vai avanti con questo importo</button></div>
+    <button class="btn s" id="no">Indietro</button></div>`;
+  const vai = (val, diverso) => { CHIUSURA.sumup = val; CHIUSURA.sumupAtteso = atteso; CHIUSURA.sumupDiverso = diverso; fineTurno(3); };
+  $('#si').onclick = () => vai(atteso, false);
+  $('#div').onclick = () => {
+    const v = ALP.num($('#v').value);
+    if (!$('#v').value.trim()) return ALP.toast('Scrivi quanto risulta su SumUp', 1);
+    if (Math.abs(v - atteso) < 0.005) return vai(atteso, false);
+    if (!confirm('SumUp ' + euro(v) + ' invece di ' + euro(atteso) + '. Vado avanti? Finisce nel report.')) return;
+    vai(v, true);
+  };
+  $('#no').onclick = () => fineTurno(1);
+}
+/** 3 · contanti: fondo + incassato */
+function fineContanti(p) {
+  const F = fondo(), incasso = Math.round((p.contanti - p.versato - p.attesa) * 100) / 100, atteso = Math.round((F + incasso) * 100) / 100;
+  $('#app').innerHTML = `<div class="pag">${testaPassi(3)}
+    <div class="card"><h2>3 · I contanti</h2>
+      <div class="contatore" style="border-radius:16px"><div><span>Dovresti avere in tasca</span><b>${euro(atteso)}</b><span>${euro(F)} di fondo + ${euro(incasso)} incassati${p.versato ? ' (già lasciati in cassa ' + euro(p.versato) + ')' : ''}</span></div></div>
+      <div class="muto">Conta i soldi. Torna?</div>
+      <button class="btn v" id="si">✓ Sì, verso ${euro(atteso)}</button>
+      <div style="display:flex;align-items:center;gap:10px;color:var(--muto);font-size:13px"><span style="flex:1;height:1px;background:#e4ded5"></span>no<span style="flex:1;height:1px;background:#e4ded5"></span></div>
+      <label class="c">Quanto hai davvero<input id="v" inputmode="decimal" placeholder="es. ${String(atteso).replace('.', ',')}"></label>
+      <button class="btn s" id="div">Verso questo importo</button></div>
+    <button class="btn s" id="no">Indietro</button></div>`;
+  const vai = (val, diverso) => { CHIUSURA.contanti = val; CHIUSURA.contantiAtteso = atteso; CHIUSURA.contantiDiverso = diverso; CHIUSURA.fondo = F; CHIUSURA.incasso = incasso; CHIUSURA.consegne = p.n; fineTurno(4); };
+  $('#si').onclick = () => vai(atteso, false);
+  $('#div').onclick = () => {
+    if (!$('#v').value.trim()) return ALP.toast('Scrivi quanto hai contato', 1);
+    const v = ALP.num($('#v').value), d = Math.round((v - atteso) * 100) / 100;
+    if (Math.abs(d) < 0.005) return vai(atteso, false);
+    if (!confirm((d > 0 ? 'Hai ' + euro(d) + ' in più' : 'Mancano ' + euro(-d)) + ' rispetto a ' + euro(atteso) + '. Verso ' + euro(v) + '? Finisce nel report.')) return;
+    vai(v, true);
+  };
+  $('#no').onclick = () => fineTurno(2);
+}
+/** 4 · furgone: quattro foto, una per lato */
+function fineFurgone() {
+  const f = CHIUSURA.foto;
+  $('#app').innerHTML = `<div class="pag">${testaPassi(4)}
+    <div class="card"><h2>4 · Il furgone</h2>
+      <div class="muto">Quattro foto, una per lato. Servono a tutelare anche te.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${LATI.map(([k, et]) => `<button class="btn ${f[k] ? 'v' : 's'}" data-l="${k}" style="min-height:92px;flex-direction:column;gap:4px;font-size:15px">${f[k] ? '✓' : '📷'}<span>${et}</span></button>`).join('')}
+      </div>
+      <input type="file" accept="image/*" capture="environment" id="file" hidden></div>
+    <button class="btn n" id="ok">Avanti</button>
+    <button class="btn s" id="no">Indietro</button></div>`;
+  let lato = null;
+  tutti('[data-l]').forEach(b => b.onclick = () => { lato = b.dataset.l; $('#file').value = ''; $('#file').click(); });
+  $('#file').onchange = async e => {
+    const file = e.target.files[0]; if (!file || !lato) return;
+    try { CHIUSURA.foto[lato] = await ALP.comprimi(file, 900); ALP.toast('Foto presa'); fineTurno(4); }
+    catch (er) { ALP.toast('Foto non riuscita', 1); }
+  };
+  $('#no').onclick = () => fineTurno(3);
+  $('#ok').onclick = () => {
+    const mancano = LATI.filter(([k]) => !f[k]).map(([, et]) => et);
+    if (mancano.length && !confirm('Mancano: ' + mancano.join(', ') + '. Vado avanti lo stesso? Finisce nel report.')) return;
+    CHIUSURA.fotoMancanti = mancano;
+    fineTurno(5);
+  };
+}
+/** ultimo passo · due parole e le stelle */
+function fineNote(p) {
+  let stelle = 0;
+  const n = NP();
+  $('#app').innerHTML = `<div class="pag">${testaPassi(n)}
+    <div class="card"><h2>Com'è andata?</h2>
+      <div class="muto">Facoltativo. Lo legge solo Andrea.</div>
+      <div style="display:flex;justify-content:center;gap:6px" id="st">${[1, 2, 3, 4, 5].map(k => `<button data-s="${k}" aria-label="${k} stelle" style="width:52px;height:52px;border:0;background:transparent;font-size:34px;line-height:1;opacity:.3">★</button>`).join('')}</div>
+      <label class="c">Qualcosa da dire<textarea id="nota" rows="4" placeholder="Problemi, moto, clienti, idee…" style="font:600 16px inherit;padding:12px;border-radius:10px;border:1px solid #d6cfc5"></textarea></label></div>
+    <button class="btn p" id="ok">🏁 Chiudo il servizio</button>
+    <button class="btn s" id="no">Indietro</button></div>`;
+  tutti('[data-s]').forEach(b => b.onclick = () => { stelle = Number(b.dataset.s); tutti('[data-s]').forEach(x => x.style.opacity = Number(x.dataset.s) <= stelle ? '1' : '.3'); });
+  $('#no').onclick = () => fineTurno(TURNO.furgone ? 4 : 3);
+  $('#ok').onclick = () => chiudiTurno(stelle, $('#nota').value.trim());
+}
+function chiudiTurno(stelle, nota) {
+  const C_ = CHIUSURA, ora = Date.now(), idv = ALP.id(), chi = TURNO.furgone ? 'FURGONE' : NOME, mese = ALP.mese();
+  const k = TURNO.furgone ? KM.furgone : KM.mio, fatti = C_.km - TURNO.kmInizio;
+  const tot = (k && k.mese === mese ? k.km : 0) + fatti;
+  const ops = [
+    ['set', 'versamenti/' + idv, { id: idv, rider: NOME, data: OGGI(), servizio: ALP.servizio(), contanti: C_.contanti, fondo: C_.fondo, incasso: C_.incasso,
+      sumup: C_.sumup, consegne: C_.consegne, ora, stato: 'attesa', fine: true, differenza: C_.contantiDiverso ? Math.round((C_.contanti - C_.contantiAtteso) * 100) / 100 : 0, agg: ora }],
+    ['update', 'turni/' + TURNO.id, { fine: ora, kmFine: C_.km, kmLettiFine: C_.kmLetti, manualeFine: C_.kmManuale, correttoFine: C_.kmCorretto, km: fatti,
+      sumup: C_.sumup, sumupAtteso: C_.sumupAtteso, sumupDiverso: !!C_.sumupDiverso,
+      contanti: C_.contanti, contantiAtteso: C_.contantiAtteso, contantiDiverso: !!C_.contantiDiverso, fondo: C_.fondo,
+      stelle: stelle || '', nota: nota || '', fotoMancanti: (C_.fotoMancanti || []).join(', '), agg: ora }],
+    ['merge', 'km/' + chi, { mese, km: tot, ultimo: C_.km, agg: ora }],
+    ['merge', 'rider/' + NOME, { turno: null, giro: null, stato: 'fuori', agg: ora }]
+  ];
+  FB.insieme(ops).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+  // le foto partono a parte, una per volta: non bloccano la chiusura
+  const foto = Object.assign({}, C_.foto); if (C_.fotoKm) foto.cruscotto = C_.fotoKm;
+  Object.keys(foto).forEach(lato => FB.scrivi('foto/' + TURNO.id + '-' + lato,
+    { turno: TURNO.id, rider: NOME, data: OGGI(), lato, img: foto[lato], agg: Date.now() }).catch(() => {}));
+  CHIUSURA = null; schermo = '';
+  alert('Servizio chiuso.\n' + fatti + ' km' + (TURNO.furgone ? ' (furgone)' : '') + '\nSumUp ' + euro(C_.sumup) + '\nVersati ' + euro(C_.contanti) + ', li conferma la cassa.\nGrazie!');
 }
 
 function portafoglio() {
-  const p = S.portafoglio; if (!p || (!p.consegne && !p.versato)) return '';
-  return `<div class="card wallet"><h2 style="margin:0">👛 Il tuo portafoglio di oggi</h2>
+  const f = fatte(), p = { contanti: 0, sumup: 0, n: f.length, versato: 0, attesa: 0 };
+  f.forEach(c => { if (c.pagamento === 'SumUp') p.sumup += c.importo || 0; else p.contanti += c.importo || 0; });
+  V.forEach(v => { if (v.stato === 'ok') p.versato += v.contanti || 0; else if (v.stato === 'attesa') p.attesa += v.contanti || 0; });
+  p.inTasca = Math.max(0, Math.round((p.contanti - p.versato - p.attesa) * 100) / 100);
+  return p;
+}
+/* ---------- challenge mensile: partecipazione libera, classifica aggiornata ogni notte dallo script ---------- */
+function cardChallenge() {
+  const dentro = !!(R && R.challenge), min = (CH && CH.minimo) || 20, lista = (CH && CH.mese === ALP.mese() && CH.classifica) || [];
+  const io = lista.find(x => x.nome === NOME), ok = lista.filter(x => x.n >= min);
+  const mese = new Date().toLocaleDateString('it-IT', { month: 'long' });
+  return `<div class="card" id="challenge"><h2>🏆 Challenge di ${mese}</h2>
+    ${Number(SEG.buono) ? `<div class="muto">Chi vince riceve un <b>buono Amazon da ${euro(Number(SEG.buono))}</b>. Si entra in classifica con almeno ${min} consegne.</div>` : `<div class="muto">Si entra in classifica con almeno ${min} consegne.</div>`}
+    ${dentro ? `${ok.length ? ok.map((x, i) => `<div style="display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:12px;${x.nome === NOME ? 'background:#fff4c2;font-weight:800' : ''}">
+        <span style="width:26px">${['🥇', '🥈', '🥉'][i] || (i + 1) + '°'}</span><span style="flex:1">${esc(x.nome)}</span><b>${String(x.voto).replace('.', ',')}</b><span class="muto">/10</span></div>`).join('')
+        : '<div class="muto">Classifica ancora vuota: si aggiorna ogni notte.</div>'}
+      ${io && io.n < min ? `<div class="avv">Hai ${io.n} consegne questo mese: te ne mancano ${min - io.n} per entrare in classifica.</div>` : ''}
+      <div class="muto" style="font-size:12px">Voto su 10: tempi contro Google con 3 minuti di sosta (40%), puntualità sull'orario (40%), rientri in pizzeria (20%).</div>
+      <button class="btn s" id="chEsci">Non partecipo più</button>`
+    : `<button class="btn p" id="chEntra">🏆 Partecipo alla challenge</button>`}
+    ${CH && CH.precedente ? `<div class="muto" style="font-size:12px">Il mese scorso ha vinto <b>${esc(CH.precedente.nome)}</b> con ${String(CH.precedente.voto).replace('.', ',')}/10.</div>` : ''}</div>`;
+}
+function aggiornaChallenge() {
+  const box = $('#challenge'); if (!box) return;
+  box.outerHTML = cardChallenge(); agganciChallenge();
+}
+function agganciChallenge() {
+  const sv = v => FB.scrivi('rider/' + NOME, { challenge: v }, true).then(() => ALP.toast(v ? 'Sei nella challenge 🏆' : 'Non partecipi più'), e => ALP.toast('Non salvato: ' + e.message, 1));
+  if ($('#chEntra')) $('#chEntra').onclick = () => sv(true);
+  if ($('#chEsci')) $('#chEsci').onclick = () => { if (confirm('Esci dalla challenge di questo mese?')) sv(false); };
+}
+
+function cardPortafoglio() {
+  const p = portafoglio(); if (!p.n && !p.versato) return '';
+  return `<div class="card wallet"><h2>👛 Portafoglio di oggi</h2>
     <div class="tot"><div><span>💶 Contanti</span><b>${euro(p.contanti)}</b></div><div><span>💳 SumUp</span><b>${euro(p.sumup)}</b></div></div>
-    <div class="tasca"><span>Contanti da lasciare in cassa</span><span>${euro(p.inTasca)}</span></div>
-    ${p.versato ? `<div class="muto" style="color:#ddd;margin-top:8px">Già lasciati in cassa: ${euro(p.versato)}${p.ultimoVersamento ? ' (ultima volta alle ' + hhmm(p.ultimoVersamento) + ')' : ''}</div>` : ''}
-    <details><summary>${p.consegne} consegne di oggi</summary>${p.voci.map(v => `<div class="voce"><span>${hhmm(v.ora)} · ${esc(v.cliente)}</span>
-      <span>${v.pagamento === 'Contanti' ? '💶' : '💳'} ${euro(v.importo)}</span></div>`).join('')}</details>
-    ${p.inTasca > 0 ? `<button class="btn l" id="versa">💶 Lascio ${euro(p.inTasca)} in cassa</button>` : ''}</div>`;
+    <div class="tasca"><span>In tasca da lasciare in cassa</span><span>${euro(p.inTasca)}</span></div>
+    ${p.attesa ? `<div class="muto" style="color:#e8e1d6">⏳ ${euro(p.attesa)} in attesa di conferma della cassa</div>` : ''}
+    ${p.versato ? `<div class="muto" style="color:#e8e1d6">✓ Già lasciati in cassa: ${euro(p.versato)}</div>` : ''}
+    ${p.inTasca > 0 && !p.attesa ? `<button class="btn l" id="versa">💶 Lascio ${euro(p.inTasca)} in cassa</button>` : ''}</div>`;
 }
 
-function versa() {
-  const p = S.portafoglio;
-  $('#app').innerHTML = `<div class="pag"><div class="card" style="text-align:center"><h2>Lasci ${euro(p.inTasca)} in cassa</h2>
-    <div class="muto">Chi è in cassa conta i contanti e scrive il suo PIN</div>
-    <input id="pc" type="password" inputmode="numeric" maxlength="4" style="font-size:28px;text-align:center;letter-spacing:10px;margin-top:14px" placeholder="PIN cassa">
-    <button class="btn v" id="okv">✓ Contanti consegnati</button><button class="btn s" id="nov">Annulla</button></div></div>`;
-  $('#pc').focus();
-  $('#nov').onclick = disegna;
-  $('#okv').onclick = async () => { if ($('#pc').value.length < 4) return avviso('Scrivi il PIN della cassa');
-    try { await fai('Registro…', 'riderVersa', $('#pc').value); alert('Fatto: contanti lasciati in cassa ✓'); } catch (e) {} };
+function rigaConsegna(c, i, mostraPassa) {
+  const sc = MIEI_SCAMBI.find(s => s.consegna === c.id);
+  return `<div class="tappa" data-apri="${c.id}"><div class="numtappa">${i + 1}</div><div class="t"><b>${esc(c.via)}</b><span class="muto">${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}</span><div>
+    ${c.previsto ? `<span class="bdg b-o">⏰ PER LE ${esc(c.previsto)}</span>` : ''}<span class="bdg ${c.pagamento === 'SumUp' ? 'b-s' : 'b-c'}">${c.pagamento === 'SumUp' ? '💳 SumUp' : '💶 Contanti'} ${c.importo ? euro(c.importo) : ''}</span>
+    ${sc ? `<span class="bdg b-a">⇄ in attesa di ${esc(sc.a)}</span>` : ''}</div>${c.note ? `<div class="muto">📝 ${esc(c.note)}</div>` : ''}</div>
+    ${mostraPassa ? (sc ? `<button class="mini" data-annulla="${c.id}">Annulla</button>` : `<button class="mini" data-passa="${c.id}">⇄ Passa</button>`) : ''}</div>`;
 }
 
-function modulo(o) {
-  scheda = Object.assign({ pagamento: 'Contanti' }, o);
-  if (!o.pagamento && o.letto) scheda.pagamento = '';
-  const avv = (o.avvisi || []).map(a => `<div class="avv ${/ASPORTO/.test(a) ? 'err' : ''}">${/ASPORTO/.test(a) ? '⛔' : '⚠️'} ${esc(a)}</div>`).join('');
-  $('#app').innerHTML = `<div class="pag"><div class="card"><h2>${o.letto ? 'Controlla l\'ordine' : 'Nuovo ordine'}</h2>
-    ${o.numero ? `<div class="muto">Domicilio n. ${esc(o.numero)}${o.cassiere ? ' · preso da ' + esc(o.cassiere) : ''}</div>` : ''}${avv}
-    <label>Cliente</label><input id="f_cliente" value="${esc(o.cliente)}">
-    <label>Via e numero</label><input id="f_ind" value="${esc(o.indirizzo)}" placeholder="Via Roma 1">
-    <label>Paese</label><input id="f_paese" value="${esc(o.paese || 'San Paolo d\'Argon')}">
-    <div class="riga"><div><label>Telefono</label><input id="f_tel" inputmode="tel" value="${esc(o.telefono)}"></div>
-      <div><label>Per le</label><input id="f_ora" type="time" value="${esc(o.previsto)}"></div></div>
-    <label>Totale da incassare</label><input id="f_imp" inputmode="decimal" value="${esc(o.importo)}" placeholder="0,00">
-    <label>Pagamento</label><div class="toggle"><button data-p="Contanti">💶 Contanti</button><button data-p="SumUp">💳 SumUp</button></div>
-    <label>Note</label><input id="f_note" placeholder="citofono, scala…">
-    <button class="btn p" id="ok">Aggiungi al giro</button><button class="btn s" id="no">Annulla</button></div></div>`;
-  const tg = () => document.querySelectorAll('.toggle button').forEach(b => b.classList.toggle('on', b.dataset.p === scheda.pagamento));
-  document.querySelectorAll('.toggle button').forEach(b => b.onclick = () => { scheda.pagamento = b.dataset.p; tg(); }); tg();
-  $('#no').onclick = disegna;
-  $('#ok').onclick = async () => {
-    const via = $('#f_ind').value.trim();
-    if (!via) return avviso('Manca la via');
-    if (!scheda.pagamento) return avviso('Scegli contanti o SumUp');
-    if (o.tipo === 'ASPORTO' && !confirm('Sulla comanda c\'è ASPORTO: il cliente ritira lui. Vuoi aggiungerla lo stesso?')) return;
-    await fai('Aggiungo…', 'riderAggiungi', {
-      indirizzo: via + ', ' + ($('#f_paese').value.trim() || 'San Paolo d\'Argon') + ' BG', cliente: $('#f_cliente').value, telefono: $('#f_tel').value,
-      previsto: $('#f_ora').value, importo: $('#f_imp').value, pagamento: scheda.pagamento, note: $('#f_note').value,
-      numero: o.numero || '', cassiere: o.cassiere || '', fotoId: o.fotoId || ''
-    });
+function preparaGiro() {
+  schermo = 'giro'; smontaMappa();
+  const seq = ALP.ordina(ALP.CASA, attive());
+  $('#app').innerHTML = `<div class="pag">
+    ${contatoreKm(TURNO.furgone)}
+    <div class="card"><h2>${seq.length ? 'Il tuo giro' : 'In attesa di consegne'}</h2>
+      ${seq.length ? `<div class="muto">Ordine calcolato dalla pizzeria, il più veloce.</div>${seq.map((c, i) => rigaConsegna(c, i, true)).join('')}
+        <button class="btn v" id="parti">🛵 Parti (${seq.length} ${seq.length === 1 ? 'consegna' : 'consegne'})</button>`
+      : `<div class="muto">Le consegne le assegna la cassa: appena arrivano senti un suono.</div>`}
+      <button class="btn s" id="agg">📷 Aggiungi una consegna</button>
+    </div>
+    ${cardPortafoglio()}
+    ${cardChallenge()}
+    ${!seq.length ? `<button class="btn s" id="fine">🏁 Fine servizio</button>` : ''}</div>`;
+  agganciComuni();
+  agganciChallenge();
+  if ($('#agg')) $('#agg').onclick = () => nuovaConsegna();
+  if ($('#parti')) $('#parti').onclick = () => parti(seq);
+  if ($('#fine')) $('#fine').onclick = () => fineTurno(1);
+}
+function agganciComuni() {
+  if ($('#versa')) $('#versa').onclick = versa;
+  tutti('[data-passa]').forEach(b => b.onclick = e => { e.stopPropagation(); passa(b.dataset.passa); });
+  tutti('[data-annulla]').forEach(b => b.onclick = e => { e.stopPropagation(); FB.togli('scambi/' + b.dataset.annulla); });
+  tutti('[data-apri]').forEach(b => b.onclick = () => scheda(b.dataset.apri));
+}
+
+/** tocca una consegna: dettagli, passala a un collega, correggila */
+function scheda(id) {
+  const c = C.find(x => x.id === id); if (!c) return;
+  bloccato = true;
+  $('#extra').innerHTML = `<div class="velo" id="v"><div class="foglio">
+    <div class="maniglia"></div><h2 style="margin:0 0 4px">${esc(c.via)}</h2>
+    <div class="muto">${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}</div>
+    <div style="margin:10px 0">${c.previsto ? `<span class="bdg b-o">⏰ PER LE ${esc(c.previsto)}</span>` : ''}
+      <span class="bdg ${c.pagamento === 'SumUp' ? 'b-s' : 'b-c'}">${c.pagamento === 'SumUp' ? '💳 SumUp' : '💶 Contanti'} ${c.importo ? euro(c.importo) : ''}</span>
+      ${c.pizze ? `<span class="bdg b-a">${c.pizze} pizze</span>` : ''}${c.burger ? `<span class="bdg b-a">${c.burger} burger</span>` : ''}</div>
+    ${c.note ? `<div class="avv" style="margin-bottom:10px">📝 ${esc(c.note)}</div>` : ''}
+    ${c.telefono ? `<a class="btn s" style="margin-bottom:8px;text-decoration:none" href="tel:${esc(c.telefono)}">📞 Chiama ${esc(c.telefono)}</a>` : ''}
+    <a class="btn s" style="margin-bottom:8px;text-decoration:none" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.via + ', ' + c.paese)}&travelmode=driving" target="_blank">🗺️ Apri in Maps</a>
+    <button class="btn l" style="margin-bottom:8px" id="sPassa">⇄ Passa a un collega</button>
+    <button class="btn s" id="sChiudi">Chiudi</button></div></div>`;
+  const chiudi = () => { $('#extra').innerHTML = ''; bloccato = false; schermo = ''; disegna(); mostraScambi(); };
+  $('#sChiudi').onclick = chiudi; $('#v').onclick = e => { if (e.target.id === 'v') chiudi(); };
+  $('#sPassa').onclick = () => { chiudi(); passa(id); };
+}
+
+/** il rider aggiunge una consegna con la foto della comanda (si vede subito) */
+function nuovaConsegna() {
+  bloccato = true;
+  $('#extra').innerHTML = `<div class="velo" id="v"><div class="foglio"><div class="maniglia"></div><h2 style="margin:0">Aggiungi una consegna</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+      <button class="btn n" id="foto">📷 Foto comanda + scontrino</button><input type="file" accept="image/*" capture="environment" id="file" hidden>
+      <div class="muto" id="st" style="text-align:center"></div>
+      <label class="c">Via e numero<input id="n_via" placeholder="Via Roma 14"></label>
+      <label class="c">Paese<input id="n_paese" value="San Paolo d'Argon"></label>
+      <label class="c">Cliente<input id="n_cli"></label>
+      <label class="c">Telefono<input id="n_tel" inputmode="tel"></label>
+      <label class="c">Orario PER LE<input id="n_ora" type="time"></label>
+      <label class="c">Totale €<input id="n_imp" inputmode="decimal"></label>
+      <div class="seg" id="n_pag"><button data-p="Contanti">💶 Contanti</button><button data-p="SumUp">💳 SumUp</button></div>
+      <button class="btn p" id="n_ok">Aggiungi al mio giro</button>
+      <button class="btn s" id="n_no">Annulla</button></div></div></div>`;
+  let pag = 'Contanti', letto = {};
+  const segna = () => tutti('#n_pag button').forEach(b => b.classList.toggle('on', b.dataset.p === pag));
+  segna();
+  tutti('#n_pag button').forEach(b => b.onclick = () => { pag = b.dataset.p; segna(); });
+  const chiudi = () => { $('#extra').innerHTML = ''; bloccato = false; schermo = ''; disegna(); };
+  $('#n_no').onclick = chiudi; $('#v').onclick = e => { if (e.target.id === 'v') chiudi(); };
+  $('#foto').onclick = () => $('#file').click();
+  $('#file').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const t0 = Date.now(); $('#st').textContent = 'Leggo la comanda… intanto puoi scrivere';
+    try {
+      const o = await ALP.leggiFoto(await ALP.comprimi(f, 1600), 'ordine', SEG.gemini, SEG.modello);
+      const m = (id, v) => { if (v && !$(id).value) $(id).value = v; };
+      m('#n_via', o.via); if (o.paese) $('#n_paese').value = o.paese; m('#n_cli', o.cliente); m('#n_tel', o.telefono); m('#n_ora', o.previsto);
+      if (o.importo) $('#n_imp').value = String(o.importo).replace('.', ',');
+      if (o.pagamento) { pag = /sum/i.test(o.pagamento) ? 'SumUp' : 'Contanti'; segna(); }
+      letto = o;
+      $('#st').textContent = 'Letta in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓ · controlla';
+    } catch (er) { $('#st').textContent = SEG.gemini ? 'Lettura non riuscita: scrivi a mano' : 'Lettura foto non attiva: scrivi a mano'; }
+  };
+  $('#n_ok').onclick = () => {
+    const via = $('#n_via').value.trim(); if (!via) return ALP.toast('Manca la via', 1);
+    const ora = Date.now(), id = ALP.id();
+    FB.scrivi('consegne/' + id, { id, data: OGGI(), servizio: ALP.servizio(), tipo: 'DOMICILIO', via, paese: $('#n_paese').value.trim() || "San Paolo d'Argon",
+      cliente: $('#n_cli').value.trim(), telefono: $('#n_tel').value.replace(/\s/g, ''), previsto: $('#n_ora').value, importo: ALP.num($('#n_imp').value),
+      pizze: Math.round(Number(letto.pizze) || 0), burger: Math.round(Number(letto.burger) || 0), numero: letto.numero || '', cassiere: letto.cassiere || '',
+      pagamento: pag, note: letto.note || '', rider: NOME, stato: inGiro() ? 'partita' : 'assegnata', giro: inGiro() ? R.giro : '',
+      creata: ora, creataDa: NOME, lat: null, lng: null, storia: [], agg: ora })
+      .catch(er => ALP.toast('Non salvato: ' + er.message, 1));
+    chiudi(); ALP.toast('Consegna aggiunta al tuo giro');
   };
 }
 
-/* ---------- navigatore integrato ---------- */
-let NAV = null, voce = true, ultimoRicalcolo = 0, fuoriStrada = 0, segnaposto = null, lineaNav = null, segue = true, chiedendo = false;
-try { voce = leggi('voce') !== 'no'; } catch (e) {}
+function parti(seq) {
+  const id = ALP.id(), ora = Date.now();
+  const ops = [['set', 'giri/' + id, { id, rider: NOME, data: OGGI(), servizio: ALP.servizio(), partenza: ora, rientro: null, ordine: seq.map(c => c.id), furgone: !!TURNO.furgone, agg: ora }],
+    ['merge', 'rider/' + NOME, { giro: id, stato: 'andata', agg: ora }]];
+  seq.forEach((c, i) => ops.push(['update', 'consegne/' + c.id, { stato: 'partita', giro: id, n: i + 1, partita: ora, agg: ora }]));
+  FB.insieme(ops).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+  parla('Buon giro');
+}
 
+function versa() {
+  const p = portafoglio(); if (!(p.inTasca > 0)) return;
+  if (!confirm('Lasci ' + euro(p.inTasca) + ' in cassa? La cassa conferma dalla centrale.')) return;
+  const id = ALP.id(), ora = Date.now();
+  FB.scrivi('versamenti/' + id, { id, rider: NOME, data: OGGI(), servizio: ALP.servizio(), contanti: p.inTasca, sumup: Math.round(p.sumup * 100) / 100, consegne: p.n, ora, stato: 'attesa', agg: ora })
+    .catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+  ALP.toast('Fatto: ora la cassa conferma');
+}
+
+/* ---------- scambi tra rider ---------- */
+function passa(idc) {
+  const c = C.find(x => x.id === idc); if (!c) return;
+  const altri = RIDER.filter(r => r.nome !== NOME && r.turno && r.stato !== 'fuori');
+  if (!altri.length) return ALP.toast('Nessun altro rider in servizio', 1);
+  bloccato = true;
+  $('#extra').innerHTML = `<div class="velo" id="v"><div class="foglio"><div class="maniglia"></div><h2>Passa ${esc(c.via)} a…</h2>
+    <div class="muto" style="margin:6px 0 12px">L'altro rider deve accettare sul suo telefono.</div>
+    ${altri.map(r => `<button class="btn s" style="margin-bottom:8px" data-a="${esc(r.nome)}"><span style="width:14px;height:14px;border-radius:50%;background:${ALP.colore(r.nome)}"></span>${esc(r.nome)}</button>`).join('')}
+    <button class="btn s" id="chiudi">Annulla</button></div></div>`;
+  const chiudi = () => { $('#extra').innerHTML = ''; bloccato = false; schermo = ''; disegna(); mostraScambi(); };
+  $('#chiudi').onclick = chiudi; $('#v').onclick = e => { if (e.target.id === 'v') chiudi(); };
+  tutti('[data-a]').forEach(b => b.onclick = () => {
+    FB.scrivi('scambi/' + c.id, { consegna: c.id, da: NOME, a: b.dataset.a, via: c.via, paese: c.paese, importo: c.importo || 0, pagamento: c.pagamento, t: Date.now() })
+      .catch(e => ALP.toast('Non inviato: ' + e.message, 1));
+    ALP.toast('Richiesta inviata a ' + b.dataset.a); chiudi();
+  });
+}
+async function mostraScambi() {
+  const s = X[0]; let box = $('#scambioBox');
+  if (!s) { if (box) box.remove(); return; }
+  if (box && box.dataset.id === s.consegna) return;
+  if (box) box.remove();
+  ALP.suono(); parla(s.da + ' ti vuole passare una consegna');
+  box = document.createElement('div'); box.id = 'scambioBox'; box.dataset.id = s.consegna; box.className = 'scambio vetro';
+  box.innerHTML = `<b style="font-size:17px">⇄ ${esc(s.da)} ti passa una consegna</b><div>${esc(s.via)}, ${esc(s.paese)} · ${s.pagamento === 'SumUp' ? '💳 SumUp' : '💶 Contanti'} ${s.importo ? euro(s.importo) : ''}</div>
+    <div style="display:flex;gap:8px"><button class="btn v" id="acc">Accetto</button><button class="btn s" id="rif">Rifiuto</button></div>`;
+  document.body.appendChild(box);
+  $('#rif').onclick = () => { FB.togli('scambi/' + s.consegna); box.remove(); };
+  $('#acc').onclick = async () => {
+    const ora = Date.now();
+    FB.insieme([
+      ['update', 'consegne/' + s.consegna, { rider: NOME, stato: inGiro() ? 'partita' : 'assegnata', giro: inGiro() ? R.giro : '', agg: ora, storia: await FB.aggiungiA({ t: ora, da: s.da, a: NOME, chi: NOME, tipo: 'scambio tra rider' }) }],
+      ['delete', 'scambi/' + s.consegna]
+    ]).catch(e => ALP.toast('Non riuscito: ' + e.message, 1));
+    box.remove(); ALP.toast('Consegna presa ✓');
+  };
+}
+
+/* ---------- navigatore integrato (percorsi OpenStreetMap, istruzioni in italiano) ---------- */
+let NAV = null, map = null, voce = ALP.ls.get('voce') !== 'no', ultimoRicalcolo = 0, fuoriStrada = 0, segnaposto = null, lineaNav = null, segue = true, chiedendo = false;
 function parla(t) {
   if (!voce || !('speechSynthesis' in window)) return;
   try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'it-IT'; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {}
 }
 const FRECCE = { 'turn-left': '⬅', 'turn-right': '➡', 'turn-slight-left': '↖', 'turn-slight-right': '↗', 'turn-sharp-left': '↙', 'turn-sharp-right': '↘',
-  'uturn-left': '↶', 'uturn-right': '↷', 'roundabout-left': '⟲', 'roundabout-right': '⟳', 'keep-left': '↖', 'keep-right': '↗', 'fork-left': '↖', 'fork-right': '↗',
-  'ramp-left': '↖', 'ramp-right': '↗', 'merge': '⬆', 'straight': '⬆' };
-const freccia = m => FRECCE[m] || (/rotatoria/i.test(m) ? '⟳' : '⬆');
+  'uturn': '↶', 'roundabout': '⟳', 'keep-left': '↖', 'keep-right': '↗', 'straight': '⬆', 'arrive': '🏁' };
 const metri = d => d >= 1000 ? (d / 1000).toFixed(1).replace('.', ',') + ' km' : (d < 50 ? Math.max(10, Math.round(d / 10) * 10) : Math.round(d / 50) * 50) + ' m';
 const metriVoce = d => d >= 1000 ? (d / 1000).toFixed(1).replace('.', ',') + ' chilometri' : Math.round(d / 50) * 50 + ' metri';
-function dist(a, b) {
-  const r = Math.PI / 180, x = (b[1] - a[1]) * r * Math.cos((a[0] + b[0]) / 2 * r), y = (b[0] - a[0]) * r;
-  return Math.sqrt(x * x + y * y) * 6371000;
-}
+const dist = (a, b) => ALP.km(a, b) * 1000;
 function distLinea(p, linea) {
   let m = Infinity;
   for (let i = 0; i < linea.length - 1; i++) {
@@ -330,84 +636,115 @@ function distLinea(p, linea) {
   }
   return m;
 }
-
+const MOD = { left: 'a sinistra', right: 'a destra', 'slight left': 'leggermente a sinistra', 'slight right': 'leggermente a destra', 'sharp left': 'tutto a sinistra', 'sharp right': 'tutto a destra', straight: 'dritto', uturn: 'inversione' };
+function istruzione(s) {
+  const m = s.maneuver, mod = m.modifier || '', nome = s.name ? (s.ref && !s.name ? s.ref : s.name) : '', su = nome ? ' su ' + nome : '';
+  let t, f = 'straight';
+  if (m.type === 'arrive') { t = 'Sei arrivato'; f = 'arrive'; }
+  else if (m.type === 'depart') t = 'Parti' + (nome ? ' su ' + nome : '');
+  else if (m.type === 'roundabout' || m.type === 'rotary') { t = 'Alla rotonda prendi la ' + (m.exit || 1) + 'ª uscita' + su; f = 'roundabout'; }
+  else if (m.type === 'exit roundabout' || m.type === 'exit rotary') t = 'Esci dalla rotonda' + su;
+  else if (m.type === 'fork' || m.type === 'off ramp' || m.type === 'on ramp') { t = (m.type === 'fork' ? 'Al bivio tieni ' : 'Prendi lo svincolo ') + (/left/.test(mod) ? 'la sinistra' : 'la destra') + su; f = /left/.test(mod) ? 'keep-left' : 'keep-right'; }
+  else if (m.type === 'merge') t = 'Immettiti' + su;
+  else if (mod === 'uturn') { t = 'Fai inversione a U'; f = 'uturn'; }
+  else if (mod === 'straight' || !mod) t = 'Prosegui dritto' + su;
+  else { t = 'Svolta ' + (MOD[mod] || '') + su; f = 'turn-' + mod.replace(' ', '-'); }
+  return { t, f };
+}
+function percorsoAttuale() {
+  const a = attive();
+  const da = mioPunto || ALP.CASA;
+  return ALP.ordina(da, a);
+}
 function navigazione() {
-  const c = S.consegne, prossima = c.filter(x => !x.consegnata)[0], fatte = c.filter(x => x.consegnata).length;
-  const meta = prossima ? prossima.id : 'casa';
+  schermo = 'nav';
+  const seq = percorsoAttuale(), prossima = seq[0], nF = fatte().filter(c => c.giro === R.giro).length;
+  const meta = prossima ? prossima.id + ':' + (prossima.lat || '') : 'casa';
   if (!$('#mappa')) {
     $('#app').innerHTML = `<div id="mappa"></div>
-      <div class="banner" id="banner"><div class="fr" id="fr">⬆</div><div class="bt"><b id="bdist">Calcolo il percorso…</b><span id="bistr"></span></div></div>
-      <div class="navbar"><button id="voce">${voce ? '🔊' : '🔇'}</button><button id="centra">◎</button></div>
-      <div class="arrivo" id="arrivo"></div><div class="foglio basso" id="foglio"></div>`;
-    map = L.map('mappa', { zoomControl: false, attributionControl: true }).setView(S.casa, 16);
+      <div class="banner" id="banner"><div class="fr" id="fr">⬆</div><div><b id="bdist">Calcolo il percorso…</b><span id="bistr"></span></div></div>
+      <div class="nb"><button class="vetro" id="voce">${voce ? '🔊' : '🔇'}</button><button class="vetro" id="centra">◎</button></div>
+      <div class="arrivo vetro" id="arrivo"></div><div class="sotto" id="sotto"></div>`;
+    map = L.map('mappa', { zoomControl: false }).setView(ALP.CASA, 16);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-    map._livello = L.layerGroup().addTo(map);
+    map._liv = L.layerGroup().addTo(map);
     map.on('dragstart', () => { segue = false; $('#centra').classList.add('on'); });
     $('#centra').onclick = () => { segue = true; $('#centra').classList.remove('on'); map.setZoom(17); centra(); };
-    $('#voce').onclick = () => { voce = !voce; salva('voce', voce ? 'si' : 'no'); $('#voce').textContent = voce ? '🔊' : '🔇'; if (voce) parla('Voce attiva'); };
+    $('#voce').onclick = () => { voce = !voce; ALP.ls.set('voce', voce ? 'si' : 'no'); $('#voce').textContent = voce ? '🔊' : '🔇'; if (voce) parla('Voce attiva'); };
   }
-  disegnaTappe();
-  const cont = prossima && prossima.pagamento === 'Contanti';
-  $('#foglio').innerHTML = prossima ? `
-      <div class="riga1"><div><div class="tappa">Consegna ${fatte + 1} di ${c.length}${prossima.previsto ? ' · per le ' + esc(prossima.previsto) : ''}</div>
-        <div class="cliente">${esc(prossima.cliente || 'Cliente')}</div><div class="via">${esc(prossima.indirizzo.split(',')[0])}</div></div>
-        <div class="chip ${cont ? 'c' : 's'}">${cont ? '💶' : '💳'}<b>${prossima.importo ? euro(prossima.importo) : ''}</b><small>${cont ? 'contanti' : 'SumUp'}</small></div></div>
-      ${prossima.note ? `<div class="avv">📝 ${esc(prossima.note)}</div>` : ''}
-      <div class="icone">${prossima.telefono ? `<a class="btn s pic" href="tel:${esc(prossima.telefono)}">📞</a>` : ''}
-        <a class="btn s pic" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(prossima.indirizzo)}&travelmode=driving" target="_blank" style="font-size:13px;font-weight:900">Maps</a>
-        <button class="btn v" id="fatto" style="flex:3">✓ Consegnato</button></div>`
-    : `<div class="riga1"><div><div class="tappa">Tutto consegnato 🍕</div><div class="cliente">Rientro in pizzeria</div></div></div>
-       <div class="icone"><a class="btn s pic" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(S.pizzeria)}&travelmode=driving" target="_blank" style="font-size:13px;font-weight:900">Maps</a>
-       <button class="btn p" id="rientro" style="flex:3">🏠 Sono rientrato</button></div>`;
-  if (prossima) $('#fatto').onclick = () => confirm('Consegnato a ' + (prossima.cliente || prossima.indirizzo) + (prossima.importo ? ' e incassato ' + euro(prossima.importo) + '?' : '?'))
-    && ottimista(s => { s.consegne.find(x => x.id === prossima.id).consegnata = new Date().toISOString(); if (navigator.vibrate) navigator.vibrate(60); }, 'riderConsegnato', prossima.id);
-  else $('#rientro').onclick = () => ottimista(s => { s.giro = null; s.consegne = []; }, 'riderRientrato');
+  disegnaTappe(seq);
+  const cont = prossima && prossima.pagamento !== 'SumUp', tot = nF + seq.length;
+  $('#sotto').innerHTML = prossima ? `
+    <div class="r1"><div><div class="eti">Consegna ${nF + 1} di ${tot}${prossima.previsto ? ' · per le ' + esc(prossima.previsto) : ''}</div>
+      <div class="cli">${esc(prossima.cliente || prossima.via)}</div><div class="via">${esc(prossima.via)}, ${esc(prossima.paese)}</div></div>
+      <div class="chip ${cont ? 'c' : 's'}">${cont ? '💶' : '💳'}<b>${prossima.importo ? euro(prossima.importo) : ''}</b><small>${cont ? 'contanti' : 'SumUp'}</small></div></div>
+    ${prossima.note ? `<div class="avv" style="margin-top:8px">📝 ${esc(prossima.note)}</div>` : ''}
+    <div class="azioni">${prossima.telefono ? `<a class="btn s q" href="tel:${esc(prossima.telefono)}">📞</a>` : ''}
+      <button class="btn s q" data-passa="${prossima.id}" title="Passa a un altro rider">⇄</button>
+      <a class="btn s q" style="font-size:13px" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(prossima.via + ', ' + prossima.paese)}&travelmode=driving" target="_blank">Maps</a>
+      <button class="btn v" id="fatto">✓ Consegnato</button></div>`
+    : `<div class="r1"><div><div class="eti">Tutto consegnato 🍕</div><div class="cli">Rientro in pizzeria</div></div></div>
+      <div class="azioni"><a class="btn s q" style="font-size:13px" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ALP.PIZZERIA)}&travelmode=driving" target="_blank">Maps</a>
+      <button class="btn p" id="rientro">🏠 Sono rientrato</button></div>`;
+  tutti('[data-passa]').forEach(b => b.onclick = () => confirm('Hai già le pizze con te: le passi davvero a un altro rider?') && passa(b.dataset.passa));
+  if (prossima) { const t = $('#sotto .cli'); if (t) t.onclick = () => scheda(prossima.id); }
+  if (prossima) $('#fatto').onclick = () => {
+    if (!confirm('Consegnato a ' + (prossima.cliente || prossima.via) + (prossima.importo ? ' e incassato ' + euro(prossima.importo) + '?' : '?'))) return;
+    const ora = Date.now(), ops = [['update', 'consegne/' + prossima.id, { stato: 'consegnata', consegnata: ora, nFatto: nF + 1, agg: ora }]];
+    if (seq.length === 1) ops.push(['merge', 'rider/' + NOME, { stato: 'rientro', agg: ora }]);
+    FB.insieme(ops).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+    if (navigator.vibrate) navigator.vibrate(60);
+  };
+  else $('#rientro').onclick = () => {
+    const ora = Date.now();
+    FB.insieme([['update', 'giri/' + R.giro, { rientro: ora, agg: ora }], ['merge', 'rider/' + NOME, { giro: null, stato: 'pizzeria', dal: ora, agg: ora }]])
+      .catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+    fermaGps(); schermo = '';
+  };
   posizionaArrivo();
-  if (!NAV || NAV.meta !== meta) { NAV = { meta, passi: null }; calcola(true); }
+  if (!NAV || NAV.meta !== meta) { NAV = { meta, dest: prossima ? ALP.pt(prossima) : ALP.CASA, passi: null }; calcola(true); }
   else aggiornaNav();
   avviaGps();
 }
 
 async function calcola(nuova) {
-  if (chiedendo) return; chiedendo = true; ultimoRicalcolo = Date.now();
-  const meta = NAV.meta;
+  if (chiedendo || !NAV) return;
+  if (!NAV.dest) { $('#bdist').textContent = 'Indirizzo non trovato sulla mappa'; $('#bistr').textContent = 'Usa il tasto Maps'; return; }
+  chiedendo = true; ultimoRicalcolo = Date.now();
+  const meta = NAV.meta, da = mioPunto || ALP.CASA;
   try {
-    const r = await chiama('riderIndicazioni', PIN, mioPunto ? mioPunto[0] : null, mioPunto ? mioPunto[1] : null);
-    if (!NAV || NAV.meta !== meta) return;
-    NAV = Object.assign(NAV, r, { linea: decodifica(r.linea), passo: 0, annunci: {}, arrivato: false, t0: Date.now() });
+    const r = await (await fetch(`https://router.project-osrm.org/route/v1/driving/${da[1]},${da[0]};${NAV.dest[1]},${NAV.dest[0]}?overview=full&geometries=polyline&steps=true`)).json();
+    if (!NAV || NAV.meta !== meta || !r.routes || !r.routes[0]) throw 0;
+    const leg = r.routes[0].legs[0], st = leg.steps;
+    const passi = st.map((s, i) => { const x = istruzione(s), nx = st[i + 1]; return { t: x.t, m: x.f, d: s.distance, s: s.duration, a: [s.maneuver.location[1], s.maneuver.location[0]], b: nx ? [nx.maneuver.location[1], nx.maneuver.location[0]] : NAV.dest }; });
+    NAV = Object.assign(NAV, { passi, linea: decodifica(r.routes[0].geometry), dur: r.routes[0].duration, dist: r.routes[0].distance, arrivo: NAV.dest, passo: 0, annunci: {}, arrivato: false });
     if (lineaNav) lineaNav.remove();
-    lineaNav = L.layerGroup([L.polyline(NAV.linea, { color: '#fff', weight: 11, opacity: .95 }), L.polyline(NAV.linea, { color: '#C6413C', weight: 7 })]).addTo(map);
-    if (!mioPunto) map.fitBounds(NAV.linea, { paddingTopLeft: [20, 120], paddingBottomRight: [20, 200] });
-    parla((nuova ? '' : 'Percorso ricalcolato. ') + NAV.passi[0].t + (NAV.passi.length > 1 ? '. Poi, ' + NAV.passi[1].t : ''));
+    lineaNav = L.layerGroup([L.polyline(NAV.linea, { color: '#fff', weight: 11, opacity: .95 }), L.polyline(NAV.linea, { color: '#b8372f', weight: 7 })]).addTo(map);
+    if (!mioPunto) map.fitBounds(NAV.linea, { paddingTopLeft: [20, 130], paddingBottomRight: [20, 220] });
+    parla((nuova ? '' : 'Percorso ricalcolato. ') + (passi[1] ? passi[1].t : passi[0].t));
     aggiornaNav();
-  } catch (e) { $('#bdist').textContent = 'Percorso non disponibile'; $('#bistr').textContent = 'Usa il tasto G per Google Maps'; }
+  } catch (e) { $('#bdist').textContent = 'Percorso non disponibile'; $('#bistr').textContent = 'Riprovo tra poco · oppure tasto Maps'; setTimeout(() => { if (NAV && NAV.meta === meta && !NAV.passi) calcola(nuova); }, 8000); }
   finally { chiedendo = false; }
 }
-
 function aggiornaNav() {
   if (!NAV || !NAV.passi) return;
   const P = NAV.passi;
   if (mioPunto) {
-    // avanza al passo giusto: il più vicino tra quello attuale e i prossimi due
-    for (let k = NAV.passo; k < Math.min(P.length, NAV.passo + 3); k++) {
-      if (dist(mioPunto, P[k].b) < 30 && k + 1 < P.length) NAV.passo = k + 1;
-    }
-    const fuori = distLinea(mioPunto, NAV.linea);
-    fuoriStrada = fuori > 60 ? fuoriStrada + 1 : 0;
-    if (fuoriStrada >= 2 && Date.now() - ultimoRicalcolo > 25000) { fuoriStrada = 0; calcola(false); }
+    for (let k = NAV.passo; k < Math.min(P.length, NAV.passo + 3); k++) if (dist(mioPunto, P[k].b) < 30 && k + 1 < P.length) NAV.passo = k + 1;
+    fuoriStrada = distLinea(mioPunto, NAV.linea) > 60 ? fuoriStrada + 1 : 0;
+    if (fuoriStrada >= 2 && Date.now() - ultimoRicalcolo > 20000) { fuoriStrada = 0; calcola(false); }
     if (segue) centra();
   }
   const i = NAV.passo, p = P[i], prox = P[i + 1];
   const allaSvolta = mioPunto ? dist(mioPunto, p.b) : p.d;
   const resto = allaSvolta + P.slice(i + 1).reduce((a, x) => a + x.d, 0);
   const all = mioPunto ? dist(mioPunto, NAV.arrivo) : resto;
-  if (all < 45 || (!prox && allaSvolta < 40)) {
-    $('#fr').textContent = '🏁'; $('#bdist').textContent = 'Sei arrivato';
-    $('#bistr').textContent = NAV.meta === 'casa' ? 'Amo la Pizza' : 'Consegna e premi Consegnato';
-    if (!NAV.arrivato) { NAV.arrivato = true; parla('Sei arrivato a destinazione'); $('#foglio').classList.add('evid'); if (navigator.vibrate) navigator.vibrate(300); }
+  if (all < 45) {
+    $('#fr').textContent = '🏁'; $('#bdist').textContent = 'Sei arrivato'; $('#bistr').textContent = NAV.meta === 'casa' ? 'Amo la Pizza' : 'Consegna e premi Consegnato';
+    if (!NAV.arrivato) { NAV.arrivato = true; parla('Sei arrivato a destinazione'); $('#sotto').classList.add('arr'); if (navigator.vibrate) navigator.vibrate(300); }
   } else {
     const istr = prox || p;
-    $('#fr').textContent = freccia(istr.m);
+    $('#fr').textContent = FRECCE[istr.m] || '⬆';
     $('#bdist').textContent = prox ? 'Tra ' + metri(allaSvolta) : metri(allaSvolta);
     $('#bistr').textContent = istr.t;
     const k = i + ':' + (allaSvolta < 120 ? 'v' : allaSvolta < 450 ? 'l' : '');
@@ -416,14 +753,12 @@ function aggiornaNav() {
   const vel = NAV.dur && NAV.dist ? NAV.dist / NAV.dur : 8;
   $('#arrivo').innerHTML = `<b>${hhmm(Date.now() + resto / vel * 1000)}</b><span>${metri(resto)} · ${Math.max(1, Math.round(resto / vel / 60))} min</span>`;
 }
-
 function centra() {
   if (!mioPunto || !map) return;
-  const f = $('#foglio') ? $('#foglio').offsetHeight : 0;
-  map.setView(mioPunto, Math.max(map.getZoom(), 16), { animate: false });
-  map.panBy([0, Math.round((f - 120) / 2)], { animate: false });
+  const f = $('#sotto') ? $('#sotto').offsetHeight : 0;
+  map.setView(mioPunto, Math.max(map.getZoom(), 16), { animate: false }); map.panBy([0, Math.round((f - 120) / 2)], { animate: false });
 }
-function posizionaArrivo() { const f = $('#foglio'), a = $('#arrivo'); if (f && a) a.style.bottom = (f.offsetHeight + 10) + 'px'; }
+function posizionaArrivo() { const f = $('#sotto'), a = $('#arrivo'); if (f && a) a.style.bottom = (f.offsetHeight + 10) + 'px'; }
 function decodifica(s) {
   let i = 0, lat = 0, lng = 0; const out = [];
   while (i < s.length) {
@@ -433,69 +768,41 @@ function decodifica(s) {
   }
   return out;
 }
-function disegnaTappe() {
-  const lv = map._livello; lv.clearLayers();
-  L.marker(S.casa, { icon: L.divIcon({ className: 'casa-icon', html: '🍕', iconSize: [30, 30] }) }).addTo(lv);
-  S.consegne.forEach((x, i) => {
-    if (!x.lat) return;
-    L.marker([x.lat, x.lng], { icon: L.divIcon({ className: 'num-icon', html: x.consegnata ? '✓' : String(i + 1), iconSize: [30, 30] }), opacity: x.consegnata ? .5 : 1 }).addTo(lv);
-  });
+function disegnaTappe(seq) {
+  const lv = map._liv; lv.clearLayers();
+  L.marker(ALP.CASA, { icon: L.divIcon({ className: 'casa-i', html: '<img src="../img/marchio.png" alt="" style="width:22px;height:auto;max-width:22px">', iconSize: [34, 34] }) }).addTo(lv);
+  seq.forEach((c, i) => { if (c.lat) L.marker([c.lat, c.lng], { icon: L.divIcon({ className: 'num-i', html: String(i + 1), iconSize: [30, 30] }) }).addTo(lv); });
 }
 function smontaMappa() { if (map) { map.remove(); map = null; } lineaNav = null; segnaposto = null; NAV = null; fermaGps(); }
 
-/* ---------- GPS: solo durante il giro e solo con l'app aperta ---------- */
-let prima = null;
+/* ---------- GPS: solo durante il giro e solo con l'app aperta (accordo firmato dai rider) ---------- */
 function avviaGps() {
   if (gpsWatch !== null || !navigator.geolocation) return;
   if ('wakeLock' in navigator) navigator.wakeLock.request('screen').then(w => wake = w).catch(() => {});
   gpsWatch = navigator.geolocation.watchPosition(p => {
     const nuovo = [p.coords.latitude, p.coords.longitude];
-    const dir = p.coords.heading != null && !isNaN(p.coords.heading) ? p.coords.heading : (prima && dist(prima, nuovo) > 4 ? Math.atan2((nuovo[1] - prima[1]) * Math.cos(nuovo[0] * Math.PI / 180), nuovo[0] - prima[0]) * 180 / Math.PI : null);
-    prima = nuovo; mioPunto = nuovo;
+    if (p.coords.heading != null && !isNaN(p.coords.heading) && p.coords.speed > 1) dir = p.coords.heading;
+    else if (prima && dist(prima, nuovo) > 6) dir = Math.atan2((nuovo[1] - prima[1]) * Math.cos(nuovo[0] * Math.PI / 180), nuovo[0] - prima[0]) * 180 / Math.PI;
+    if (!prima || dist(prima, nuovo) > 6) prima = nuovo;
+    mioPunto = nuovo;
     if (map) {
       const html = `<div class="io" style="transform:rotate(${dir == null ? 0 : dir}deg)">${dir == null ? '' : '▲'}</div>`;
-      if (!segnaposto) segnaposto = L.marker(mioPunto, { icon: L.divIcon({ className: 'io-wrap', html, iconSize: [28, 28] }), zIndexOffset: 2000 }).addTo(map);
-      else { segnaposto.setLatLng(mioPunto); segnaposto.setIcon(L.divIcon({ className: 'io-wrap', html, iconSize: [28, 28] })); }
+      if (!segnaposto) segnaposto = L.marker(mioPunto, { icon: L.divIcon({ className: 'mk', html, iconSize: [30, 30] }), zIndexOffset: 2000 }).addTo(map);
+      else { segnaposto.setLatLng(mioPunto); segnaposto.setIcon(L.divIcon({ className: 'mk', html, iconSize: [30, 30] })); }
       if (NAV && !NAV.passi && !chiedendo) calcola(true); else aggiornaNav();
     }
-    if (!S.gps || document.visibilityState !== 'visible' || Date.now() - ultimoInvio < S.gpsOgni * 1000) return;
+    if (!inGiro() || document.visibilityState !== 'visible' || Date.now() - ultimoInvio < ALP.GPS_OGNI * 1000) return;
     ultimoInvio = Date.now();
-    chiama('riderPosizione', PIN, p.coords.latitude, p.coords.longitude, p.coords.accuracy).catch(() => {});
-    if (window.FB && S.giro && S.giro.partenza) FB.scrivi('posizioni/' + S.nome, { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy || 0), ora: new Date().toISOString(), giro: S.giro.id }).catch(() => {});
-  }, err => { $('#bistr') && ($('#bistr').textContent = 'Attiva la posizione per il navigatore'); }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 });
+    FB.scrivi('posizioni/' + NOME, { lat: nuovo[0], lng: nuovo[1], acc: Math.round(p.coords.accuracy || 0), ora: new Date().toISOString(), giro: R.giro, dir: dir == null ? -1 : Math.round(dir) }).catch(() => {});
+  }, () => { $('#bistr') && ($('#bistr').textContent = 'Attiva la posizione per il navigatore'); }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 });
 }
 function fermaGps() {
   if (gpsWatch !== null) { navigator.geolocation.clearWatch(gpsWatch); gpsWatch = null; }
   if (wake) { wake.release().catch(() => {}); wake = null; }
 }
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && S && S.giro && S.giro.partenza) { fermaGps(); avviaGps(); }
-});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && inGiro()) { fermaGps(); avviaGps(); } });
 
-/* ---------- foto: ridimensiona prima di inviare ---------- */
-function comprimi(file, max) {
-  return new Promise((ok, ko) => {
-    const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => {
-      const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
-      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      ok(c.toDataURL('image/jpeg', 0.78));
-    };
-    img.onerror = ko; img.src = url;
-  });
-}
-
-(async () => {
-  const p = leggi('rider_pin'); if (!p) return login();
-  PIN = p;
-  let salvato = null; try { salvato = JSON.parse(localStorage.getItem('rider_S') || 'null'); } catch (e) {}
-  if (salvato && salvato.nome) { S = salvato; disegna(); } else attesa('Entro…');
-  if (S && S.nome) ascoltaStato();
-  try { S = await chiama('riderStato', p); memorizza(); attesa(); disegna(); ascoltaStato(); }
-  catch (e) { attesa(); if (/PIN/.test(String(e))) { togli('rider_pin'); togli('rider_S'); login(); } }
-})();
-
+if (NOME) avvia(); else login();
 })();
 </script>
 </body>
