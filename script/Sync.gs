@@ -84,7 +84,8 @@ function syncConsegna_(c, imp) {
     'Orario previsto': c.previsto ? "'" + c.previsto : '', Creata: dt_(c.creata), 'N. consigliato': c.n || '',
     Consegnata: c.stato === 'consegnata' ? dt_(c.consegnata) : '', 'N. fatto': c.nFatto || '',
     Cliente: c.cliente || '', Telefono: c.telefono ? "'" + c.telefono : '', 'N. ordine': c.numero || '', Cassiere: c.cassiere || '',
-    Lat: c.lat || '', Lng: c.lng || '', Paese: c.paese || '', Stato: c.stato || '', Cambi: cambi, Assegnata: dt_(c.assegnata), 'Creata da': c.creataDa || ''
+    Lat: c.lat || '', Lng: c.lng || '', Paese: c.paese || '', Stato: c.stato || '', Cambi: cambi, Assegnata: dt_(c.assegnata), 'Creata da': c.creataDa || '',
+    Pizze: Number(c.pizze) || 0, Burger: Number(c.burger) || 0, Tipo: c.tipo === 'ASPORTO' ? 'Asporto' : 'Domicilio'
   };
   const r = riga_('Consegne', c.id);
   // cambio dopo la consegna (forzato) o scambio: va negli avvisi, una volta sola
