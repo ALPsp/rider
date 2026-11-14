@@ -244,3 +244,89 @@ function aggiornaImpostazioni_() {
   const nuove = { SOSTA_CLIENTE_MIN: 3, LAT_PIZZERIA: CENTRO[0], LNG_PIZZERIA: CENTRO[1] };
   righe_('Impostazioni').forEach(function (r) { if (nuove[r.Chiave] !== undefined) scrivi_('Impostazioni', r._riga, { Valore: nuove[r.Chiave] }); });
 }
+
+/* ================= CHALLENGE MENSILE DEI RIDER =================
+   Partecipa chi tocca "Partecipo alla challenge" nell'app (campo challenge nel documento rider).
+   Voto su 10: tempi contro Google con la sosta (40%), puntualità sull'orario (40%), rientri (20%).
+   In classifica dalle 20 consegne del mese. Ogni notte scrive config/challenge, che l'app rider legge.
+   Il giorno 1 chiude il mese prima e manda l'email con il vincitore e il valore del buono. */
+const CH_PESI = { tempi: 0.4, puntualita: 0.4, rientri: 0.2 }, CH_MINIMO = 20;
+
+/** Da eseguire UNA volta dall'editor: crea il trigger di ogni notte e calcola subito la classifica. */
+function installaChallenge() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'aggiornaChallenge') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('aggiornaChallenge').timeBased().everyDays(1).atHour(1).nearMinute(30).inTimezone('Europe/Rome').create();
+  aggiornaChallenge();
+  console.log('Challenge attiva ✓');
+}
+
+function aggiornaChallenge() {
+  const ora = new Date(), mese = Utilities.formatDate(ora, 'Europe/Rome', 'yyyy-MM');
+  const base = 'https://firestore.googleapis.com/v1/projects/' + FB_PROGETTO + '/databases/(default)/documents/';
+  const h = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
+  const leggi = function (p) {
+    const r = UrlFetchApp.fetch(base + p, { headers: h, muteHttpExceptions: true });
+    return r.getResponseCode() < 300 ? JSON.parse(r.getContentText()) : {};
+  };
+  const campi = function (d) { const o = {}; Object.keys((d && d.fields) || {}).forEach(function (k) { o[k] = fbVal_(d.fields[k]); }); return o; };
+  const iscritti = (leggi('rider?pageSize=200').documents || [])
+    .map(function (d) { const r = campi(d); r.nome = r.nome || decodeURIComponent(d.name.split('/').pop()); return r; })
+    .filter(function (r) { return r.challenge === true && String(r.nome).toUpperCase() !== 'TEST'; })
+    .map(function (r) { return r.nome; });
+  const prima = campi(leggi('config/challenge'));
+  const dati = { mese: mese, minimo: CH_MINIMO, aggiornata: ora.getTime(), classifica: classificaChallenge_(mese, iscritti), precedente: prima.precedente || null };
+
+  // il giorno 1: chiusura del mese passato
+  const mesePrima = Utilities.formatDate(new Date(ora.getFullYear(), ora.getMonth(), 0, 12), 'Europe/Rome', 'yyyy-MM');
+  if (Utilities.formatDate(ora, 'Europe/Rome', 'd') === '1' && (!prima.precedente || prima.precedente.mese !== mesePrima)) {
+    const fin = classificaChallenge_(mesePrima, iscritti).filter(function (x) { return x.n >= CH_MINIMO; });
+    const buono = Number(campi(leggi('segreti/app')).buono) || 0, imp = imp_();
+    if (fin.length) dati.precedente = { mese: mesePrima, nome: fin[0].nome, voto: fin[0].voto, n: fin[0].n };
+    if (imp.EMAIL_REPORT) MailApp.sendEmail({ to: String(imp.EMAIL_REPORT), subject: '🏆 Challenge rider ' + mesePrima + (fin.length ? ': vince ' + fin[0].nome : ': nessun vincitore'),
+      htmlBody: '<div style="font-family:Arial,sans-serif"><h2>Challenge rider · ' + mesePrima + '</h2>' +
+        (fin.length ? '<p>Vince <b>' + fin[0].nome + '</b> con <b>' + String(fin[0].voto).replace('.', ',') + '/10</b> su ' + fin[0].n + ' consegne.</p>' +
+          '<p>' + (buono ? 'Premio: <b>buono Amazon da ' + buono.toFixed(2).replace('.', ',') + ' €</b>, da comprare e mandare.' : 'Valore del buono non impostato nella centrale.') + '</p>' +
+          '<table cellpadding="6" style="border-collapse:collapse">' + fin.map(function (x, i) { return '<tr><td>' + (i + 1) + '°</td><td>' + x.nome + '</td><td><b>' + String(x.voto).replace('.', ',') + '</b></td><td>' + x.n + ' consegne</td><td style="color:#888">tempi ' + x.tempi + ' · puntualità ' + x.puntualita + ' · rientri ' + x.rientri + '</td></tr>'; }).join('') + '</table>'
+          : '<p>Nessun partecipante ha raggiunto ' + CH_MINIMO + ' consegne.</p>') + '</div>' });
+  }
+  const r = UrlFetchApp.fetch(base + 'config/challenge', { method: 'patch', contentType: 'application/json', headers: h, muteHttpExceptions: true,
+    payload: JSON.stringify({ fields: fbEnc_(dati).mapValue.fields }) });
+  if (r.getResponseCode() >= 300) console.log('Challenge: ' + r.getContentText().slice(0, 300));
+}
+
+/** Calcola i voti del mese (yyyy-MM) per i rider iscritti, dal Foglio. */
+function classificaChallenge_(mese, iscritti) {
+  const st = {}; iscritti.forEach(function (n) { st[n] = { n: 0, t: [], p: [], r: [] }; });
+  const delMese = function (d) { return d instanceof Date && Utilities.formatDate(d, 'Europe/Rome', 'yyyy-MM') === mese; };
+  const num = function (v) { return v === '' || v === null || isNaN(Number(v)) ? null : Number(v); };
+  const lim = function (x) { return Math.max(0, Math.min(1, x)); };
+  righe_('Consegne').forEach(function (c) {
+    const s = st[c.Rider]; if (!s || !delMese(c.Consegnata)) return;
+    s.n++;
+    const rt = num(c['Ritardo tratta (min)']), ro = num(c['Ritardo su orario (min)']);
+    if (rt !== null) s.t.push(lim(1 - rt / 10));            // in linea con Google (sosta compresa) = pieno, 10 min in più = zero
+    if (ro !== null) s.p.push(lim(1 - (ro - 15) / 15));     // entro l'orario + 15 = pieno, 30 min oltre = zero
+  });
+  righe_('Giri').forEach(function (g) {
+    const s = st[g.Rider]; if (!s || !delMese(g.Partenza)) return;
+    const re = num(g['Rientro reale (min)']), go = num(g['Rientro Google (min)']);
+    if (re !== null && go !== null) s.r.push(lim(1 - (re - go - 2) / 10)); // 2 min di margine, poi 10 min = zero
+  });
+  const media = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; };
+  return Object.keys(st).map(function (nome) {
+    const s = st[nome], m = { tempi: media(s.t), puntualita: media(s.p), rientri: media(s.r) };
+    let som = 0, pes = 0; Object.keys(CH_PESI).forEach(function (k) { if (m[k] !== null) { som += m[k] * CH_PESI[k]; pes += CH_PESI[k]; } });
+    const dieci = function (v) { return v === null ? '' : Math.round(v * 100) / 10; };
+    return { nome: nome, n: s.n, voto: pes ? Math.round(som / pes * 100) / 10 : 0, tempi: dieci(m.tempi), puntualita: dieci(m.puntualita), rientri: dieci(m.rientri) };
+  }).sort(function (a, b) { return (b.n >= CH_MINIMO) - (a.n >= CH_MINIMO) || b.voto - a.voto || b.n - a.n; });
+}
+
+/** Valore JS → formato Firestore REST. */
+function fbEnc_(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === 'boolean') return { booleanValue: v };
+  if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  if (typeof v === 'string') return { stringValue: v };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(fbEnc_) } };
+  const f = {}; Object.keys(v).forEach(function (k) { f[k] = fbEnc_(v[k]); }); return { mapValue: { fields: f } };
+}

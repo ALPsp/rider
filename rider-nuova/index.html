@@ -81,7 +81,7 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
 const { $, tutti, esc, euro, hhmm } = ALP;
 
 /* ---------- stato (arriva tutto da Firebase, in tempo reale) ---------- */
-let NOME = ALP.ls.get('rider_nome'), R = null, C = [], X = [], MIEI_SCAMBI = [], V = [], RIDER = [], KM = {}, SEG = {}, TURNO = null, GIRO = null;
+let NOME = ALP.ls.get('rider_nome'), R = null, C = [], X = [], MIEI_SCAMBI = [], V = [], RIDER = [], KM = {}, SEG = {}, TURNO = null, GIRO = null, CH = null;
 let schermo = '', CHIUSURA = null, bloccato = false, noti = null, mioPunto = null, gpsWatch = null, wake = null, ultimoInvio = 0, prima = null, dir = null;
 const OGGI = () => ALP.oggi();
 const attive = () => C.filter(c => c.rider === NOME && c.stato !== 'consegnata' && c.stato !== 'annullata');
@@ -132,6 +132,7 @@ async function avvia() {
   L(FB.doc('km/' + NOME, d => { KM.mio = d; disegna(); }));
   L(FB.doc('km/FURGONE', d => { KM.furgone = d; }));
   L(FB.doc('segreti/app', d => { SEG = d || {}; }));
+  L(FB.doc('config/challenge', d => { CH = d; aggiornaChallenge(); }));
 }
 let ascTurno = null, ascGiro = null;
 function collega() {
@@ -185,7 +186,7 @@ function turno(fine) {
   const furg = fine ? !!TURNO.furgone : false;
   let letti = null;
   $('#app').innerHTML = `<div class="pag">
-    ${R && R.premio ? '' : ''}
+    ${fine ? '' : cardChallenge()}
     <div id="cont">${contatoreKm(furg)}</div>
     ${fine ? '' : `<label class="spunta"><input type="checkbox" id="furg"><span>USO IL FURGONE DI AMO LA PIZZA<small>I km vanno nel contatore del furgone, non nei tuoi</small></span></label>`}
     <div class="card"><h2>${fine ? 'Km di fine servizio' : 'Km di inizio servizio'}</h2>
@@ -197,6 +198,7 @@ function turno(fine) {
     </div>
     <button class="btn n" id="ok">${fine ? '🏁 Chiudo il servizio' : 'Inizio servizio'}</button>
     ${fine ? '<button class="btn s" id="no">Indietro</button>' : ''}</div>`;
+  agganciChallenge();
   if (!fine) $('#furg').onchange = () => { $('#cont').innerHTML = contatoreKm($('#furg').checked); $('#km').placeholder = ultimoKm($('#furg').checked) ? 'ultima volta ' + ultimoKm($('#furg').checked) : 'es. 48215'; };
   $('#foto').onclick = () => $('#file').click();
   $('#file').onchange = async e => {
@@ -415,6 +417,32 @@ function portafoglio() {
   p.inTasca = Math.max(0, Math.round((p.contanti - p.versato - p.attesa) * 100) / 100);
   return p;
 }
+/* ---------- challenge mensile: partecipazione libera, classifica aggiornata ogni notte dallo script ---------- */
+function cardChallenge() {
+  const dentro = !!(R && R.challenge), min = (CH && CH.minimo) || 20, lista = (CH && CH.mese === ALP.mese() && CH.classifica) || [];
+  const io = lista.find(x => x.nome === NOME), ok = lista.filter(x => x.n >= min);
+  const mese = new Date().toLocaleDateString('it-IT', { month: 'long' });
+  return `<div class="card" id="challenge"><h2>🏆 Challenge di ${mese}</h2>
+    ${Number(SEG.buono) ? `<div class="muto">Chi vince riceve un <b>buono Amazon da ${euro(Number(SEG.buono))}</b>. Si entra in classifica con almeno ${min} consegne.</div>` : `<div class="muto">Si entra in classifica con almeno ${min} consegne.</div>`}
+    ${dentro ? `${ok.length ? ok.map((x, i) => `<div style="display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:12px;${x.nome === NOME ? 'background:#fff4c2;font-weight:800' : ''}">
+        <span style="width:26px">${['🥇', '🥈', '🥉'][i] || (i + 1) + '°'}</span><span style="flex:1">${esc(x.nome)}</span><b>${String(x.voto).replace('.', ',')}</b><span class="muto">/10</span></div>`).join('')
+        : '<div class="muto">Classifica ancora vuota: si aggiorna ogni notte.</div>'}
+      ${io && io.n < min ? `<div class="avv">Hai ${io.n} consegne questo mese: te ne mancano ${min - io.n} per entrare in classifica.</div>` : ''}
+      <div class="muto" style="font-size:12px">Voto su 10: tempi contro Google con 3 minuti di sosta (40%), puntualità sull'orario (40%), rientri in pizzeria (20%).</div>
+      <button class="btn s" id="chEsci">Non partecipo più</button>`
+    : `<button class="btn p" id="chEntra">🏆 Partecipo alla challenge</button>`}
+    ${CH && CH.precedente ? `<div class="muto" style="font-size:12px">Il mese scorso ha vinto <b>${esc(CH.precedente.nome)}</b> con ${String(CH.precedente.voto).replace('.', ',')}/10.</div>` : ''}</div>`;
+}
+function aggiornaChallenge() {
+  const box = $('#challenge'); if (!box) return;
+  box.outerHTML = cardChallenge(); agganciChallenge();
+}
+function agganciChallenge() {
+  const sv = v => FB.scrivi('rider/' + NOME, { challenge: v }, true).then(() => ALP.toast(v ? 'Sei nella challenge 🏆' : 'Non partecipi più'), e => ALP.toast('Non salvato: ' + e.message, 1));
+  if ($('#chEntra')) $('#chEntra').onclick = () => sv(true);
+  if ($('#chEsci')) $('#chEsci').onclick = () => { if (confirm('Esci dalla challenge di questo mese?')) sv(false); };
+}
+
 function cardPortafoglio() {
   const p = portafoglio(); if (!p.n && !p.versato) return '';
   return `<div class="card wallet"><h2>👛 Portafoglio di oggi</h2>
@@ -445,8 +473,10 @@ function preparaGiro() {
       <button class="btn s" id="agg">📷 Aggiungi una consegna</button>
     </div>
     ${cardPortafoglio()}
+    ${cardChallenge()}
     ${!seq.length ? `<button class="btn s" id="fine">🏁 Fine servizio</button>` : ''}</div>`;
   agganciComuni();
+  agganciChallenge();
   if ($('#agg')) $('#agg').onclick = () => nuovaConsegna();
   if ($('#parti')) $('#parti').onclick = () => parti(seq);
   if ($('#fine')) $('#fine').onclick = () => fineTurno(1);

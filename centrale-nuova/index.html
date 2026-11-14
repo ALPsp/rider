@@ -628,13 +628,14 @@ function fineTurno() {
         <div class="avv" style="${SEG.gemini ? 'background:#e2f3e8;color:#1d7a3d' : ''}">${SEG.gemini ? '✓ Lettura delle foto attiva' : '⚠️ Lettura delle foto non attiva'}<button class="mini" id="cambiak" style="margin-left:auto">Sostituisci chiave</button></div>
         <label class="c" id="rigak" style="display:none">Nuova chiave Gemini<input id="k" type="password" placeholder="incolla qui la chiave"></label>
         <label class="c">Fondo cassa del rider €<input id="fondo" inputmode="decimal" value="${String(Number(SEG.fondo) || ALP.FONDO).replace('.', ',')}"></label>
+        <label class="c">Buono Amazon per chi vince la challenge €<input id="buono" inputmode="decimal" placeholder="es. 30" value="${SEG.buono ? String(SEG.buono).replace('.', ',') : ''}"></label>
         <button class="btn s" id="salvak">Salva impostazioni</button>
         <button class="btn s" id="esci">Esci da questo dispositivo</button></div></details>
     <button class="btn n" style="margin-top:14px" id="chiudi">Chiudi</button>`, () => {
     $('#chiudi').onclick = chiudi;
     $('#cambiak').onclick = () => { $('#rigak').style.display = ''; $('#k').focus(); };
     $('#salvak').onclick = () => {
-      const d = { fondo: ALP.num($('#fondo').value) || ALP.FONDO };
+      const d = { fondo: ALP.num($('#fondo').value) || ALP.FONDO, buono: ALP.num($('#buono').value) || 0 };
       if ($('#k').value.trim()) d.gemini = $('#k').value.trim();
       FB.scrivi('segreti/app', d, true).then(() => ALP.toast('Salvato ✓'), e => ALP.toast('Non salvato: ' + e.message, 1));
     };
