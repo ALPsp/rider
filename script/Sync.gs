@@ -30,7 +30,7 @@ function syncFirebase(sempre) {
   try {
     const pr = PropertiesService.getScriptProperties(), dal = Number(pr.getProperty('sync_t') || 0) - 120000, ora = Date.now();
     const cons = fbCambiati_('consegne', dal), giri = fbCambiati_('giri', dal), turni = fbCambiati_('turni', dal), vers = fbCambiati_('versamenti', dal);
-    if (!cons.length && !giri.length && !turni.length && !vers.length) { pr.setProperty('sync_t', String(ora)); return; }
+    if (!cons.length && !giri.length && !turni.length && !vers.length) { archiviaFoto_(); pr.setProperty('sync_t', String(ora)); return; }
     const imp = imp_();
     giri.forEach(function (g) { syncGiro_(g); });
     cons.forEach(function (c) { syncConsegna_(c, imp); });
@@ -38,6 +38,7 @@ function syncFirebase(sempre) {
     analizzaConsegne_(imp);
     chiudiGiri_(giri, imp);
     turni.forEach(function (t) { syncTurno_(t, imp); });
+    archiviaFoto_();
     pr.setProperty('sync_t', String(ora));
   } catch (e) { console.log('Sync: ' + (e && e.stack || e)); }
   finally { lock.releaseLock(); }
@@ -151,6 +152,46 @@ function chiudiGiri_(giri, imp) {
     }
     if (g.rientro) { const r2 = riga_('Giri', g.id); if (r2.Stato !== 'Chiuso') chiudiGiro_(r2, imp, dt_(g.rientro)); }
   });
+}
+
+/* ---------- foto di fine turno: da Firebase a Drive ----------
+   Cruscotto e 4 lati del furgone arrivano nella raccolta "foto". Qui si salvano nella cartella Drive
+   "APP RIDER – Foto cruscotto" (sottocartella del mese), si scrive il link nella riga del turno e si cancella il documento. */
+function archiviaFoto_() {
+  const base = 'https://firestore.googleapis.com/v1/projects/' + FB_PROGETTO + '/databases/(default)/documents/';
+  const h = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
+  const r = UrlFetchApp.fetch(base + 'foto?pageSize=15', { headers: h, muteHttpExceptions: true });
+  if (r.getResponseCode() >= 300) { console.log('Foto: ' + r.getContentText().slice(0, 300)); return; }
+  const docs = JSON.parse(r.getContentText()).documents || [];
+  if (!docs.length) return;
+  colonna_('Turni', 'Foto furgone');
+  const cartelle = {};
+  docs.forEach(function (d) {
+    try {
+      const f = {}; Object.keys(d.fields || {}).forEach(function (k) { f[k] = fbVal_(d.fields[k]); });
+      const t = riga_('Turni', f.turno);
+      if (!t && Date.now() - Number(f.agg || 0) < 3600000) return; // il turno non è ancora nel Foglio: riprova al giro dopo
+      const m = String(f.img || '').match(/^data:([^;]+);base64,(.*)$/);
+      if (m) {
+        const mese = String(f.data || '').slice(0, 7) || Utilities.formatDate(new Date(), 'Europe/Rome', 'yyyy-MM');
+        if (!cartelle[mese]) { const c = cartellaFoto_(), it = c.getFoldersByName(mese); cartelle[mese] = it.hasNext() ? it.next() : c.createFolder(mese); }
+        const nome = [f.data, f.rider, f.lato].join(' ') + (m[1].indexOf('png') >= 0 ? '.png' : '.jpg');
+        const link = cartelle[mese].createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], nome)).getUrl();
+        if (t) {
+          if (f.lato === 'cruscotto') scrivi_('Turni', t._riga, { 'Foto fine': link });
+          else { const prima = String(t['Foto furgone'] || ''); scrivi_('Turni', t._riga, { 'Foto furgone': (prima ? prima + '\n' : '') + f.lato + ': ' + link }); }
+        }
+      }
+      UrlFetchApp.fetch('https://firestore.googleapis.com/v1/' + d.name, { method: 'delete', headers: h, muteHttpExceptions: true });
+    } catch (e) { console.log('Foto ' + d.name + ': ' + (e && e.stack || e)); }
+  });
+}
+/** Aggiunge in fondo alla scheda la colonna, se manca. */
+function colonna_(scheda, nome) {
+  const sh = sh_(scheda), h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  if (h.indexOf(nome) >= 0) return;
+  sh.getRange(1, h.length + 1).setValue(nome).setFontWeight('bold').setBackground('#eef0b3');
+  delete LETTE_[scheda];
 }
 
 /* ---------- turni e km ---------- */
