@@ -168,9 +168,10 @@
           '"pizze":numero dopo PIZ:,"burger":numero dopo BUR:,' +
           '"pagamento":"Contanti" oppure "SumUp","cassiere":"nome dopo OP.","note":"citofono, scala, piano se scritti"}. ' +
           'Regole: "PONY POS" o "Carte di credito" = SumUp; un codice "PIENISSIMO" in fondo = ordine dall\'app, quindi SumUp; "PONY CONTANTI" o altro = Contanti; se il pagamento non è scritto da nessuna parte = Contanti. Numeri non leggibili = 0, testi non leggibili = "". Rispondi SEMPRE con il JSON, anche se alcuni dati mancano.';
-      const prova = async (mod, senzaThink) => {
-        const gc = { temperature: 0, responseMimeType: 'application/json' };
-        if (!senzaThink) gc.thinkingConfig = { thinkingBudget: 0 };
+      // impostazione "pensiero" giusta per ogni generazione: 2.x = budget 0, 3.x e successivi = livello minimo
+      const pensiero = (mod, liv) => /gemini-2\./.test(mod) ? { thinkingBudget: 0 } : { thinkingLevel: liv || 'minimal' };
+      const prova = async (mod, liv) => {
+        const gc = { temperature: 0, responseMimeType: 'application/json', thinkingConfig: pensiero(mod, liv) };
         const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + mod.replace(/^models\//, '') + ':generateContent?key=' + encodeURIComponent(chiave), {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: dataUrl.split(',')[1] } }] }],
@@ -181,39 +182,36 @@
         if (!r.ok) { const e = new Error((j.error && j.error.message) || ('errore ' + r.status)); e.status = r.status; throw e; }
         const parti = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
         if (!parti) throw new Error('risposta vuota' + (j.candidates && j.candidates[0] ? ' (' + j.candidates[0].finishReason + ')' : ''));
-        const t = parti.map(p => p.text || '').join('');
+        const t = parti.filter(p => !p.thought).map(p => p.text || '').join('');
         let o = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
         if (Array.isArray(o)) o = o[0] || {};
         for (const k in o) if (o[k] === null) o[k] = '';
         return o;
       };
-      // modello: quello salvato che ha funzionato, altrimenti quello delle impostazioni
-      let mod; try { mod = localStorage.getItem('alp_gemini_ok'); } catch (e) {}
-      mod = mod || modello || 'gemini-flash-latest';
       const usa = async m => {
         try { return await prova(m); }
-        catch (e) { if (/think/i.test(e.message)) return await prova(m, true); throw e; }
+        catch (e) { if (/think/i.test(e.message)) return await prova(m, 'low'); throw e; } // se "minimal" non è accettato
       };
-      // trova da solo il modello "flash" più recente disponibile per questa chiave
-      const cercaModello = async () => {
-        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(chiave));
-        const j = await r.json();
-        const ver = n => parseFloat((n.match(/gemini-(\d+(\.\d+)?)/) || [0, 0])[1]);
-        const ok = (j.models || []).filter(x => (x.supportedGenerationMethods || []).includes('generateContent'))
-          .map(x => x.name.replace(/^models\//, ''))
-          .filter(n => /^gemini-.*flash/.test(n) && !/lite|image|tts|live|audio|thinking|exp|8b/.test(n))
-          .sort((x, y) => ver(y) - ver(x) || (/preview/.test(x) - /preview/.test(y)) || x.length - y.length);
-        return ok[0] || 'gemini-flash-latest';
-      };
-      let o;
-      try { o = await usa(mod); }
-      catch (e) {
-        if (e.status === 404 || e.status === 400 || /no longer|not found|not supported|deprecat/i.test(e.message)) {
-          mod = await cercaModello(); o = await usa(mod);
-        } else o = await usa(mod); // secondo tentativo
+      const morto = e => e.status === 404 || /no longer|not found|not supported for generateContent|deprecat|is not available/i.test(e.message);
+      // ordine: quello che ha già funzionato, poi i modelli veloci (Flash-Lite) e solo dopo i Flash normali
+      let salvato; try { salvato = localStorage.getItem('alp_gemini_v2'); } catch (e) {}
+      const lista = [salvato, 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.5-flash', 'gemini-flash-latest']
+        .filter((x, i, v) => x && !/gemini-2\.5-flash$/.test(x) && v.indexOf(x) === i);
+      let ultimo;
+      for (const m of lista) {
+        try { const o = await usa(m); try { localStorage.setItem('alp_gemini_v2', m); } catch (e) {} return o; }
+        catch (e) { ultimo = e; if (!morto(e)) { try { const o = await usa(m); localStorage.setItem('alp_gemini_v2', m); return o; } catch (e2) { ultimo = e2; if (!morto(e2)) throw e2; } } }
       }
-      try { localStorage.setItem('alp_gemini_ok', mod); } catch (e) {}
-      return o;
+      // ultima spiaggia: chiedo a Google l'elenco e prendo un Flash-Lite (veloce) o un Flash
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(chiave));
+      const j = await r.json().catch(() => ({}));
+      const ver = n => parseFloat((n.match(/gemini-(\d+(\.\d+)?)/) || [0, 0])[1]);
+      const m = (j.models || []).filter(x => (x.supportedGenerationMethods || []).includes('generateContent'))
+        .map(x => x.name.replace(/^models\//, ''))
+        .filter(n => /^gemini-.*flash/.test(n) && !/image|tts|live|audio|exp|8b/.test(n))
+        .sort((x, y) => (/lite/.test(y) - /lite/.test(x)) || ver(y) - ver(x) || (/preview/.test(x) - /preview/.test(y)))[0];
+      if (!m) throw ultimo || new Error('nessun modello disponibile');
+      const o = await usa(m); try { localStorage.setItem('alp_gemini_v2', m); } catch (e) {} return o;
     },
 
     /** suono breve + vibrazione (nuova consegna, rider libero…) */
