@@ -50,6 +50,11 @@ service cloud.firestore {
       allow read: if dentro();
       allow write: if hub() || sono(chi) || (rider() && chi == 'FURGONE');
     }
+    match /foto/{id} {
+      allow read: if hub();
+      allow create: if rider() && request.resource.data.rider == io() && request.resource.data.img is string;
+      allow delete: if hub();
+    }
     match /scambi/{id} {
       allow read: if hub() || (rider() && (resource.data.a == io() || resource.data.da == io()));
       allow create: if rider() && request.resource.data.da == io();

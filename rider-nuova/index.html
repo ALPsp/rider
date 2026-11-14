@@ -228,21 +228,26 @@ function turno(fine) {
 function ultimoKm(furgone) { const k = furgone ? KM.furgone : KM.mio; return k && k.ultimo ? k.ultimo : null; }
 
 
-/* ---------- FINE TURNO: tre conferme, km, SumUp, contanti ---------- */
+/* ---------- FINE TURNO: km, SumUp, contanti, foto del furgone, due parole ---------- */
 const fondo = () => Number(SEG.fondo) || ALP.FONDO;
+const LATI = [['davanti', 'Davanti'], ['dietro', 'Dietro'], ['sx', 'Lato sinistro'], ['dx', 'Lato destro']];
 function fineTurno(passo) {
-  CHIUSURA = CHIUSURA || { passo: 1, avvisi: [] };
+  CHIUSURA = CHIUSURA || { passo: 1, foto: {} };
   CHIUSURA.passo = passo; schermo = 'chiusura' + passo; smontaMappa();
   const p = portafoglio();
   if (passo === 1) return fineKm();
   if (passo === 2) return fineSumUp(p);
-  return fineContanti(p);
+  if (passo === 3) return fineContanti(p);
+  if (passo === 4 && TURNO.furgone) return fineFurgone();
+  return fineNote(p);
 }
+const NP = () => TURNO.furgone ? 5 : 4;
 function testaPassi(n) {
-  return `<div style="display:flex;gap:6px">${[1, 2, 3].map(k => `<div style="flex:1;height:6px;border-radius:3px;background:${k <= n ? 'var(--rosso2)' : '#e2dbd0'}"></div>`).join('')}</div>
-    <div class="muto" style="text-align:center;font-size:13px">Passo ${n} di 3</div>`;
+  const tot = NP();
+  return `<div style="display:flex;gap:6px">${Array.from({ length: tot }, (_, k) => `<div style="flex:1;height:6px;border-radius:3px;background:${k < n ? 'var(--rosso2)' : '#e2dbd0'}"></div>`).join('')}</div>
+    <div class="muto" style="text-align:center;font-size:13px">Passo ${n} di ${tot}</div>`;
 }
-/** 1 · km: li calcola l'app dalla foto, il rider conferma o corregge */
+/** 1 · km */
 function fineKm() {
   let letti = null;
   $('#app').innerHTML = `<div class="pag">${testaPassi(1)}
@@ -252,8 +257,7 @@ function fineKm() {
       <input type="file" accept="image/*" capture="environment" id="file" hidden>
       <div class="muto" id="stato" style="text-align:center"></div>
       <label class="c">Km sul cruscotto adesso<input id="km" inputmode="numeric" placeholder="es. ${TURNO.kmInizio + 40}"></label>
-      <div id="calc"></div>
-    </div>
+      <div id="calc"></div></div>
     <button class="btn n" id="ok">Avanti</button>
     <button class="btn s" id="no">Torna indietro</button></div>`;
   const calcola = () => {
@@ -270,7 +274,8 @@ function fineKm() {
     const f = e.target.files[0]; if (!f) return;
     const t0 = Date.now(); $('#stato').textContent = 'Leggo i km…';
     try {
-      const r = await ALP.leggiFoto(await ALP.comprimi(f, 1200), 'km', SEG.gemini, SEG.modello);
+      const d = await ALP.comprimi(f, 1200), r = await ALP.leggiFoto(d, 'km', SEG.gemini, SEG.modello);
+      CHIUSURA.fotoKm = d;
       if (r.km) { letti = Math.round(r.km); $('#km').value = letti; $('#stato').textContent = 'Letto in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓'; calcola(); }
       else $('#stato').textContent = 'Non riesco a leggere: scrivili a mano';
     } catch (er) { $('#stato').textContent = 'Lettura non riuscita: scrivili a mano'; }
@@ -284,7 +289,7 @@ function fineKm() {
     fineTurno(2);
   };
 }
-/** 2 · SumUp: confronta con il resoconto dell'app SumUp */
+/** 2 · SumUp */
 function fineSumUp(p) {
   const atteso = Math.round(p.sumup * 100) / 100, n = fatte().filter(c => c.pagamento === 'SumUp').length;
   $('#app').innerHTML = `<div class="pag">${testaPassi(2)}
@@ -294,8 +299,7 @@ function fineSumUp(p) {
       <button class="btn v" id="si">✓ Sì, torna</button>
       <div style="display:flex;align-items:center;gap:10px;color:var(--muto);font-size:13px"><span style="flex:1;height:1px;background:#e4ded5"></span>no<span style="flex:1;height:1px;background:#e4ded5"></span></div>
       <label class="c">Quanto risulta su SumUp<input id="v" inputmode="decimal" placeholder="es. ${String(atteso).replace('.', ',')}"></label>
-      <button class="btn s" id="div">Vai avanti con questo importo</button>
-    </div>
+      <button class="btn s" id="div">Vai avanti con questo importo</button></div>
     <button class="btn s" id="no">Indietro</button></div>`;
   const vai = (val, diverso) => { CHIUSURA.sumup = val; CHIUSURA.sumupAtteso = atteso; CHIUSURA.sumupDiverso = diverso; fineTurno(3); };
   $('#si').onclick = () => vai(atteso, false);
@@ -308,7 +312,7 @@ function fineSumUp(p) {
   };
   $('#no').onclick = () => fineTurno(1);
 }
-/** 3 · contanti: fondo + incassato, poi versa tutto in cassa */
+/** 3 · contanti: fondo + incassato */
 function fineContanti(p) {
   const F = fondo(), incasso = Math.round((p.contanti - p.versato - p.attesa) * 100) / 100, atteso = Math.round((F + incasso) * 100) / 100;
   $('#app').innerHTML = `<div class="pag">${testaPassi(3)}
@@ -318,35 +322,82 @@ function fineContanti(p) {
       <button class="btn v" id="si">✓ Sì, verso ${euro(atteso)}</button>
       <div style="display:flex;align-items:center;gap:10px;color:var(--muto);font-size:13px"><span style="flex:1;height:1px;background:#e4ded5"></span>no<span style="flex:1;height:1px;background:#e4ded5"></span></div>
       <label class="c">Quanto hai davvero<input id="v" inputmode="decimal" placeholder="es. ${String(atteso).replace('.', ',')}"></label>
-      <button class="btn s" id="div">Verso questo importo</button>
-    </div>
+      <button class="btn s" id="div">Verso questo importo</button></div>
     <button class="btn s" id="no">Indietro</button></div>`;
-  const sumup = CHIUSURA.sumup;
-  const chiudi = (val, diverso) => {
-    const ora = Date.now(), idv = ALP.id(), chi = TURNO.furgone ? 'FURGONE' : NOME, mese = ALP.mese();
-    const k = TURNO.furgone ? KM.furgone : KM.mio, fatti = CHIUSURA.km - TURNO.kmInizio;
-    const tot = (k && k.mese === mese ? k.km : 0) + fatti;
-    FB.insieme([
-      ['set', 'versamenti/' + idv, { id: idv, rider: NOME, data: OGGI(), servizio: ALP.servizio(), contanti: val, fondo: F, incasso,
-        sumup: sumup, consegne: p.n, ora, stato: 'attesa', fine: true, differenza: diverso ? Math.round((val - atteso) * 100) / 100 : 0, agg: ora }],
-      ['update', 'turni/' + TURNO.id, { fine: ora, kmFine: CHIUSURA.km, kmLettiFine: CHIUSURA.kmLetti, manualeFine: CHIUSURA.kmManuale, correttoFine: CHIUSURA.kmCorretto, km: fatti,
-        sumup: sumup, sumupAtteso: CHIUSURA.sumupAtteso, sumupDiverso: !!CHIUSURA.sumupDiverso,
-        contanti: val, contantiAtteso: atteso, contantiDiverso: diverso, fondo: F, agg: ora }],
-      ['merge', 'km/' + chi, { mese, km: tot, ultimo: CHIUSURA.km, agg: ora }],
-      ['merge', 'rider/' + NOME, { turno: null, giro: null, stato: 'fuori', agg: ora }]
-    ]).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
-    CHIUSURA = null; schermo = '';
-    alert('Servizio chiuso.\n' + fatti + ' km' + (TURNO.furgone ? ' (furgone)' : '') + '\nSumUp ' + euro(sumup) + '\nVersati ' + euro(val) + ', li conferma la cassa.\nGrazie!');
-  };
-  $('#si').onclick = () => chiudi(atteso, false);
+  const vai = (val, diverso) => { CHIUSURA.contanti = val; CHIUSURA.contantiAtteso = atteso; CHIUSURA.contantiDiverso = diverso; CHIUSURA.fondo = F; CHIUSURA.incasso = incasso; CHIUSURA.consegne = p.n; fineTurno(4); };
+  $('#si').onclick = () => vai(atteso, false);
   $('#div').onclick = () => {
     if (!$('#v').value.trim()) return ALP.toast('Scrivi quanto hai contato', 1);
     const v = ALP.num($('#v').value), d = Math.round((v - atteso) * 100) / 100;
-    if (Math.abs(d) < 0.005) return chiudi(atteso, false);
+    if (Math.abs(d) < 0.005) return vai(atteso, false);
     if (!confirm((d > 0 ? 'Hai ' + euro(d) + ' in più' : 'Mancano ' + euro(-d)) + ' rispetto a ' + euro(atteso) + '. Verso ' + euro(v) + '? Finisce nel report.')) return;
-    chiudi(v, true);
+    vai(v, true);
   };
   $('#no').onclick = () => fineTurno(2);
+}
+/** 4 · furgone: quattro foto, una per lato */
+function fineFurgone() {
+  const f = CHIUSURA.foto;
+  $('#app').innerHTML = `<div class="pag">${testaPassi(4)}
+    <div class="card"><h2>4 · Il furgone</h2>
+      <div class="muto">Quattro foto, una per lato. Servono a tutelare anche te.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${LATI.map(([k, et]) => `<button class="btn ${f[k] ? 'v' : 's'}" data-l="${k}" style="min-height:92px;flex-direction:column;gap:4px;font-size:15px">${f[k] ? '✓' : '📷'}<span>${et}</span></button>`).join('')}
+      </div>
+      <input type="file" accept="image/*" capture="environment" id="file" hidden></div>
+    <button class="btn n" id="ok">Avanti</button>
+    <button class="btn s" id="no">Indietro</button></div>`;
+  let lato = null;
+  tutti('[data-l]').forEach(b => b.onclick = () => { lato = b.dataset.l; $('#file').value = ''; $('#file').click(); });
+  $('#file').onchange = async e => {
+    const file = e.target.files[0]; if (!file || !lato) return;
+    try { CHIUSURA.foto[lato] = await ALP.comprimi(file, 900); ALP.toast('Foto presa'); fineTurno(4); }
+    catch (er) { ALP.toast('Foto non riuscita', 1); }
+  };
+  $('#no').onclick = () => fineTurno(3);
+  $('#ok').onclick = () => {
+    const mancano = LATI.filter(([k]) => !f[k]).map(([, et]) => et);
+    if (mancano.length && !confirm('Mancano: ' + mancano.join(', ') + '. Vado avanti lo stesso? Finisce nel report.')) return;
+    CHIUSURA.fotoMancanti = mancano;
+    fineTurno(5);
+  };
+}
+/** ultimo passo · due parole e le stelle */
+function fineNote(p) {
+  let stelle = 0;
+  const n = NP();
+  $('#app').innerHTML = `<div class="pag">${testaPassi(n)}
+    <div class="card"><h2>Com'è andata?</h2>
+      <div class="muto">Facoltativo. Lo legge solo Andrea.</div>
+      <div style="display:flex;justify-content:center;gap:6px" id="st">${[1, 2, 3, 4, 5].map(k => `<button data-s="${k}" aria-label="${k} stelle" style="width:52px;height:52px;border:0;background:transparent;font-size:34px;line-height:1;opacity:.3">★</button>`).join('')}</div>
+      <label class="c">Qualcosa da dire<textarea id="nota" rows="4" placeholder="Problemi, moto, clienti, idee…" style="font:600 16px inherit;padding:12px;border-radius:10px;border:1px solid #d6cfc5"></textarea></label></div>
+    <button class="btn p" id="ok">🏁 Chiudo il servizio</button>
+    <button class="btn s" id="no">Indietro</button></div>`;
+  tutti('[data-s]').forEach(b => b.onclick = () => { stelle = Number(b.dataset.s); tutti('[data-s]').forEach(x => x.style.opacity = Number(x.dataset.s) <= stelle ? '1' : '.3'); });
+  $('#no').onclick = () => fineTurno(TURNO.furgone ? 4 : 3);
+  $('#ok').onclick = () => chiudiTurno(stelle, $('#nota').value.trim());
+}
+function chiudiTurno(stelle, nota) {
+  const C_ = CHIUSURA, ora = Date.now(), idv = ALP.id(), chi = TURNO.furgone ? 'FURGONE' : NOME, mese = ALP.mese();
+  const k = TURNO.furgone ? KM.furgone : KM.mio, fatti = C_.km - TURNO.kmInizio;
+  const tot = (k && k.mese === mese ? k.km : 0) + fatti;
+  const ops = [
+    ['set', 'versamenti/' + idv, { id: idv, rider: NOME, data: OGGI(), servizio: ALP.servizio(), contanti: C_.contanti, fondo: C_.fondo, incasso: C_.incasso,
+      sumup: C_.sumup, consegne: C_.consegne, ora, stato: 'attesa', fine: true, differenza: C_.contantiDiverso ? Math.round((C_.contanti - C_.contantiAtteso) * 100) / 100 : 0, agg: ora }],
+    ['update', 'turni/' + TURNO.id, { fine: ora, kmFine: C_.km, kmLettiFine: C_.kmLetti, manualeFine: C_.kmManuale, correttoFine: C_.kmCorretto, km: fatti,
+      sumup: C_.sumup, sumupAtteso: C_.sumupAtteso, sumupDiverso: !!C_.sumupDiverso,
+      contanti: C_.contanti, contantiAtteso: C_.contantiAtteso, contantiDiverso: !!C_.contantiDiverso, fondo: C_.fondo,
+      stelle: stelle || '', nota: nota || '', fotoMancanti: (C_.fotoMancanti || []).join(', '), agg: ora }],
+    ['merge', 'km/' + chi, { mese, km: tot, ultimo: C_.km, agg: ora }],
+    ['merge', 'rider/' + NOME, { turno: null, giro: null, stato: 'fuori', agg: ora }]
+  ];
+  FB.insieme(ops).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+  // le foto partono a parte, una per volta: non bloccano la chiusura
+  const foto = Object.assign({}, C_.foto); if (C_.fotoKm) foto.cruscotto = C_.fotoKm;
+  Object.keys(foto).forEach(lato => FB.scrivi('foto/' + TURNO.id + '-' + lato,
+    { turno: TURNO.id, rider: NOME, data: OGGI(), lato, img: foto[lato], agg: Date.now() }).catch(() => {}));
+  CHIUSURA = null; schermo = '';
+  alert('Servizio chiuso.\n' + fatti + ' km' + (TURNO.furgone ? ' (furgone)' : '') + '\nSumUp ' + euro(C_.sumup) + '\nVersati ' + euro(C_.contanti) + ', li conferma la cassa.\nGrazie!');
 }
 
 function portafoglio() {

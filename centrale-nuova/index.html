@@ -600,9 +600,13 @@ function fineTurno() {
     const cont = f.filter(c => c.pagamento !== 'SumUp').reduce((a, c) => a + (c.importo || 0), 0), sum = f.filter(c => c.pagamento === 'SumUp').reduce((a, c) => a + (c.importo || 0), 0);
     const vers = VERS.filter(v => v.rider === n && v.stato === 'ok').reduce((a, v) => a + (v.contanti || 0), 0), tasca = Math.max(0, cont - vers);
     const tt = TURNI.filter(t => t.rider === n), km = tt.reduce((a, t) => a + (t.km || 0), 0);
-    const avv = [...new Set(tt.flatMap(t => [t.manualeInizio || t.correttoInizio ? 'km inizio a mano' : '', t.manualeFine || t.correttoFine ? 'km fine a mano' : '', t.furgone ? '🚐 furgone' : '', t.fine ? '' : 'turno aperto']).filter(String))];
+    const avv = [...new Set(tt.flatMap(t => [t.manualeInizio || t.correttoInizio ? 'km inizio a mano' : '', t.manualeFine || t.correttoFine ? 'km fine a mano' : '', t.furgone ? '🚐 furgone' : '', t.fine ? '' : 'turno aperto',
+      t.sumupDiverso ? 'SumUp corretto a mano' : '', t.contantiDiverso ? 'contanti diversi dal previsto' : '', t.fotoMancanti ? 'foto furgone mancanti: ' + t.fotoMancanti : '']).filter(String))];
+    const voti = tt.filter(t => t.stelle), note = tt.filter(t => t.nota);
     T.n += f.length; T.cont += cont; T.sum += sum; T.vers += vers; T.tasca += tasca; T.km += km;
-    return `<tr><td><b>${esc(n)}</b>${avv.length ? '<div class="muto" style="font-size:12px">⚠️ ' + avv.join(' · ') + '</div>' : ''}</td><td class="n">${f.length}</td><td class="n">${euro(cont)}</td><td class="n">${euro(sum)}</td>
+    return `<tr><td><b>${esc(n)}</b>${voti.length ? ' <span style="color:#d99a00">' + '★'.repeat(Math.round(voti.reduce((a, t) => a + t.stelle, 0) / voti.length)) + '</span>' : ''}
+      ${avv.length ? '<div class="muto" style="font-size:12px">⚠️ ' + avv.join(' · ') + '</div>' : ''}
+      ${note.length ? '<div style="font-size:12px;background:#f5f2ec;border-radius:8px;padding:5px 8px;margin-top:3px">💬 ' + note.map(t => esc(t.nota)).join(' · ') + '</div>' : ''}</td><td class="n">${f.length}</td><td class="n">${euro(cont)}</td><td class="n">${euro(sum)}</td>
       <td class="n">${tasca > 0 ? '<b style="color:#b3261e">' + euro(tasca) + '</b>' : '✓'}</td><td class="n">${km ? km + ' km' : '—'}</td></tr>`;
   }).join('');
   const mese = ALP.mese(), kmMese = KM.filter(k => k.mese === mese).sort((a, b) => (a.id === 'FURGONE') - (b.id === 'FURGONE') || b.km - a.km);
