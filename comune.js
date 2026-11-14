@@ -111,8 +111,14 @@
       return Math.round((d.getHours() * 60 + d.getMinutes()) - (h * 60 + m));
     },
 
-    /** Indirizzo → coordinate (OpenStreetMap, gratis). Ricorda i risultati per non chiedere due volte. */
-    async geocodifica(via, paese) {
+    /** Indirizzo → coordinate (OpenStreetMap, gratis). Una richiesta per volta, in coda, e ricorda i risultati. */
+    geocodifica(via, paese) {
+      const k = 'geo:' + ((via || '') + ', ' + (paese || "San Paolo d'Argon") + ', BG').replace(/\s+/g, ' ').trim().toLowerCase();
+      const c = A.ls.get(k); if (c) return Promise.resolve(JSON.parse(c));
+      A._coda = (A._coda || Promise.resolve()).then(() => new Promise(r => setTimeout(r, 1100))).then(() => A._geo(via, paese));
+      return A._coda;
+    },
+    async _geo(via, paese) {
       const q = (via + ', ' + (paese || "San Paolo d'Argon") + ', BG').replace(/\s+/g, ' ').trim(), k = 'geo:' + q.toLowerCase();
       const c = A.ls.get(k); if (c) return JSON.parse(c);
       const vicino = p => p && A.km(p, CASA) < 40 ? p : null;
