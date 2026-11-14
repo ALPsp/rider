@@ -163,20 +163,34 @@
       if (!chiave) throw new Error('Lettura foto non attiva');
       const prompt = tipo === 'km'
         ? 'Foto del cruscotto di uno scooter o di un furgone. Leggi il CONTACHILOMETRI TOTALE (il numero più grande, non il parziale/trip). Rispondi solo JSON: {"km": numero intero oppure null}'
-        : 'Foto di una comanda e di uno scontrino della pizzeria Amo la Pizza (San Paolo d\'Argon, BG), affiancati. Estrai i dati e rispondi solo JSON con queste chiavi: ' +
+        : 'Foto di una COMANDA della pizzeria Amo la Pizza (San Paolo d\'Argon, BG). Lo scontrino fiscale può esserci accanto oppure NO: se manca, leggi tutto dalla sola comanda (la comanda riporta anche prezzi e "Totale"). Estrai i dati e rispondi solo JSON con queste chiavi: ' +
           '{"tipo":"DOMICILIO" o "ASPORTO" o "","numero":"numero ordine dopo N:","cliente":"nome cliente","via":"via e numero civico","paese":"paese (la riga sotto la via, prima del trattino)","telefono":"","previsto":"orario PER LE in formato HH:MM","importo":numero dopo "Totale:",' +
           '"pizze":numero dopo PIZ:,"burger":numero dopo BUR:,' +
           '"pagamento":"Contanti" oppure "SumUp","cassiere":"nome dopo OP.","note":"citofono, scala, piano se scritti"}. ' +
-          'Regole: "PONY POS" o "Carte di credito" = SumUp; un codice "PIENISSIMO" in fondo = ordine dall\'app, quindi SumUp; "PONY CONTANTI" o altro = Contanti. Numeri non leggibili = 0, testi non leggibili = "".';
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + (modello || 'gemini-2.5-flash') + ':generateContent?key=' + encodeURIComponent(chiave), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: dataUrl.split(',')[1] } }] }],
-          generationConfig: { temperature: 0, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } } })
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error((j.error && j.error.message) || 'Lettura non riuscita');
-      const t = j.candidates[0].content.parts.map(p => p.text || '').join('');
-      return JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+          'Regole: "PONY POS" o "Carte di credito" = SumUp; un codice "PIENISSIMO" in fondo = ordine dall\'app, quindi SumUp; "PONY CONTANTI" o altro = Contanti; se il pagamento non è scritto da nessuna parte = Contanti. Numeri non leggibili = 0, testi non leggibili = "". Rispondi SEMPRE con il JSON, anche se alcuni dati mancano.';
+      const prova = async mod => {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + mod + ':generateContent?key=' + encodeURIComponent(chiave), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: dataUrl.split(',')[1] } }] }],
+            safetySettings: ['HARASSMENT', 'HATE_SPEECH', 'SEXUALLY_EXPLICIT', 'DANGEROUS_CONTENT'].map(c => ({ category: 'HARM_CATEGORY_' + c, threshold: 'BLOCK_NONE' })),
+            generationConfig: { temperature: 0, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } } })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error((j.error && j.error.message) || ('errore ' + r.status));
+        const parti = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
+        if (!parti) throw new Error('risposta vuota' + (j.candidates && j.candidates[0] ? ' (' + j.candidates[0].finishReason + ')' : ''));
+        const t = parti.map(p => p.text || '').join('');
+        let o = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+        if (Array.isArray(o)) o = o[0] || {};
+        for (const k in o) if (o[k] === null) o[k] = '';
+        return o;
+      };
+      const mod = modello || 'gemini-2.5-flash';
+      try { return await prova(mod); }
+      catch (e) { // secondo tentativo automatico (stesso modello, poi uno di riserva)
+        try { return await prova(mod); }
+        catch (e2) { if (mod !== 'gemini-2.5-flash') return await prova('gemini-2.5-flash'); throw e2; }
+      }
     },
 
     /** suono breve + vibrazione (nuova consegna, rider libero…) */

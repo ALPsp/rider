@@ -503,7 +503,7 @@ function schedaConsegna(c) {
   apri(`<div class="maniglia"></div><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${nuova ? 'Nuova consegna' : 'Consegna'}</h2>
       ${nuova ? '' : `<button class="mini" id="elim" style="color:var(--rosso2)">Elimina</button>`}</div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-      ${nuova ? `<button class="btn n" id="foto">📷 Foto comanda + scontrino</button><input type="file" accept="image/*" capture="environment" id="file" hidden><div class="muto" id="st" style="text-align:center;font-size:14px"></div>` : ''}
+      ${nuova ? `<button class="btn n" id="foto">📷 Foto comanda</button><input type="file" accept="image/*" capture="environment" id="file" hidden><div class="muto" id="st" style="text-align:center;font-size:14px"></div>` : ''}
       <div id="avvisi">${c.lontano && !c.lontanoOk ? `<div class="avv err">⚠️ Questo indirizzo risulta a ${c.lontano} minuti dalla pizzeria: controlla via e paese.</div>` : ''}</div>
       <div class="seg" id="tipo" style="max-width:360px"><button data-t="DOMICILIO">🛵 Domicilio</button><button data-t="ASPORTO">🥡 Asporto (ritira lui)</button></div>
       <div class="grid2" id="rigaVia"><label class="c">Via e numero<input id="f_via" value="${esc(c.via)}" placeholder="Via Roma 14"></label><label class="c">Paese<input id="f_paese" value="${esc(c.paese)}"></label></div>
@@ -532,7 +532,7 @@ function schedaConsegna(c) {
       $('#foto').onclick = () => $('#file').click();
       $('#file').onchange = async e => {
         const f = e.target.files[0]; if (!f) return;
-        const t0 = Date.now(); $('#st').textContent = 'Leggo comanda e scontrino… intanto puoi scrivere';
+        const t0 = Date.now(); $('#st').textContent = 'Leggo la comanda… intanto puoi scrivere';
         try {
           const o = await ALP.leggiFoto(await ALP.comprimi(f, 1600), 'ordine', SEG.gemini, SEG.modello);
           const metti = (id, v) => { if (v && !$(id).value) $(id).value = v; };
@@ -545,7 +545,7 @@ function schedaConsegna(c) {
           c.cassiere = o.cassiere || '';
           $('#avvisi').innerHTML = tipo === 'ASPORTO' ? '<div class="avv">🥡 Comanda di ASPORTO: va nella colonna VAP, senza rider.</div>' : '';
           $('#st').textContent = 'Letta in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓ · controlla i campi';
-        } catch (er) { $('#st').textContent = SEG.gemini ? 'Lettura non riuscita: scrivi a mano' : 'Lettura foto non ancora attiva (Fine turno › Impostazioni): scrivi a mano'; }
+        } catch (er) { $('#st').textContent = SEG.gemini ? 'Lettura non riuscita (' + (er.message || '').slice(0, 60) + '): scrivi a mano' : 'Lettura foto non ancora attiva (Fine turno › Impostazioni): scrivi a mano'; }
       };
     }
     $('#salva').onclick = async () => {

@@ -513,7 +513,7 @@ function nuovaConsegna() {
   bloccato = true;
   $('#extra').innerHTML = `<div class="velo" id="v"><div class="foglio"><div class="maniglia"></div><h2 style="margin:0">Aggiungi una consegna</h2>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
-      <button class="btn n" id="foto">📷 Foto comanda + scontrino</button><input type="file" accept="image/*" capture="environment" id="file" hidden>
+      <button class="btn n" id="foto">📷 Foto comanda</button><input type="file" accept="image/*" capture="environment" id="file" hidden>
       <div class="muto" id="st" style="text-align:center"></div>
       <label class="c">Via e numero<input id="n_via" placeholder="Via Roma 14"></label>
       <label class="c">Paese<input id="n_paese" value="San Paolo d'Argon"></label>
@@ -542,7 +542,7 @@ function nuovaConsegna() {
       if (o.pagamento) { pag = /sum/i.test(o.pagamento) ? 'SumUp' : 'Contanti'; segna(); }
       letto = o;
       $('#st').textContent = 'Letta in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s ✓ · controlla';
-    } catch (er) { $('#st').textContent = SEG.gemini ? 'Lettura non riuscita: scrivi a mano' : 'Lettura foto non attiva: scrivi a mano'; }
+    } catch (er) { $('#st').textContent = SEG.gemini ? 'Lettura non riuscita (' + (er.message || '').slice(0, 60) + '): scrivi a mano' : 'Lettura foto non attiva: scrivi a mano'; }
   };
   $('#n_ok').onclick = () => {
     const via = $('#n_via').value.trim(); if (!via) return ALP.toast('Manca la via', 1);
