@@ -642,8 +642,10 @@ function quizHtml() {
         <label class="c">Buono Amazon per chi vince la challenge €<input id="buono" inputmode="decimal" placeholder="es. 30" value="${SEG.buono ? String(SEG.buono).replace('.', ',') : ''}"></label>
         <button class="btn s" id="salvak">Salva impostazioni</button>
         <button class="btn s" id="esci">Esci da questo dispositivo</button></div></details>
-    <button class="btn n" style="margin-top:14px" id="chiudi">Chiudi</button>`, () => {
+    <button class="btn s" style="margin-top:14px" id="cambiaChi">🔑 Sei entrato come <b>&nbsp;${esc(HUB || 'Cassa')}&nbsp;</b> · cambia persona</button>
+    <button class="btn n" style="margin-top:10px" id="chiudi">Chiudi</button>`, () => {
     $('#chiudi').onclick = chiudi;
+    $('#cambiaChi').onclick = () => { if (confirm('Esco da ' + (HUB || 'Cassa') + ' per far entrare un\'altra persona col suo PIN?')) { ALP.ls.del('hub_nome'); location.reload(); } };
     $('#cambiak').onclick = () => { $('#rigak').style.display = ''; $('#k').focus(); };
     $('#salvak').onclick = () => {
       const d = { fondo: ALP.num($('#fondo').value) || ALP.FONDO, buono: ALP.num($('#buono').value) || 0 };
