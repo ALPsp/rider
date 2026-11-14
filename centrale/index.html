@@ -27,7 +27,8 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .testa img { height:38px; } .testa b { font-size:19px; } .testa .ora { font-size:15px; color:var(--muto); font-weight:700; }
   .testa button { height:42px; padding:0 16px; border-radius:999px; border:0; font-weight:800; font-size:15px; }
   .b-p { background:var(--rosso2); color:#fff; } .b-s { background:rgba(255,255,255,.85); color:var(--ink); border:1px solid rgba(48,47,49,.12) !important; }
-  .col { position:fixed; top:calc(14px + env(safe-area-inset-top)); right:16px; bottom:16px; width:min(420px, 38vw); z-index:700; border-radius:32px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  :root { --colw:min(370px, 33vw); }
+.col { position:fixed; top:calc(14px + env(safe-area-inset-top)); right:16px; bottom:16px; width:var(--colw); z-index:700; border-radius:32px; padding:14px; display:flex; flex-direction:column; gap:10px; }
   .col h3 { margin:2px 4px 0; font-size:19px; display:flex; justify-content:space-between; align-items:baseline; } .col h3 small { font-size:12px; color:var(--muto); font-weight:700; }
   .lista { flex:1; overflow:auto; display:flex; flex-direction:column; gap:10px; padding:4px; margin:-4px; }
   .rc { background:#fff; border-radius:22px; padding:12px 14px; display:flex; gap:12px; transition:box-shadow .15s, transform .15s; cursor:pointer; }
@@ -38,7 +39,7 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .rc.bersaglio { box-shadow:0 0 0 3px var(--rosso2), 0 0 0 9px rgba(198,65,60,.15); transform:scale(1.02); }
   .rc.lib { box-shadow:0 0 0 2px var(--lime); }
   .vuoto { color:var(--muto); font-size:14px; padding:10px 6px; }
-  .vass { position:fixed; left:16px; bottom:16px; right:calc(min(420px, 38vw) + 32px); z-index:690; border-radius:28px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; max-height:38vh; }
+  .vass { position:fixed; left:16px; bottom:16px; right:calc(var(--colw) + 32px); z-index:690; border-radius:28px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; max-height:38vh; }
   .vass h3 { margin:0 2px; font-size:17px; display:flex; gap:10px; align-items:baseline; } .vass h3 small { font-size:13px; color:var(--muto); font-weight:600; }
   .carte { display:flex; flex-wrap:wrap; gap:10px; overflow:auto; }
   .ca { width:230px; background:#fff; border-radius:18px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:grab; }
@@ -73,7 +74,8 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .fotobox { border-radius:16px; background:#26211e; color:#fff; min-height:120px; display:grid; place-items:center; text-align:center; padding:14px; font-weight:700; }
   .pinbox { max-width:340px; margin:14vh auto 0; position:relative; z-index:900; border-radius:28px; padding:22px; display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center; }
   .pinbox input { font-size:30px; text-align:center; letter-spacing:12px; }
-  @media (max-width:820px) { .col { width:46vw; } .vass { right:calc(46vw + 32px); } .aiuto { display:none; } }
+  @media (max-width:1100px) { :root { --colw:33vw; } .aiuto { display:none; } .testa { gap:5px; } .testa .ora { display:none; } .testa button { padding:0 8px; font-size:12.5px; } .testa img { height:34px; } }
+.testa { max-width:calc(100vw - var(--colw) - 48px); overflow-x:auto; scrollbar-width:none; } .testa::-webkit-scrollbar { display:none; } .testa > * { flex:none; }
   /* ---- ORARI CONSEGNE ---- */
   #orari { position:fixed; inset:0; z-index:750; background:#fff; display:none; flex-direction:column; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 14px 12px; }
   #orari.on { display:flex; }
