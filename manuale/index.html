@@ -117,6 +117,101 @@ input[type=range] { width:100%; accent-color:var(--rosso2); }
 .spiega { margin-top:10px; font-weight:700; color:var(--muto); }
 footer { text-align:center; padding:24px 16px 40px; color:var(--muto); font-weight:700; font-size:14px; }
 footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
+
+/* ===== SCHERMATE (mockup interattivi) ===== */
+.sx-sw { display:flex; background:#ece7df; border-radius:999px; padding:4px; gap:4px; max-width:420px; }
+.sx-sw button { flex:1; border:0; background:transparent; min-height:44px; border-radius:999px; font-weight:800; font-size:15px; color:var(--muto); }
+.sx-sw button.on { background:#fff; color:var(--ink); box-shadow:0 2px 6px rgba(0,0,0,.1); }
+.sx-chips { display:flex; gap:6px; overflow-x:auto; padding:12px 0 4px; scrollbar-width:none; }
+.sx-chips::-webkit-scrollbar { display:none; }
+.sx-chips button { flex:0 0 auto; border:1px solid var(--linea); background:#fff; border-radius:999px; padding:8px 13px; font-weight:800; font-size:13px; color:var(--muto); }
+.sx-chips button.on { background:var(--lime); color:var(--ink); border-color:var(--lime); }
+.sx-zona { display:grid; grid-template-columns:auto 1fr; gap:22px; align-items:start; margin-top:10px; }
+.sx-zona.ipad { grid-template-columns:1fr; }
+@media (max-width:720px) { .sx-zona { grid-template-columns:1fr; } }
+.sx-box { position:relative; margin:0 auto; }
+.sx-scala { transform-origin:top left; position:absolute; left:0; top:0; }
+.sx-dev { background:#1d1c1e; border-radius:46px; padding:12px; box-shadow:0 24px 50px rgba(48,47,49,.28), inset 0 0 0 2px #3a393c; }
+.sx-dev.tab { border-radius:34px; padding:16px; }
+.sx-scr { position:relative; width:320px; height:668px; border-radius:36px; overflow:hidden; background:#f5f2ec; color:#302f31;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Nunito",sans-serif; font-size:14px; }
+.sx-dev.tab .sx-scr { width:860px; height:600px; border-radius:20px; font-size:13px; }
+.sx-notch { position:absolute; top:9px; left:50%; transform:translateX(-50%); width:96px; height:28px; background:#000; border-radius:20px; z-index:30; }
+.sx-scr * { box-sizing:border-box; }
+.sx-ora { height:44px; display:flex; justify-content:space-between; align-items:center; padding:0 28px; font-weight:800; font-size:14px; background:var(--lime); }
+.sx-dev.tab .sx-ora { height:24px; font-size:11px; padding:0 18px; background:#fff; }
+.sx-top { display:flex; align-items:center; gap:9px; padding:6px 12px 9px; background:var(--lime); }
+.sx-top img { height:30px; }
+.sx-top .chi { flex:1; font-weight:800; font-size:15px; line-height:1.1; } .sx-top .chi small { display:block; font-weight:700; font-size:11px; opacity:.75; }
+.sx-top .bt { background:rgba(255,255,255,.65); border-radius:999px; padding:6px 10px; font-weight:800; font-size:12px; }
+.sx-pag { padding:11px; display:flex; flex-direction:column; gap:10px; }
+.sx-card { position:relative; background:#fff; border-radius:18px; padding:13px; box-shadow:0 4px 18px rgba(48,47,49,.07); display:flex; flex-direction:column; gap:8px; }
+.sx-card h4 { margin:0; font-size:18px; font-weight:800; }
+.sx-mu { color:#5f574f; font-size:12px; }
+.sx-b { position:relative; display:flex; align-items:center; justify-content:center; gap:6px; min-height:42px; border-radius:999px; padding:0 14px; font-weight:800; font-size:14px; text-align:center; }
+.sx-b.p { background:var(--rosso2); color:#fff; } .sx-b.n { background:#302f31; color:#fff; } .sx-b.l { background:var(--lime); }
+.sx-b.s { background:#fff; border:1px solid #ddd5ca; } .sx-b.v { background:var(--verde); color:#fff; }
+.sx-in { position:relative; background:#fff; border:1px solid #d6cfc5; border-radius:9px; padding:9px 10px; font-weight:600; }
+.sx-lb { font-size:10px; font-weight:800; color:#5f574f; text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px; }
+.sx-seg { position:relative; display:flex; background:#ece7df; border-radius:999px; padding:3px; gap:3px; }
+.sx-seg span { flex:1; text-align:center; padding:8px 4px; border-radius:999px; font-weight:800; font-size:12px; color:#5f574f; }
+.sx-seg span.on { background:#fff; color:#302f31; box-shadow:0 2px 6px rgba(0,0,0,.1); }
+.sx-cont { position:relative; background:#302f31; color:#fff; border-radius:18px; padding:13px; display:flex; justify-content:space-between; align-items:flex-end; }
+.sx-cont b { display:block; font-size:30px; line-height:1; } .sx-cont span { font-size:11px; color:#d9d2c8; }
+.sx-spu { position:relative; display:flex; gap:10px; align-items:center; background:#fff; border:2px solid var(--lime); border-radius:15px; padding:11px; font-weight:800; font-size:13px; }
+.sx-spu i { width:24px; height:24px; border-radius:6px; background:var(--rosso2); color:#fff; display:grid; place-items:center; font-style:normal; flex:none; }
+.sx-spu small { display:block; font-weight:600; color:#5f574f; font-size:11px; }
+.sx-tap { position:relative; display:flex; gap:10px; padding:10px 0; border-top:1px solid #efe9e0; } .sx-tap:first-of-type { border-top:0; }
+.sx-nt { width:30px; height:30px; border-radius:50%; background:var(--rosso2); color:#fff; display:grid; place-items:center; font-weight:800; flex:none; }
+.sx-tap b { display:block; font-size:15px; }
+.sx-bd { display:inline-block; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:800; margin:3px 3px 0 0; }
+.sx-bd.c { background:#e2f3e8; color:var(--verde); } .sx-bd.s { background:#e3ebfd; color:#1d5fd1; } .sx-bd.o { background:#f1f2c4; } .sx-bd.a { background:#ffe2c2; color:#7a3d00; }
+.sx-wal { position:relative; background:#302f31; color:#fff; border-radius:18px; padding:12px; }
+.sx-wal .t { display:flex; gap:8px; margin-top:8px; } .sx-wal .t div { flex:1; background:rgba(255,255,255,.08); border-radius:12px; padding:9px; }
+.sx-wal .t span { display:block; font-size:10px; font-weight:800; opacity:.7; text-transform:uppercase; } .sx-wal .t b { font-size:18px; }
+.sx-velo { position:absolute; inset:0; background:rgba(48,47,49,.3); z-index:10; display:flex; align-items:flex-end; }
+.sx-fog { position:relative; width:100%; background:#fff; border-radius:24px 24px 0 0; padding:9px 14px 22px; display:flex; flex-direction:column; gap:8px; }
+.sx-man { width:38px; height:5px; border-radius:3px; background:#d8d1c6; margin:0 auto 4px; }
+.sx-pin { display:flex; justify-content:center; gap:12px; margin:8px 0; } .sx-pin i { width:15px; height:15px; border-radius:50%; border:2px solid #302f31; }
+.sx-pin i.f { background:#302f31; }
+.sx-kp { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; padding:0 22px; }
+.sx-kp span { background:#fff; border-radius:50%; aspect-ratio:1; display:grid; place-items:center; font-size:24px; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.sx-pas { display:flex; gap:5px; } .sx-pas i { flex:1; height:6px; border-radius:3px; background:#e2dbd0; } .sx-pas i.f { background:var(--rosso2); }
+.sx-foto { display:grid; grid-template-columns:1fr 1fr; gap:7px; } .sx-foto span { height:62px; border-radius:12px; background:#ece7df; display:grid; place-items:center; font-size:12px; font-weight:800; color:#5f574f; }
+.sx-pill { display:inline-flex; align-items:center; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:800; white-space:nowrap; }
+.sx-pill.piz { background:var(--lime); } .sx-pill.and { background:#dde8ff; color:#123f8c; } .sx-pill.rie { background:#ffe2c2; color:#7a3d00; } .sx-pill.off { background:#ece7df; color:#5f574f; }
+.sx-map { position:absolute; inset:0; background:#eceae4; }
+.sx-cl { position:absolute; inset:0; display:grid; grid-template-columns:1fr 250px; grid-template-rows:1fr 150px; }
+.sx-col { position:relative; background:rgba(255,255,255,.9); border-left:1px solid #e7e0d5; padding:10px; display:flex; flex-direction:column; gap:7px; grid-row:1 / 3; grid-column:2; overflow:hidden; }
+.sx-rid { position:relative; background:#fff; border-radius:13px; padding:8px 10px; box-shadow:0 2px 8px rgba(0,0,0,.06); display:flex; flex-direction:column; gap:3px; }
+.sx-rid.rit { box-shadow:0 0 0 2px #e05a52, 0 2px 8px rgba(0,0,0,.06); }
+.sx-da { position:relative; grid-column:1; grid-row:2; background:rgba(255,255,255,.92); border-top:1px solid #e7e0d5; padding:9px 12px; display:flex; flex-direction:column; gap:6px; }
+.sx-dac { display:flex; gap:8px; } .sx-dac div { position:relative; width:170px; background:#fff; border-radius:13px; padding:8px 10px; border:1px solid #e7e0d5; font-size:12px; }
+.sx-hd { display:flex; align-items:center; gap:8px; padding:7px 12px; background:var(--lime); }
+.sx-hd img { height:28px; } .sx-hd b { font-size:15px; margin-right:auto; }
+.sx-hd span { position:relative; background:rgba(255,255,255,.7); border-radius:999px; padding:6px 11px; font-weight:800; font-size:12px; }
+.sx-hd span.on { background:#302f31; color:#fff; } .sx-hd span.r { background:var(--rosso2); color:#fff; }
+.sx-tab { width:100%; border-collapse:collapse; font-size:12px; background:#fff; }
+.sx-tab th { text-align:left; font-size:10px; color:#5f574f; padding:6px 7px; border-bottom:1px solid #e7e0d5; }
+.sx-tab td { padding:6px 7px; border-bottom:1px solid #f1ece4; font-weight:700; }
+.sx-bar { height:9px; border-radius:5px; background:#ece7df; overflow:hidden; min-width:70px; } .sx-bar i { display:block; height:100%; border-radius:5px; background:var(--verde); }
+.sx-bar i.g { background:#e8b923; } .sx-bar i.r { background:var(--rosso2); }
+/* bollini numerati */
+.hs { position:absolute; top:-9px; right:-9px; z-index:20; width:24px; height:24px; border-radius:50%; background:var(--rosso2); color:#fff; font:900 13px/24px "Nunito",sans-serif;
+  text-align:center; box-shadow:0 0 0 3px #fff, 0 4px 10px rgba(0,0,0,.25); cursor:pointer; font-style:normal; }
+.hs::after { content:""; position:absolute; inset:0; border-radius:50%; border:3px solid var(--rosso2); animation:sxp 1.6s infinite; }
+.hs.on { background:#302f31; } .hs.on::after { border-color:#302f31; }
+@keyframes sxp { 0% { transform:scale(1); opacity:.8; } 100% { transform:scale(1.9); opacity:0; } }
+.sx-note h3 { display:flex; align-items:center; gap:8px; }
+.sx-note ol { list-style:none; padding:0; margin:8px 0 0; display:flex; flex-direction:column; gap:7px; }
+.sx-note li { display:flex; gap:10px; align-items:flex-start; padding:9px 10px; border-radius:14px; cursor:pointer; transition:.15s; line-height:1.4; }
+.sx-note li b.n { flex:0 0 26px; height:26px; border-radius:50%; background:var(--rosso2); color:#fff; display:grid; place-items:center; font-weight:900; font-size:13px; }
+.sx-note li.on { background:var(--lime2); }
+.sx-nav { display:flex; gap:8px; margin-top:12px; } .sx-nav button { flex:1; min-height:46px; border-radius:999px; border:0; font-weight:800; font-size:15px; }
+.sx-nav .a { background:var(--ink); color:#fff; } .sx-nav .i { background:#fff; border:1px solid var(--linea); color:var(--ink); }
+.sx-cnt { font-size:13px; font-weight:800; color:var(--muto); }
+.flussoM{stroke-dasharray:2 12;animation:sxf 1s linear infinite}@keyframes sxf{to{stroke-dashoffset:-14}}
+.sx-vai{display:flex;align-items:center;gap:8px;border:0;border-radius:999px;background:var(--ink);color:#fff;font-weight:800;font-size:15px;padding:12px 18px;margin:0 0 14px}
 </style>
 </head>
 <body>
@@ -128,6 +223,7 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
 </header>
 <nav><div class="tabs" id="tabs">
   <button data-v="inizio">🏠 Inizio</button>
+  <button data-v="schermate">📱 Schermate</button>
   <button data-v="cassa">🧾 Cassa</button>
   <button data-v="orari">⏰ Orari consegne</button>
   <button data-v="rider">🛵 Rider</button>
@@ -145,6 +241,7 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
   <div class="scelta">
     <button data-v="cassa"><span class="ico">🧾</span><b>Sono in cassa</b>Ricevere le consegne e darle ai rider</button>
     <button data-v="rider"><span class="ico">🛵</span><b>Sono un rider</b>Turno, giro, navigatore, soldi</button>
+    <button data-v="schermate"><span class="ico">📱</span><b>Le schermate</b>Telefono e iPad, tocca e scopri</button>
     <button data-v="challenge"><span class="ico">🏆</span><b>La challenge</b>Classifica del mese e buono Amazon</button>
   </div>
   <div class="card">
@@ -167,6 +264,7 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
 <section id="cassa">
   <h2>🧾 La Centrale</h2>
   <p class="sub">Per l'iPad della cassa e per chi gestisce le consegne. Si entra con il PIN della cassa.</p>
+  <button class="sx-vai" data-v="schermate" onclick="sxApri('centrale',1)">📱 Guarda le schermate della Centrale</button>
 
   <details open><summary><span>➕</span> Inserire una consegna</summary><div>
     <p>Tocca <span class="btnfinto">+ Consegna</span> e poi <span class="btnfinto n">📷 Foto comanda + scontrino</span>. L'app legge da sola indirizzo, orario, pizze, burger, totale e pagamento.</p>
@@ -250,6 +348,7 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
 <section id="rider">
   <h2>🛵 L'App rider</h2>
   <p class="sub">Sul tuo telefono, con il tuo PIN. Mai sui dispositivi della cassa.</p>
+  <button class="sx-vai" data-v="schermate" onclick="sxApri('rider')">📱 Guarda le schermate dell'app rider</button>
 
   <details open><summary><span>▶️</span> Inizio turno</summary><div>
     <p>Tocca <span class="btnfinto">📷 Foto del cruscotto</span>: l'app legge i km da sola. Se non va, scrivili a mano.</p>
@@ -328,6 +427,15 @@ footer img { height:38px; opacity:.85; display:block; margin:0 auto 8px; }
     <h3>💡 Come si vince</h3>
     <p>Segui l'ordine consigliato, non fermarti tra una consegna e l'altra, rispetta l'orario e torna subito in pizzeria. Niente trucchi: conta guidare bene e con calma.</p>
   </div>
+</section>
+
+<!-- ================= SCHERMATE ================= -->
+<section id="schermate">
+  <h2>📱 Le schermate, una per una</h2>
+  <p class="sub">Come sono fatte davvero le app. Scegli l'app, poi scorri le schermate e tocca i bollini rossi.</p>
+  <div class="sx-sw" id="sxApp"><button class="on" data-a="rider">🛵 App rider (telefono)</button><button data-a="centrale">🧾 Centrale (iPad)</button></div>
+  <div class="sx-chips" id="sxChips"></div>
+  <div class="sx-zona" id="sxZona"><div><div class="sx-box" id="sxBox"><div class="sx-scala" id="sxScala"></div></div></div><div class="card sx-note" id="sxNote"></div></div>
 </section>
 
 <!-- ================= QUIZ ================= -->
@@ -456,6 +564,250 @@ function quiz() {
   });
 }
 quiz();
+</script>
+<script>
+/* ===== SCHERMATE: mockup interattivi di app rider e Centrale ===== */
+(function () {
+  const LOGO = (document.querySelector('.cop img') || {}).src || '';
+  const H = n => `<b class="hs" data-n="${n}">${n}</b>`;
+  const top = (chi, sub, bt) => `<div class="sx-top"><img src="${LOGO}" alt=""><div class="chi">${chi}<small>${sub}</small></div>${bt ? `<span class="bt">${bt}</span>` : ''}</div>`;
+  const ORA = '<div class="sx-ora"><span>19:12</span><span>●●● 5G 🔋</span></div>';
+  const mappa = (w, h, extra) => `<svg class="sx-map" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice">
+    <rect width="${w}" height="${h}" fill="#ecebe5"/>
+    <g stroke="#fff" stroke-linecap="round" fill="none"><path d="M-10 ${h*.3} C ${w*.3} ${h*.25}, ${w*.5} ${h*.45}, ${w+10} ${h*.4}" stroke-width="14"/>
+    <path d="M${w*.35} -10 C ${w*.4} ${h*.4}, ${w*.3} ${h*.7}, ${w*.4} ${h+10}" stroke-width="12"/><path d="M-10 ${h*.75} L ${w+10} ${h*.68}" stroke-width="9"/>
+    <path d="M${w*.75} -10 L ${w*.7} ${h+10}" stroke-width="9"/><path d="M${w*.1} ${h*.05} L ${w*.6} ${h*.95}" stroke-width="6"/></g>
+    <rect x="${w*.52}" y="${h*.08}" width="${w*.14}" height="${h*.12}" rx="8" fill="#dfe8d2"/><rect x="${w*.05}" y="${h*.5}" width="${w*.16}" height="${h*.13}" rx="8" fill="#dfe8d2"/>${extra}</svg>`;
+  const freccia = (x, y, rot, pieno, rit, nome) => `<g transform="translate(${x} ${y})">${rit ? '<circle r="22" fill="#e05a52" opacity=".28"/>' : ''}
+    <g transform="rotate(${rot})"><path d="M0 -14 L10 10 L0 5 L-10 10 Z" fill="${pieno ? '#b8372f' : '#fff'}" stroke="#b8372f" stroke-width="3" stroke-linejoin="round"/></g>
+    ${pieno ? '' : '<text y="5" font-size="9" text-anchor="middle">🏠</text>'}<text y="28" font-size="11" font-weight="800" text-anchor="middle" fill="#302f31" stroke="#fff" stroke-width="3" paint-order="stroke">${nome}</text></g>`;
+  const pizzeria = (x, y) => `<g transform="translate(${x} ${y})"><circle r="15" fill="#ccd231" stroke="#fff" stroke-width="3"/><text y="5" font-size="14" text-anchor="middle">🍕</text></g>`;
+  const casa = (x, y, n) => `<g transform="translate(${x} ${y})"><circle r="12" fill="#302f31" stroke="#fff" stroke-width="3"/><text y="4" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">${n}</text></g>`;
+
+  const RIDER = [
+    { t: '🔑 PIN', h: `${ORA}<div style="padding:30px 0 0;text-align:center"><img src="${LOGO}" style="width:150px;display:block;margin:0 auto"><div style="position:relative;display:inline-block;margin-top:16px;font-weight:800">Scrivi il tuo PIN ${H(1)}</div>
+      <div class="sx-pin"><i class="f"></i><i class="f"></i><i></i><i></i></div></div>
+      <div class="sx-kp">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(x => `<span style="${x === '' ? 'background:none;box-shadow:none' : ''}">${x}</span>`).join('')}</div>
+      <div style="position:relative;margin:18px 60px 0" class="sx-b s">Esci ${H(2)}</div>`,
+      n: ['Ogni rider ha il <b>suo PIN</b> di 4 cifre. Lo scrivi una volta sola: il telefono se lo ricorda.',
+          '<b>Un telefono = un accesso.</b> Se entri da un altro telefono, il primo viene scollegato e ti richiede il PIN. Dopo un aggiornamento dell\'app può chiederlo di nuovo: è normale.'] },
+
+    { t: '▶ Inizio servizio', h: `${ORA}${top('Claudio', 'Pronto per il turno', '🏆')}<div class="sx-pag">
+      <div class="sx-cont"><div><span>I TUOI KM DI NOVEMBRE</span><b>214</b></div><span>si azzera il 1° del mese</span>${H(1)}</div>
+      <div class="sx-spu"><i>✓</i><div>USO IL FURGONE DI AMO LA PIZZA<small>I km vanno nel contatore del furgone, non nei tuoi</small></div>${H(2)}</div>
+      <div class="sx-card"><div class="sx-b n">📷 Foto del cruscotto ${H(3)}</div><div class="sx-lb">Km sul cruscotto</div><div class="sx-in">48.215</div></div>
+      <div class="sx-b p" style="min-height:50px">Inizio servizio ${H(4)}</div></div>`,
+      n: ['I <b>km del mese</b> fatti col tuo mezzo. Ripartono da zero il 1° del mese.',
+          'Spunta <b>solo se usi il furgone</b>: così i km vanno al furgone e a fine turno ti chiede le 4 foto.',
+          'Fai la <b>foto del cruscotto</b>: l\'app legge da sola i km. Se non ci riesce, scrivili a mano qui sotto.',
+          'Premi <b>Inizio servizio</b>: da adesso la cassa ti vede sulla mappa e può darti le consegne.'] },
+
+    { t: '🛵 Il mio giro', h: `${ORA}${top('Claudio', 'In servizio · 2 consegne', '🏆')}<div class="sx-pag">
+      <div class="sx-card"><h4>Il tuo giro</h4><div class="sx-mu" style="position:relative">Ordine calcolato dalla pizzeria, il più veloce. ${H(1)}</div>
+      <div class="sx-tap"><span class="sx-nt">1</span><div><b>Via Roma 12</b><span class="sx-mu">Albano S.A. · Rossi · PER LE 19:30</span><br><span class="sx-bd o">3 pizze</span><span class="sx-bd c">Contanti 24,50 €</span></div>${H(2)}</div>
+      <div class="sx-tap"><span class="sx-nt">2</span><div><b>Via Dante 5</b><span class="sx-mu">Cenate Sotto · Bianchi · PER LE 19:45</span><br><span class="sx-bd o">2 pizze · 1 burger</span><span class="sx-bd s">SumUp 31,00 €</span></div></div>
+      <div class="sx-b v">🛵 Parti (2 consegne) ${H(3)}</div></div>
+      <div class="sx-b s">📷 Aggiungi una consegna ${H(4)}</div>
+      <div class="sx-wal"><b>👛 Portafoglio di oggi</b>${H(5)}<div class="t"><div><span>💶 Contanti</span><b>56,00 €</b></div><div><span>💳 SumUp</span><b>18,50 €</b></div></div></div>
+      <div class="sx-b s">🏁 Fine servizio</div></div>`,
+      n: ['Le consegne le <b>assegna la cassa</b>: quando arrivano senti un suono e una voce. L\'ordine è già calcolato per fare prima.',
+          'Ogni consegna: indirizzo, cliente, <b>orario PER LE</b>, pizze/burger e come paga (verde contanti, blu SumUp). <b>Tocca</b> per i dettagli.',
+          '<b>Parti</b>: si apre il navigatore con la voce, consegna dopo consegna.',
+          'Ti hanno dato una comanda a mano? <b>Aggiungila tu</b> con la foto.',
+          'Il <b>portafoglio</b> conta da solo contanti e SumUp incassati oggi.'] },
+
+    { t: '📋 Dettaglio', h: `${ORA}${top('Claudio', 'In servizio · 2 consegne', '🏆')}<div class="sx-pag" style="opacity:.5"><div class="sx-card"><h4>Il tuo giro</h4><div style="height:180px"></div></div></div>
+      <div class="sx-velo"><div class="sx-fog"><div class="sx-man"></div><h4 style="margin:0;font-size:19px">Via Roma 12</h4>
+      <div class="sx-mu">Albano Sant'Alessandro · Rossi · PER LE 19:30<br>Citofono: Rossi-Ferri, 2° piano</div><div><span class="sx-bd o">3 pizze</span><span class="sx-bd c">Contanti 24,50 €</span></div>
+      <div class="sx-b s">📞 Chiama 333 123 4567 ${H(1)}</div><div class="sx-b s">🗺️ Apri in Maps ${H(2)}</div><div class="sx-b s">⇄ Passa a un collega ${H(3)}</div><div class="sx-b n">Chiudi</div></div></div>`,
+      n: ['<b>Chiama</b> il cliente con un tocco (citofono che non va, indirizzo che non trovi).',
+          '<b>Apri in Maps</b>: usa Google Maps se preferisci, o se il navigatore dell\'app non risponde.',
+          '<b>Passa a un collega</b>: la consegna va a un altro rider, ma solo se lui accetta.'] },
+
+    { t: '🧭 Navigatore', h: `${ORA}<div style="position:absolute;top:44px;left:0;right:0;bottom:0">${mappa(320, 624,
+      `<path d="M150 470 C 140 380, 120 300, 112 190" stroke="#b8b2a8" stroke-width="7" fill="none" stroke-linecap="round"/>
+       <path d="M112 190 C 150 160, 210 150, 240 120" stroke="#b8372f" stroke-width="7" fill="none" stroke-linecap="round" class="flussoM"/>
+       ${pizzeria(150, 470)}${casa(240, 120, 1)}${freccia(112, 196, 20, true, false, '')}`)}
+      <div style="position:absolute;top:10px;left:10px;right:10px;background:#302f31;color:#fff;border-radius:18px;padding:12px;display:flex;gap:12px;align-items:center">
+        <span style="font-size:34px">↗</span><div><b style="font-size:22px">300 m</b><div style="font-size:13px;opacity:.8">Svolta a destra su Via Roma</div></div>${H(1)}</div>
+      <div style="position:absolute;left:10px;right:10px;bottom:14px" class="sx-card"><div style="display:flex;justify-content:space-between"><b>1 · Via Roma 12</b><span class="sx-mu">4 min · 1,6 km</span></div>
+        <div style="display:flex;gap:8px"><div class="sx-b s" style="flex:1">Maps ${H(3)}</div><div class="sx-b v" style="flex:2">✓ Consegnato ${H(2)}</div></div></div></div>`,
+      n: ['Il <b>navigatore integrato</b> ti dice a voce dove girare. Strada fatta in grigio, quella che manca in rosso.',
+          'Arrivato e pagato? <b>✓ Consegnato</b>: passa alla consegna dopo. I soldi finiscono nel portafoglio.',
+          'Nelle ore di punta il navigatore gratuito può non rispondere: c\'è sempre il tasto <b>Maps</b>.'] },
+
+    { t: '⇄ Passa', h: `${ORA}${top('Simone', 'In servizio · libero', '🏆')}<div class="sx-pag" style="opacity:.5"><div class="sx-card"><h4>Il tuo giro</h4><div class="sx-mu">Le consegne le assegna la cassa: appena arrivano senti un suono.</div><div style="height:150px"></div></div></div>
+      <div class="sx-velo"><div class="sx-fog"><div class="sx-man"></div><h4 style="margin:0;font-size:19px;position:relative">Claudio ti passa una consegna ${H(1)}</h4>
+      <div class="sx-card" style="box-shadow:none;border:1px solid #efe9e0"><b>Via Dante 5 · Cenate Sotto</b><div class="sx-mu">Bianchi · PER LE 19:45</div><div><span class="sx-bd o">2 pizze · 1 burger</span><span class="sx-bd s">SumUp 31,00 €</span></div></div>
+      <div style="display:flex;gap:8px"><div class="sx-b s" style="flex:1">Rifiuto</div><div class="sx-b v" style="flex:1">Accetto ${H(2)}</div></div></div></div>`,
+      n: ['Questo lo vede <b>il collega</b> a cui passi la consegna. Finché non risponde, resta tua.',
+          'Se <b>accetta</b>, la consegna sparisce dal tuo giro e passa nel suo. Se rifiuta, torna a te.'] },
+
+    { t: '📷 Aggiungi', h: `${ORA}${top('Claudio', 'In servizio · 2 consegne', '🏆')}<div class="sx-pag" style="opacity:.5"><div style="height:120px"></div></div>
+      <div class="sx-velo"><div class="sx-fog"><div class="sx-man"></div><h4 style="margin:0;font-size:19px">Aggiungi una consegna</h4>
+      <div class="sx-b n">📷 Foto comanda + scontrino ${H(1)}</div>
+      <div><div class="sx-lb">Via e numero</div><div class="sx-in">Via Verdi 8 ${H(2)}</div></div>
+      <div style="display:flex;gap:8px"><div style="flex:1"><div class="sx-lb">Paese</div><div class="sx-in">Gorlago</div></div><div style="flex:1"><div class="sx-lb">Orario PER LE</div><div class="sx-in">20:00</div></div></div>
+      <div style="display:flex;gap:8px"><div style="flex:1"><div class="sx-lb">Cliente</div><div class="sx-in">Ferri</div></div><div style="flex:1"><div class="sx-lb">Totale €</div><div class="sx-in">18,00</div></div></div>
+      <div class="sx-b p">Aggiungi al mio giro ${H(3)}</div></div></div>`,
+      n: ['Fai la <b>foto della comanda con lo scontrino</b>: l\'app legge da sola indirizzo, orario, cliente e totale.',
+          'Controlla i campi: se qualcosa è sbagliato <b>correggilo a mano</b>.',
+          'La consegna entra nel tuo giro e la cassa la vede subito.'] },
+
+    { t: '👛 Portafoglio', h: `${ORA}${top('Claudio', 'In servizio · 1 consegna', '🏆')}<div class="sx-pag">
+      <div class="sx-wal"><b>👛 Portafoglio di oggi</b><div class="t"><div style="position:relative"><span>💶 Contanti</span><b>112,50 €</b>${H(1)}</div><div><span>💳 SumUp</span><b>48,00 €</b></div></div>
+      <div style="margin-top:10px;font-size:12px;opacity:.8">In tasca da lasciare in cassa</div><b style="font-size:24px">112,50 €</b></div>
+      <div class="sx-b l">💶 Lascio 112,50 € in cassa ${H(2)}</div>
+      <div class="sx-card"><div class="sx-mu" style="position:relative">⏳ In attesa: la cassa deve confermare di averli ricevuti. ${H(3)}</div></div></div>`,
+      n: ['<b>Contanti e SumUp</b> si sommano da soli a ogni consegna fatta.',
+          'Troppi contanti in tasca? Lasciali in cassa durante il turno con <b>Lascio … in cassa</b>.',
+          'La <b>cassa conferma</b> dalla Centrale. Solo allora i soldi escono dal tuo portafoglio.'] },
+
+    { t: '🏠 Rientro', h: `${ORA}${top('Claudio', 'In servizio · rientro', '🏆')}<div class="sx-pag">
+      <div class="sx-card" style="text-align:center;padding:24px 13px"><div style="font-size:46px">🍕</div><h4 style="position:relative">Tutto consegnato 🍕 ${H(1)}</h4><div class="sx-mu">Rientro in pizzeria</div></div>
+      <div class="sx-b v" style="min-height:52px">🏠 Sono rientrato ${H(2)}</div></div>`,
+      n: ['Finito il giro, la tua freccia sulla mappa della cassa diventa <b>vuota con la casetta</b>: sanno che stai tornando.',
+          'Appena arrivi premi <b>Sono rientrato</b>: torni libero e in cima alla lista per la prossima consegna. Conta anche per la challenge (rientri).'] },
+
+    { t: '🏁 Fine turno', h: `${ORA}${top('Claudio', 'Fine servizio', '')}<div class="sx-pag">
+      <div class="sx-pas" style="position:relative"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i>${H(1)}</div>
+      <div class="sx-card"><h4>3 · I contanti</h4><div class="sx-mu">Dovresti avere in tasca</div><b style="font-size:30px;position:relative">192,55 € ${H(2)}</b>
+      <div class="sx-mu">fondo 80,05 € + incassato 112,50 €</div><div class="sx-mu">Conta i soldi. Torna?</div>
+      <div class="sx-b v">✓ Sì, verso 192,55 € ${H(3)}</div><div class="sx-lb" style="margin-top:4px">Quanto hai davvero</div><div class="sx-in">&nbsp;</div></div>
+      <div style="display:flex;gap:8px"><div class="sx-b s" style="flex:1">Indietro</div><div class="sx-b n" style="flex:1">Avanti</div></div></div>`,
+      n: ['Il fine turno ha <b>5 passi</b>: km, SumUp, contanti, foto del furgone (solo se usato), voto. Prova la simulazione nella scheda 🏁 Fine turno.',
+          'L\'app ti dice quanto <b>dovresti avere</b>: fondo cassa 80,05 € più i contanti incassati. Si versa tutto.',
+          'Se torna premi il verde. Se non torna, scrivi <b>quanto hai davvero</b>: la differenza va nel report.'] },
+
+    { t: '🏆 Challenge', h: `${ORA}${top('Claudio', 'Challenge di novembre', '')}<div class="sx-pag">
+      <div class="sx-card" style="background:#302f31;color:#fff"><div style="font-size:12px;opacity:.8">Chi vince riceve un</div><b style="font-size:22px;position:relative">Buono Amazon 🎁 ${H(1)}</b></div>
+      <div class="sx-card"><h4 style="position:relative">Classifica ${H(2)}</h4>
+      ${[['🥇', 'Duca', '8,9', '34'], ['🥈', 'Claudio', '8,4', '41'], ['🥉', 'Filippo', '7,7', '22']].map(r => `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid #efe9e0"><span style="font-size:20px">${r[0]}</span><b style="flex:1">${r[1]}</b><span class="sx-mu">${r[3]} cons.</span><b style="font-size:18px">${r[2]}</b></div>`).join('')}
+      <div class="sx-mu">Tempi 40% · Puntualità 40% · Rientri 20%. In classifica dalle 20 consegne.</div></div>
+      <div class="sx-b s">Non partecipo più ${H(3)}</div></div>`,
+      n: ['Chi è primo a fine mese vince un <b>buono Amazon</b> (lo manda Andrea).',
+          'La <b>classifica</b> si aggiorna ogni notte. Voto su 10: tempi, puntualità, rientri. Entri in classifica dalle 20 consegne del mese.',
+          'Partecipare è <b>libero</b>: entri con "🏆 Partecipo alla challenge" e puoi uscire quando vuoi.'] },
+  ];
+
+  const HD = on => `${ORA}<div class="sx-hd"><img src="${LOGO}" alt=""><b>Centrale</b>${['Centrale', 'Orari consegne', 'Fine turno e totali'].map(x => `<span class="${x === on ? 'on' : ''}">${x}</span>`).join('')}<span class="r">+ Consegna</span></div>`;
+  const BASE = (extra, hs) => `${HD('Centrale')}<div style="position:absolute;top:66px;left:0;right:0;bottom:0"><div class="sx-cl">
+    <div style="position:relative;grid-column:1;grid-row:1;overflow:hidden">${mappa(610, 384,
+      `<path d="M300 200 C 260 150, 200 120, 150 90" stroke="#b8b2a8" stroke-width="6" fill="none"/><path d="M150 90 C 120 70, 100 60, 80 50" stroke="#b8372f" stroke-width="5" fill="none" stroke-dasharray="2 12" stroke-linecap="round"/>
+       <path d="M300 200 C 380 230, 450 260, 520 300" stroke="#b8b2a8" stroke-width="6" fill="none"/>
+       ${pizzeria(300, 200)}${casa(80, 50, 1)}${casa(470, 110, 2)}${freccia(150, 92, -60, true, false, 'Claudio')}${freccia(430, 250, -110, false, false, 'Duca')}${freccia(520, 160, 30, true, true, 'Filippo')}`)}${hs[0] || ''}</div>
+    <div class="sx-col"><b style="font-size:13px;position:relative;display:inline-block;align-self:flex-start">Rider in servizio${hs[1] || ''}</b>
+      <div class="sx-rid"><div style="display:flex;justify-content:space-between"><b>Simone</b><span class="sx-pill piz">IN PIZZERIA</span></div><span class="sx-mu">libero · in cassa 0 €</span></div>
+      <div class="sx-rid"><div style="display:flex;justify-content:space-between"><b>Claudio</b><span class="sx-pill and">→ IN ANDATA</span></div><span class="sx-mu">1/2 · In pizzeria alle 19:40</span></div>
+      <div class="sx-rid rit"><div style="display:flex;justify-content:space-between"><b>Filippo</b><span class="sx-pill and">→ IN ANDATA</span></div><span class="sx-mu" style="color:#b8372f;font-weight:800">+6 min ritardo su una consegna</span>${hs[2] || ''}</div>
+      <div class="sx-rid"><div style="display:flex;justify-content:space-between"><b>Duca</b><span class="sx-pill rie">↩ IN RIENTRO</span></div><span class="sx-mu">💶 lascia 95 € in cassa</span><div class="sx-b v" style="min-height:28px;font-size:12px;position:relative">✓ Conferma${hs[3] || ''}</div></div>
+      <div class="sx-lb" style="margin-top:4px">DI TURNO, NON ANCORA ACCESI</div><div class="sx-rid" style="opacity:.6;position:relative"><b>Daniel</b><span class="sx-mu">18:30–22:00</span>${hs[4] || ''}</div></div>
+    <div class="sx-da"><b style="font-size:13px">Da assegnare <span class="sx-mu" style="font-weight:600">· Tieni premuto e trascina sul rider · tocca per modificare</span></b>${hs[5] || ''}
+      <div class="sx-dac"><div><b>Via Leopardi 3</b><br><span class="sx-mu">Montello · PER LE 20:00</span><br><span class="sx-bd o">4 pizze</span><span class="sx-bd c">29 €</span></div>
+      <div><b>Via Manzoni 21</b><br><span class="sx-mu">Gorlago · PER LE 20:15</span><br><span class="sx-bd o">1 burger</span><span class="sx-bd s">SumUp</span></div></div></div>
+    </div></div>${extra}`;
+  const hsAt = (n, css) => `<b class="hs" data-n="${n}" style="top:auto;right:auto;${css}">${n}</b>`;
+  const CAMPO = (l, v, w) => `<div style="flex:${w || 1}"><div class="sx-lb">${l}</div><div class="sx-in">${v}</div></div>`;
+
+  const CENTRALE = [
+    { t: '🔑 Entra', h: `${ORA}<div style="height:576px;display:grid;place-items:center;background:var(--lime)"><div class="sx-card" style="width:330px;text-align:center;padding:26px">
+      <img src="${LOGO}" style="width:150px;margin:0 auto"><b style="font-size:18px">Centrale consegne</b><div class="sx-pin"><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div>
+      <div class="sx-in" style="text-align:center;letter-spacing:8px">•••</div><div class="sx-b p">Entra ${H(1)}</div></div></div>`,
+      n: ['iPad della cassa, iPad di Andrea e iPhone della cassa entrano con il <b>PIN della cassa</b>. Un dispositivo = un accesso.'] },
+
+    { t: '🗺️ Mappa e rider', h: BASE('', [hsAt(1, 'top:14px;left:14px'), H(2), H(3), H(4), H(5), H(6)]),
+      n: ['La <b>mappa</b>: ogni rider è una freccia. <b>Piena</b> = va dal cliente, <b>vuota con casetta</b> = rientra, <b>alone rosso</b> = è in ritardo. Strada fatta grigia, quella che manca a trattini.',
+          '<b>Rider in servizio</b>: il primo libero è sempre in cima. Per ognuno vedi lo stato e quando torna in pizzeria.',
+          'Riquadro rosso: il rider è <b>in ritardo</b> su una consegna rispetto all\'orario.',
+          'Il rider vuole lasciare contanti: tocca <b>✓ Conferma</b> quando li hai in mano.',
+          '<b>Di turno ma non ancora acceso</b>: dovrebbe esserci (orari del turno) ma non ha aperto l\'app.',
+          '<b>Da assegnare</b>: tieni premuta una consegna e <b>trascinala sul rider</b>. Un tocco per modificarla.'] },
+
+    { t: '+ Consegna', h: `${HD('')}<div style="position:absolute;inset:66px 0 0 0;background:rgba(48,47,49,.3);display:flex;justify-content:center;align-items:flex-start;padding-top:10px">
+      <div class="sx-card" style="width:560px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><h4>Nuova consegna</h4><span class="sx-mu">N. ordine 47</span></div>
+        <div class="sx-b n">📷 Foto comanda + scontrino ${H(1)}</div>
+        <div class="sx-seg"><span class="on">🛵 Domicilio</span><span>🥡 Asporto (ritira lui)</span>${H(2)}</div>
+        <div style="display:flex;gap:8px">${CAMPO('Via e numero', 'Via Leopardi 3', 2)}${CAMPO('Paese', 'Montello')}</div>
+        <div style="display:flex;gap:8px">${CAMPO('Cliente', 'Gatti')}${CAMPO('Telefono', '347 555 1122')}${CAMPO('Orario PER LE', '20:00')}</div>
+        <div style="display:flex;gap:8px">${CAMPO('Pizze (PIZ)', '4')}${CAMPO('Burger (BUR)', '0')}${CAMPO('Totale €', '29,00')}<div style="flex:1.4;position:relative"><div class="sx-lb">Pagamento</div><div class="sx-seg"><span class="on">Contanti</span><span>SumUp</span></div>${H(3)}</div></div>
+        <div class="sx-lb" style="position:relative">ASSEGNA A (facoltativo) ${H(4)}</div><div style="display:flex;gap:6px">${['Simone', 'Claudio', 'Duca'].map(x => `<span class="sx-pill off" style="font-size:12px;padding:5px 10px">${x}</span>`).join('')}</div>
+        <div style="display:flex;gap:8px"><div class="sx-b s" style="flex:1">Dopo</div><div class="sx-b p" style="flex:2">Salva</div></div></div></div>`,
+      n: ['<b>Foto della comanda con lo scontrino</b>: l\'app compila da sola i campi. Puoi anche scriverli a mano.',
+          '<b>Domicilio</b> va a un rider. <b>Asporto</b> va nella colonna VAP degli orari, senza rider.',
+          'Pizze, burger, totale e <b>pagamento</b> (Contanti o SumUp). Se l\'indirizzo è a più di 20 minuti compare un avviso.',
+          'Puoi darla subito a un rider, oppure <b>Dopo</b>: finisce in "Da assegnare".'] },
+
+    { t: '⏰ Orari consegne', h: `${HD('Orari consegne')}<div style="position:absolute;inset:66px 0 0 0;padding:12px;display:grid;grid-template-columns:1fr 290px;gap:12px">
+      <div class="sx-card" style="padding:10px;gap:6px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">ORARI CONSEGNE</b><div class="sx-seg" style="width:180px"><span>Pranzo</span><span class="on">Cena</span></div></div>
+      <table class="sx-tab"><tr><th>FASCIA</th><th>PIZZE</th><th></th><th>BURGER</th><th>CONS</th><th>VAP</th></tr>
+      ${[['19:00–19:15', 9, 3, 4, 2], ['19:15–19:30', 14, 5, 5, 3], ['19:30–19:45', 17, 8, 6, 2], ['19:45–20:00', 21, 4, 7, 4], ['20:00–20:15', 12, 11, 5, 1], ['20:15–20:30', 6, 2, 2, 1], ['20:30–20:45', 3, 0, 1, 0]].map((r, i) =>
+        `<tr><td>${r[0]}</td><td>${r[1]}</td><td style="position:relative"><div class="sx-bar"><i class="${r[1] >= 20 ? 'r' : r[1] >= 15 ? 'g' : ''}" style="width:${Math.min(100, r[1] * 5)}%"></i></div>${i === 3 ? H(2) : ''}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('')}</table>
+      <div style="position:relative" class="sx-mu">Tocca una casella per vedere l'ordine: indirizzo, pizze, totale, pagamento. ${H(1)}</div></div>
+      <div class="sx-card" style="padding:12px"><div class="sx-b l">Al telefono: che orario dico? ${H(3)}</div><div class="sx-seg"><span class="on">🛵 Domicilio</span><span>🥡 Asporto</span></div>
+        <div class="sx-lb">Paese del cliente</div><div class="sx-in">Gorlago · 8 min</div>
+        ${[['20:15', 'parte alle 20:05', 'Simone, Duca'], ['20:30', 'parte alle 20:20', 'Simone, Claudio, Duca']].map((x, i) => `<div style="position:relative;border:1px solid #e7e0d5;border-radius:12px;padding:8px"><b style="font-size:17px">"Per le ${x[0]}"</b><div class="sx-mu">8 min di strada · ${x[1]}<br>Liberi: ${x[2]}</div>${i === 0 ? H(4) : ''}</div>`).join('')}</div></div>`,
+      n: ['Ogni consegna va nella <b>fascia dell\'orario scritto sulla comanda</b>: "PER LE 19:00" → fascia 19:00–19:15. Le consegne (CONS) e gli asporti (VAP) si sommano.',
+          'La barra del forno: <b>gialla da 15 pizze</b>, <b>rossa da 20</b> nella stessa fascia. Burger contati a parte. È un avviso, non un blocco.',
+          'Cliente al telefono? Premi <b>Che orario dico</b> e scegli domicilio o asporto.',
+          'Ti propone le <b>prime fasce libere</b> già dette come al cliente, con i minuti di strada, l\'ora in cui il rider deve partire e chi è libero.'] },
+
+    { t: '🏁 Fine turno e totali', h: `${HD('Fine turno e totali')}<div style="position:absolute;inset:66px 0 0 0;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start">
+      <div class="sx-card" style="padding:10px"><b style="position:relative">Servizio di oggi ${H(1)}</b><table class="sx-tab"><tr><th>Rider</th><th>Consegne</th><th>Contanti</th><th>SumUp</th><th>In tasca</th></tr>
+      ${[['Claudio', 9, '112,50', '48,00', '0,00 ✓'], ['Duca', 7, '95,00', '22,00', '95,00'], ['Simone', 5, '41,00', '30,50', '41,00']].map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}<tr><td><b>Totale</b></td><td>21</td><td>248,50</td><td>100,50</td><td></td></tr></table>
+      <div class="sx-mu" style="position:relative">⭐ 4,3 · "traffico a Gorlago" ${H(2)}</div></div>
+      <div class="sx-card" style="padding:10px"><b style="position:relative">Km del mese ${H(3)}</b><table class="sx-tab"><tr><th>Rider</th><th>Km</th></tr><tr><td>Claudio</td><td>214</td></tr><tr><td>Duca</td><td>187</td></tr><tr><td>Furgone</td><td>96</td></tr></table>
+      <div class="sx-mu">(si azzerano il 1° del mese, il totale arriva via email)</div></div>
+      <div class="sx-b s" style="grid-column:1 / 3;position:relative">⚙️ Impostazioni ${H(4)}</div></div>`,
+      n: ['Per ogni rider: consegne, <b>contanti, SumUp</b> e quanto ha ancora <b>in tasca</b> da versare.',
+          '<b>Stelle e note</b> che i rider lasciano a fine turno, e gli avvisi se qualcosa non torna.',
+          '<b>Km del mese</b> per rider e per il furgone. Il 1° del mese arriva il totale via email.',
+          'Le <b>Impostazioni</b> (prossima schermata).'] },
+
+    { t: '⚙️ Impostazioni', h: `${HD('Fine turno e totali')}<div style="position:absolute;inset:66px 0 0 0;background:rgba(48,47,49,.3);display:flex;justify-content:center;padding-top:20px">
+      <div class="sx-card" style="width:440px;align-self:start"><h4>Impostazioni</h4>
+      <div><div class="sx-lb">Fondo cassa del rider €</div><div class="sx-in">80,05 ${H(1)}</div></div>
+      <div><div class="sx-lb">Buono Amazon per chi vince la challenge €</div><div class="sx-in">30,00 ${H(2)}</div></div>
+      <div><div class="sx-lb">Chiave Gemini</div><div class="sx-b s" style="position:relative">Sostituisci chiave ${H(3)}</div></div>
+      <div class="sx-b p">Salva impostazioni</div><div class="sx-b s" style="position:relative">Esci da questo dispositivo ${H(4)}</div></div></div>`,
+      n: ['Il <b>fondo cassa</b> che ogni rider ha in tasca a inizio turno (uguale per tutti).',
+          'Il valore del <b>buono Amazon</b> della challenge: lo legge l\'email del giorno 1.',
+          'La <b>chiave Gemini</b> serve a leggere le foto (comande, cruscotto). Toccare solo se smette di funzionare.',
+          '<b>Esci</b> se l\'iPad non deve più essere usato come cassa.'] },
+  ];
+
+  const S = { app: 'rider', i: 0 };
+  const el = id => document.getElementById(id);
+  function fit() {
+    const box = el('sxBox'), sc = el('sxScala'); if (!box || !sc) return;
+    const w = sc.offsetWidth, h = sc.offsetHeight, max = el('sxZona').clientWidth;
+    const k = Math.min(1, max / w); sc.style.transform = `scale(${k})`; box.style.width = w * k + 'px'; box.style.height = h * k + 'px';
+  }
+  function vai(i) {
+    const L = S.app === 'rider' ? RIDER : CENTRALE; S.i = (i + L.length) % L.length; const s = L[S.i];
+    el('sxChips').innerHTML = L.map((x, j) => `<button class="${j === S.i ? 'on' : ''}" data-j="${j}">${x.t}</button>`).join('');
+    el('sxChips').querySelector('.on').scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    el('sxZona').className = 'sx-zona' + (S.app === 'rider' ? '' : ' ipad');
+    el('sxScala').innerHTML = `<div class="sx-dev${S.app === 'rider' ? '' : ' tab'}"><div class="sx-scr">${S.app === 'rider' ? '<div class="sx-notch"></div>' : ''}${s.h}</div></div>`;
+    el('sxNote').innerHTML = `<h3>${s.t}</h3><p class="sub" style="margin:0">Tocca i bollini rossi o le righe qui sotto.</p><ol>${s.n.map((t, j) => `<li data-n="${j + 1}"><b class="n">${j + 1}</b><span>${t}</span></li>`).join('')}</ol>
+      <div class="sx-nav"><button class="i" id="sxPrev">← Indietro</button><button class="a" id="sxNext">Avanti →</button></div><p class="sx-cnt">Schermata ${S.i + 1} di ${L.length}</p>`;
+    el('sxPrev').onclick = () => vai(S.i - 1); el('sxNext').onclick = () => vai(S.i + 1);
+    requestAnimationFrame(fit);
+  }
+  function evid(n) {
+    document.querySelectorAll('#schermate .hs, #sxNote li').forEach(x => x.classList.toggle('on', x.dataset.n == n));
+    const li = document.querySelector(`#sxNote li[data-n="${n}"]`); li && li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('#schermate .hs, #sxNote li'); if (t) return evid(t.dataset.n);
+    const c = e.target.closest('#sxChips button'); if (c) return vai(+c.dataset.j);
+    const a = e.target.closest('#sxApp button'); if (a) { S.app = a.dataset.a; document.querySelectorAll('#sxApp button').forEach(b => b.classList.toggle('on', b === a)); vai(0); }
+  });
+  window.addEventListener('resize', fit);
+  window.sxApri = (app, i) => { S.app = app; document.querySelectorAll('#sxApp button').forEach(b => b.classList.toggle('on', b.dataset.a === app)); vai(i || 0); };
+  vai(0);
+  new MutationObserver(fit).observe(el('schermate'), { attributes: true, attributeFilter: ['class'] });
+})();
 </script>
 </body>
 </html>
