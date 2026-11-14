@@ -12,6 +12,17 @@ service cloud.firestore {
       return exists(/databases/$(db)/documents/scambi/$(id)) && get(/databases/$(db)/documents/scambi/$(id)).data.a == io();
     }
 
+    // quiz del manuale: chiunque apra il manuale può salvare il SUO punteggio; lo leggono solo i responsabili
+    match /quiz/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['nome', 'quiz', 'punti', 'totale', 'sbagliate', 'quando'])
+        && request.resource.data.nome is string && request.resource.data.nome.size() <= 60
+        && request.resource.data.quiz in ['rider', 'cassa', 'responsabili']
+        && request.resource.data.punti is int && request.resource.data.totale is int
+        && request.resource.data.sbagliate is list && request.resource.data.sbagliate.size() <= 50;
+      allow read: if dentro() && (io() == 'Andrea' || io() == 'Meris Bertuletti');
+    }
+
     match /accessi/{u} { allow read: if request.auth != null && request.auth.uid == u; }
     // versione precedente dell'app (resta finché non si spegne)
     match /stato/{nome} { allow read: if hub() || sono(nome); }

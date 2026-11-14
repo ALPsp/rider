@@ -586,22 +586,45 @@ const mescola = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { c
 const prepara = t => mescola(QQ[t]).map(([d, r, g, sp]) => { const o = mescola(r.map((x, i) => i)); return [d, o.map(i => r[i]), o.indexOf(g), sp]; });
 let QT = 'rider', Q = prepara(QT);
 document.addEventListener('click', e => { const b = e.target.closest('#qTipo button'); if (!b) return;
-  $$('#qTipo button').forEach(x => x.classList.toggle('on', x === b)); QT = b.dataset.q; Q = prepara(QT); qi = 0; punti = 0; $('#qBox').dataset.fatto = '0'; quiz(); });
-let qi = 0, punti = 0;
+  $$('#qTipo button').forEach(x => x.classList.toggle('on', x === b)); QT = b.dataset.q; Q = prepara(QT); qi = 0; punti = 0; SB = []; salvato = false; $('#qBox').dataset.fatto = '0'; quiz(); });
+document.addEventListener('click', e => { if (e.target.id !== 'qCambia') return; e.preventDefault(); NOMEQ = ''; try { localStorage.removeItem('quiz_nome'); } catch (x) {} qi = 0; punti = 0; SB = []; salvato = false; quiz(); });
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let qi = 0, punti = 0, SB = [], salvato = false;
+let NOMEQ = (() => { try { return localStorage.getItem('quiz_nome') || ''; } catch (e) { return ''; } })();
+function caricaFB() { return window.FB ? Promise.resolve(window.FB) : new Promise((ok, no) => { const x = document.createElement('script'); x.src = '../fb2.js'; x.onload = () => window.FB ? ok(window.FB) : no(); x.onerror = no; document.head.appendChild(x); }); }
+async function salvaQuiz() {
+  if (salvato) return; salvato = true; const el = $('#qSalva'); if (!el) return;
+  try {
+    const FB = await caricaFB();
+    const id = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    await Promise.race([FB.scrivi('quiz/' + id, { nome: NOMEQ, quiz: QT, punti, totale: Q.length, sbagliate: SB.slice(0, 50), quando: new Date().toISOString() }), new Promise((a, b) => setTimeout(b, 12000))]);
+    el.innerHTML = '✅ Punteggio salvato. Lo vedono i responsabili.';
+  } catch (e) { salvato = false; el.innerHTML = '⚠️ Punteggio non salvato. Apri il manuale dal link solito (alpsp.github.io/rider/manuale) e rifallo. <button class="btnfinto" id="qRiprova" style="border:0">Riprova</button>'; const r = $('#qRiprova'); r && (r.onclick = salvaQuiz); }
+}
+function chiediNome() {
+  $('#qBox').innerHTML = `<div class="dom">Prima di iniziare: chi sei?</div><p class="mute" style="margin:0 0 10px">Scrivi nome e cognome. Il punteggio lo vedono solo i responsabili.</p>
+    <input id="qNome" placeholder="Nome e cognome" autocomplete="name" style="width:100%;font:700 17px inherit;font-family:inherit;padding:13px;border-radius:12px;border:2px solid #e7e0d5">
+    <button class="btnfinto n" id="qVia" style="border:0;font-size:16px;padding:12px 20px;margin-top:12px">Inizia il quiz</button>`;
+  const go = () => { const v = $('#qNome').value.trim().replace(/\s+/g, ' '); if (v.split(' ').length < 2) { $('#qNome').style.borderColor = 'var(--rosso2)'; $('#qNome').placeholder = 'Serve nome E cognome'; return; }
+    NOMEQ = v.slice(0, 50); try { localStorage.setItem('quiz_nome', NOMEQ); } catch (e) {} quiz(); };
+  $('#qVia').onclick = go; $('#qNome').onkeydown = e => { if (e.key === 'Enter') go(); };
+}
 function quiz() {
   const box = $('#qBox');
+  if (!NOMEQ) return chiediNome();
   if (qi >= Q.length) {
     box.innerHTML = `<div style="text-align:center"><div style="font-size:56px">${punti === Q.length ? '🏆' : punti >= Q.length * .75 ? '👏' : '📖'}</div>
       <div class="dom">${punti} su ${Q.length}</div><p>${punti === Q.length ? 'Perfetto, sei pronto!' : punti >= Q.length * .75 ? 'Molto bene! Ripassa quelle sbagliate.' : 'Rileggi il manuale e riprova.'}</p>
-      <button class="btnfinto n" id="qRe" style="border:0;font-size:16px;padding:12px 20px;margin-top:8px">Rifai il quiz</button></div>`;
-    $('#qRe').onclick = () => { Q = prepara(QT); qi = 0; punti = 0; quiz(); }; return;
+      <p id="qSalva" class="mute">Salvo il punteggio…</p><button class="btnfinto n" id="qRe" style="border:0;font-size:16px;padding:12px 20px;margin-top:8px">Rifai il quiz</button></div>`;
+    salvaQuiz();
+    $('#qRe').onclick = () => { Q = prepara(QT); qi = 0; punti = 0; SB = []; salvato = false; quiz(); }; return;
   }
   const [d, r, g, sp] = Q[qi];
-  box.innerHTML = `<div class="mute">Domanda ${qi + 1} di ${Q.length}</div><div class="barra"><i style="width:${qi / Q.length * 100}%"></i></div>
+  box.innerHTML = `<div class="mute">${esc(NOMEQ)} · <a href="#quiz" id="qCambia" style="color:inherit">non sei tu?</a> · Domanda ${qi + 1} di ${Q.length}</div><div class="barra"><i style="width:${qi / Q.length * 100}%"></i></div>
     <div class="dom" style="margin-top:12px">${d}</div><div class="risp">${r.map((x, i) => `<button data-i="${i}">${x}</button>`).join('')}</div><div id="qS"></div>`;
   $$('.risp button').forEach(b => b.onclick = () => {
     if (box.dataset.fatto === '1') return; box.dataset.fatto = '1';
-    const i = +b.dataset.i; if (i === g) punti++;
+    const i = +b.dataset.i; if (i === g) punti++; else SB.push(d);
     $$('.risp button').forEach((x, j) => { if (j === g) x.classList.add('giusta'); else if (j === i) x.classList.add('sbagliata'); });
     $('#qS').innerHTML = `<p class="spiega">${i === g ? '✅ Giusto! ' : '❌ Non proprio. '}${sp}</p><button class="btnfinto n" id="qN" style="border:0;font-size:16px;padding:12px 20px">${qi === Q.length - 1 ? 'Vedi il risultato' : 'Avanti'}</button>`;
     $('#qN').onclick = () => { qi++; box.dataset.fatto = '0'; quiz(); };

@@ -114,7 +114,7 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
 (function () {
 "use strict";
 const { $, tutti, esc, euro, hhmm } = ALP;
-let HUB = ALP.ls.get('hub_nome');
+let HUB = ALP.ls.get('hub_nome'); const RESP = () => ['Andrea', 'Meris Bertuletti'].includes(HUB); let QUIZ = [];
 let CONS = [], RIDER = [], POS = {}, VERS = [], TURNI = [], GIRI = [], KM = [], SEG = {}, map = null, livello = null, primaVolta = true;
 let VISTA = 'mappa', SERV = ALP.servizio(), SELE = null, Q = { p: 4, b: 0, tipo: 'DOMICILIO', paese: "San Paolo d'Argon" };
 const MAX = 20, GIALLO = 15, STRADA_DEF = 10;
@@ -154,7 +154,8 @@ async function avvia() {
     if (noteLibere) liberi.forEach(n => { if (!noteLibere.has(n)) { ALP.suono(); ALP.toast(n + ' è libero in pizzeria'); } });
     noteLibere = liberi; RIDER = d; presto();
   }));
-  L(FB.lista('posizioni', [], d => { POS = {}; d.forEach(p => POS[p.id] = p); presto(); }));
+  if (RESP()) L(FB.lista('quiz', [], d => { QUIZ = d; }));
+    L(FB.lista('posizioni', [], d => { POS = {}; d.forEach(p => POS[p.id] = p); presto(); }));
   L(FB.lista('versamenti', [['data', '==', oggi]], d => { if (d.some(v => v.stato === 'attesa' && !VERS.find(x => x.id === v.id))) ALP.suono(true); VERS = d; presto(); }));
   L(FB.lista('turni', [['data', '==', oggi]], d => { TURNI = d; presto(); }));
   L(FB.lista('giri', [['data', '==', oggi]], d => { GIRI = d; presto(); }));
@@ -601,7 +602,16 @@ function schedaRider(nome) {
   });
 }
 
-function fineTurno() {
+function quizHtml() {
+    const nomi = { rider: '🛵 Rider', cassa: '🧾 Cassa', responsabili: '⭐ Responsabili' };
+    const l = QUIZ.slice().sort((a, b) => String(b.quando).localeCompare(String(a.quando))).slice(0, 60);
+    return `<details style="margin-top:18px"><summary style="font-weight:800">📝 Risultati quiz <small class="muto">(${QUIZ.length})</small></summary>
+      ${l.length ? `<table style="margin-top:8px"><tr><th>Chi</th><th>Quiz</th><th>Punti</th><th>Quando</th></tr>${l.map(q => { const pc = q.totale ? q.punti / q.totale : 0;
+        return `<tr><td><b>${esc(q.nome)}</b>${(q.sbagliate || []).length ? `<details><summary class="muto" style="font-size:12px">${q.sbagliate.length} sbagliate</summary><div class="muto" style="font-size:12px">${q.sbagliate.map(esc).join('<br>')}</div></details>` : ''}</td>
+        <td>${nomi[q.quiz] || esc(q.quiz)}</td><td><b style="color:${pc >= .75 ? 'var(--verde)' : pc >= .5 ? '#b07d00' : 'var(--rosso2)'}">${q.punti}/${q.totale}</b></td>
+        <td class="muto">${q.quando ? new Date(q.quando).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</td></tr>`; }).join('')}</table>` : '<p class="muto">Nessun quiz fatto per ora.</p>'}</details>`;
+  }
+  function fineTurno() {
   const nomi = [...new Set(TURNI.map(t => t.rider).concat(CONS.filter(c => c.rider).map(c => c.rider)))].sort();
   let T = { n: 0, cont: 0, sum: 0, vers: 0, tasca: 0, km: 0 };
   const righe = nomi.map(n => {
@@ -624,7 +634,7 @@ function fineTurno() {
       <tr class="tot"><td>Totale</td><td class="n">${T.n}</td><td class="n">${euro(T.cont)}</td><td class="n">${euro(T.sum)}</td><td class="n">${euro(T.tasca)}</td><td class="n">${T.km} km</td></tr></table>
     <h3 style="margin:18px 0 6px">Km di ${new Date().toLocaleDateString('it-IT', { month: 'long' })} <small class="muto">(si azzerano il 1° del mese, il totale arriva via email)</small></h3>
     <div class="chips">${kmMese.length ? kmMese.map(k => `<button disabled style="opacity:1">${k.id === 'FURGONE' ? '🚐 Furgone' : '<i style="background:' + ALP.colore(k.id) + '"></i>' + esc(k.id)} · <b>${Math.round(k.km)} km</b></button>`).join('') : '<span class="muto">Ancora nessun km questo mese</span>'}</div>
-    <details style="margin-top:18px"><summary style="font-weight:800">Impostazioni</summary>
+    ${RESP() ? quizHtml() : ''}<details ${RESP() ? '' : 'hidden'} style="margin-top:18px"><summary style="font-weight:800">Impostazioni</summary>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
         <div class="avv" style="${SEG.gemini ? 'background:#e2f3e8;color:#1d7a3d' : ''}">${SEG.gemini ? '✓ Lettura delle foto attiva' : '⚠️ Lettura delle foto non attiva'}<button class="mini" id="cambiak" style="margin-left:auto">Sostituisci chiave</button></div>
         <label class="c" id="rigak" style="display:none">Nuova chiave Gemini<input id="k" type="password" placeholder="incolla qui la chiave"></label>
