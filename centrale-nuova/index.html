@@ -223,7 +223,14 @@ function struttura() {
           <div class="sugg" id="sugg"></div></div>
       </div></div></div>`;
   $('#nuova').onclick = () => schedaConsegna();
+  $('#nuova2').onclick = () => schedaConsegna();
   $('#fine').onclick = fineTurno;
+  $('#vOrari').onclick = () => { VISTA = 'orari'; $('#orari').classList.add('on'); presto(); };
+  $('#vMappa').onclick = () => { VISTA = 'mappa'; $('#orari').classList.remove('on'); };
+  tutti('#serv button').forEach(b => b.onclick = () => { SERV = b.dataset.s; presto(); });
+  tutti('#tipoQ button').forEach(b => b.onclick = () => { Q.tipo = b.dataset.t; presto(); });
+  tutti('[data-q]').forEach(b => b.onclick = () => { const k = b.dataset.q[0], d = Number(b.dataset.q.slice(1)); Q[k] = Math.max(0, Q[k] + d); presto(); });
+  $('#qpaese').oninput = () => { Q.paese = $('#qpaese').value; presto(); };
   if (!map) {
     map = L.map('mappa', { zoomControl: false }).setView(ALP.CASA, 13);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
