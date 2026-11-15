@@ -52,6 +52,7 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .ca.dass { border:2px dashed #e0a800; } .ca.dass .rd { background:#fff4d6; color:#7a5600; }
   .ca.gir .rd { background:#dde8ff; color:#123f8c; } .ca.fat { border-color:#3aa35c; } .ca.fat .rd { background:#e2f3e8; color:#1d7a3d; }
   .ca .spunta { position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:50%; background:#2e9b50; color:#fff; display:grid; place-items:center; font:900 18px sans-serif; }
+  .ca.asp { border-color:#c9b48a; } .ca.asp .rd { background:#f3ead8; color:#6b4f1d; }
   .ca.ces { opacity:.7; } .ca.ces .rd { background:#fde8e7; color:#b3261e; }
   .ca { width:220px; background:#fff; border-radius:18px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; touch-action:pan-x; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:grab; }
   .ca .r1 { display:flex; justify-content:space-between; gap:6px; } .ca b { font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -299,25 +300,28 @@ function cardRider(o) {
 }
 /* ---------- striscia consegne: filtro per fascia (segue l'ora da sola) + stato ---------- */
 let FIL_F = null, FIL_S = 'tutte';
-const STATI = [['tutte', 'Tutte'], ['dass', 'Da assegnare'], ['gir', 'In giro'], ['fat', 'Consegnate'], ['ces', 'Cestino']];
-const statoC = c => c.stato === 'annullata' ? 'ces' : c.stato === 'consegnata' ? 'fat' : !c.rider ? 'dass' : 'gir';
+const STATI = [['tutte', 'Tutte'], ['dass', 'Da assegnare'], ['gir', 'In giro'], ['fat', 'Consegnate'], ['asp', '🥡 Asporto'], ['ces', 'Cestino']];
+const statoC = c => c.stato === 'annullata' ? 'ces' : c.tipo === 'ASPORTO' ? 'asp' : c.stato === 'consegnata' ? 'fat' : !c.rider ? 'dass' : 'gir';
+const inTutte = c => !['ces', 'asp'].includes(statoC(c));
 function striscia() {
-  const tutte = CONS.filter(c => c.tipo !== 'ASPORTO'), adesso = ALP.fascia(ALP.hhmm(Date.now()));
+  const tutte = CONS, adesso = ALP.fascia(ALP.hhmm(Date.now()));
   const f = FIL_F || adesso, inF = c => f === 'tutto' || fasciaForno(c) === f;
   const fasce = [...new Set(tutte.map(fasciaForno).filter(Boolean).concat(ALP.fasce(SERV).includes(adesso) ? [adesso] : []))].sort();
-  const n = (x, flt) => tutte.filter(c => (x === 'tutto' || fasciaForno(c) === x) && (flt ? flt(c) : statoC(c) !== 'ces')).length;
+  const n = (x, flt) => tutte.filter(c => (x === 'tutto' || fasciaForno(c) === x) && (flt ? flt(c) : inTutte(c))).length;
   $('#filF').innerHTML = `<button data-ff="tutto" class="${f === 'tutto' ? 'on' : ''}">Tutto il turno (${n('tutto')})</button>`
     + fasce.map(x => `<button data-ff="${x}" class="${x === f ? 'on' : ''} ${x === adesso ? 'now' : ''}">${x}–${ALP.meno(x, -15)}${x === adesso ? ' · adesso' : ''} (${n(x)})</button>`).join('');
-  $('#filS').innerHTML = STATI.map(([k, t]) => `<button data-fs="${k}" class="${k === FIL_S ? 'on' : ''}">${t} (${tutte.filter(c => inF(c) && (k === 'tutte' ? statoC(c) !== 'ces' : statoC(c) === k)).length})</button>`).join('');
+  $('#filS').innerHTML = STATI.map(([k, t]) => `<button data-fs="${k}" class="${k === FIL_S ? 'on' : ''}">${t} (${tutte.filter(c => inF(c) && (k === 'tutte' ? inTutte(c) : statoC(c) === k)).length})</button>`).join('');
   tutti('[data-ff]').forEach(b => b.onclick = () => { FIL_F = b.dataset.ff === adesso ? null : b.dataset.ff; striscia(); });
   tutti('[data-fs]').forEach(b => b.onclick = () => { FIL_S = b.dataset.fs; striscia(); });
-  const l = tutte.filter(c => inF(c) && (FIL_S === 'tutte' ? statoC(c) !== 'ces' : statoC(c) === FIL_S))
+  const l = tutte.filter(c => inF(c) && (FIL_S === 'tutte' ? inTutte(c) : statoC(c) === FIL_S))
     .sort((a, b) => (a.previsto || '99').localeCompare(b.previsto || '99'));
   $('#na').textContent = 'Consegne · ' + l.length;
   $('#carte').innerHTML = l.length ? l.map(cardConsegna).join('') : '<div class="vuoto">Nessuna consegna qui. Premi “+ Consegna” o cambia filtro.</div>';
 }
 function cardConsegna(c) {
   const s = statoC(c), info = [c.pizze ? c.pizze + 'P' : '', c.burger ? c.burger + 'B' : ''].filter(Boolean).join(' ') + (c.note ? ' · ' + c.note : '');
+  if (s === 'asp') return `<div class="ca asp" data-c="${c.id}"><span class="po">PER LE ${esc(c.previsto || '—')}</span><span class="vi">🥡 ASPORTO</span>
+    ${c.cliente ? `<span class="cl">${esc(c.cliente)}</span>` : ''}${info ? `<span>${esc(info)}</span>` : ''}<div class="rd">🥡 Ritira alle ${esc(c.previsto || '—')}</div><span class="st">Ritiro del cliente</span></div>`;
   const rd = s === 'dass' ? '👆 Da assegnare' : s === 'gir' ? '🚗 ' + esc(c.rider) : s === 'fat' ? '✓ ' + esc(c.rider) : '🗑 ' + esc(c.rider || 'Eliminata');
   const st = s === 'dass' ? 'Tieni premuto o trascina sul rider →' : s === 'gir' ? (c.stato === 'partita' ? 'In giro' : 'Assegnata, parte a breve')
     : s === 'fat' ? 'Consegnata alle ' + hhmm(c.consegnata) : 'Nel cestino' + (c.eliminataDa ? ' · ' + esc(c.eliminataDa) : '') + (c.eliminata ? ' ' + hhmm(c.eliminata) : '');
@@ -384,6 +388,7 @@ function trascina() {
   const pulisci = () => { clearTimeout(timer); timer = null; if (fant) fant.remove(); fant = null; if (sorg) sorg.classList.remove('su'); sorg = null; tutti('.rc.bersaglio').forEach(e => e.classList.remove('bersaglio')); sopra = null; };
   document.addEventListener('pointerdown', e => {
     const ca = e.target.closest('.ca'); if (!ca) return;
+    if (ca.classList.contains('asp')) { x0 = e.clientX; y0 = e.clientY; sorg = ca; timer = setTimeout(() => { timer = null; }, 5000); return; } // asporto: si tocca e basta, niente rider
     x0 = e.clientX; y0 = e.clientY; sorg = ca;
     timer = setTimeout(() => {
       timer = null; const r = ca.getBoundingClientRect(); dx = x0 - r.left; dy = y0 - r.top;

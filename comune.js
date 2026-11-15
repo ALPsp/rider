@@ -140,6 +140,10 @@
         const r = await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=' + encodeURIComponent(q))).json();
         if (r[0]) p = vicino([Number(r[0].lat), Number(r[0].lon)]);
       } catch (e) {}
+      if (!p && window.API_URL) try { // OpenStreetMap non la trova: la cerca Google tramite lo script
+        const r = await (await fetch(window.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'geocodifica', a: [via, paese || "San Paolo d'Argon"] }) })).json();
+        if (r.ok && r.r) p = vicino([Number(r.r[0]), Number(r.r[1])]);
+      } catch (e) {}
       if (p) A.ls.set(k, JSON.stringify(p));
       return p;
     },

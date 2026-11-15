@@ -289,7 +289,7 @@ function aggiornaImpostazioni_() {
 
 /* ================= CHALLENGE MENSILE DEI RIDER =================
    Partecipa chi tocca "Partecipo alla challenge" nell'app (campo challenge nel documento rider).
-   Voto su 10: tempi contro Google con la sosta (40%), puntualità sull'orario (40%), rientri (20%).
+   Voto su 10: tempi del giro intero contro Google + 3 min a consegna + ritorno (40%), puntualità sull'orario (40%), rientri (20%).
    In classifica dalle 20 consegne del mese. Ogni notte scrive config/challenge, che l'app rider legge.
    Il giorno 1 chiude il mese prima e manda l'email con il vincitore e il valore del buono. */
 const CH_PESI = { tempi: 0.4, puntualita: 0.4, rientri: 0.2 }, CH_MINIMO = 20;
@@ -346,13 +346,15 @@ function classificaChallenge_(mese, iscritti) {
     const s = st[c.Rider]; if (!s || !delMese(c.Consegnata)) return;
     s.n++;
     const rt = num(c['Ritardo tratta (min)']), ro = num(c['Ritardo su orario (min)']);
-    if (rt !== null) s.t.push(lim(1 - rt / 10));            // in linea con Google (sosta compresa) = pieno, 10 min in più = zero
     if (ro !== null && !(num(c['Uscita in ritardo (min)']) > 0)) s.p.push(lim(1 - (ro - 15) / 15)); // uscita in ritardo dal locale: non conta
   });
+  const nCons = {}, sosta = Number(imp_().SOSTA_CLIENTE_MIN) || 3;
+  righe_('Consegne').forEach(function (c) { if (c.Giro && c.Consegnata) nCons[c.Giro] = (nCons[c.Giro] || 0) + 1; });
   righe_('Giri').forEach(function (g) {
     const s = st[g.Rider]; if (!s || !delMese(g.Partenza)) return;
     const re = num(g['Rientro reale (min)']), go = num(g['Rientro Google (min)']);
     if (re !== null && go !== null) s.r.push(lim(1 - (re - go - 2) / 10)); // 2 min di margine, poi 10 min = zero
+    const v = votoGiro_(g, nCons[g.ID] || 0, sosta); if (v !== null) s.t.push(v / 10); // giro intero: in linea con Google + 3 min a consegna = 8, più svelti fino a 10
   });
   const media = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; };
   return Object.keys(st).map(function (nome) {

@@ -107,7 +107,7 @@ function doGet(e) {
 function api_() {
   return { riderStato: riderStato, riderFotoCruscotto: riderFotoCruscotto, riderConfermaKm: riderConfermaKm, riderScansiona: riderScansiona,
     riderAggiungi: riderAggiungi, riderTogli: riderTogli, riderParto: riderParto, riderConsegnato: riderConsegnato, riderRientrato: riderRientrato,
-    riderPosizione: riderPosizione, riderIndicazioni: riderIndicazioni, riderVersa: riderVersa, hubDati: hubDati };
+    riderPosizione: riderPosizione, riderIndicazioni: riderIndicazioni, riderVersa: riderVersa, hubDati: hubDati, geocodifica: geocodifica };
 }
 function doPost(e) {
   let out;
@@ -119,6 +119,26 @@ function doPost(e) {
   } catch (err) { out = { ok: false, e: String(err && err.message || err) }; }
   fbDopo_(e, out);
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Indirizzo → [lat, lng] con Google, solo se trova la via (non il centro del paese). Usata quando OpenStreetMap non la trova. */
+function geocodifica(via, paese) {
+  via = String(via || '').slice(0, 120); paese = String(paese || "San Paolo d'Argon").slice(0, 60);
+  if (!via) return null;
+  const k = 'gg_' + Utilities.base64EncodeWebSafe(via + '|' + paese).slice(0, 200), c = CacheService.getScriptCache(), x = c.get(k);
+  if (x) return JSON.parse(x);
+  const r = Maps.newGeocoder().setRegion('it').setLanguage('it').geocode(via + ', ' + paese + ', BG, Italia');
+  const g = (r.results || []).filter(function (a) { return (a.types || []).some(function (t) { return /street_address|premise|subpremise|route|establishment/.test(t); }); })[0];
+  const out = g ? [g.geometry.location.lat, g.geometry.location.lng] : null;
+  c.put(k, JSON.stringify(out), 21600);
+  return out;
+}
+/** Voto tempi di un giro su 10: Google andata (tutte le tappe) + sosta a consegna + Google ritorno, contro il tempo reale partenza→rientro.
+    In linea = 8; ogni minuto risparmiato +0,5 (max 10); ogni minuto in più −0,5 (min 0). */
+function votoGiro_(g, nCons, sosta) {
+  if (vuoto_(g['Google percorso fatto (min)']) || vuoto_(g['Minuti totali']) || !nCons) return null;
+  const atteso = Number(g['Google percorso fatto (min)']) + sosta * nCons, diff = Number(g['Minuti totali']) - atteso;
+  return Math.max(0, Math.min(10, 8 - diff * 0.5));
 }
 
 /* ================= UTILITÀ ================= */
@@ -773,6 +793,8 @@ function classifica_(rif) {
     if (!vuoto_(c['Tratta Google (min)'])) { s.tratte++; if (!/Lento/.test(a)) s.tratteOk++; }
     s.ritardo += Math.max(0, Number(c['Ritardo tratta (min)']) || 0);
   });
+  const nCons = {}, sosta = Number(imp_().SOSTA_CLIENTE_MIN) || 3;
+  righe_('Consegne').forEach(function (c) { if (c.Giro && c.Consegnata) nCons[c.Giro] = (nCons[c.Giro] || 0) + 1; });
   righe_('Giri').forEach(function (g) {
     if (!nelMese(g.Partenza) || g.Stato !== 'Chiuso') return;
     const s = s_(g.Rider), a = String(g.Avvisi || '');
@@ -780,6 +802,7 @@ function classifica_(rif) {
     if (a) s.avvisi += a.split(' · ').length;
     if (!vuoto_(g['Google percorso fatto (min)']) && String(g['Ordine consigliato']).indexOf('→') > 0) { s.giriMulti++; if (!/non ottimizzato/.test(a)) s.percorsiOk++; }
     if (!vuoto_(g['Rientro Google (min)'])) { s.rientri++; if (!/Rientro lungo/.test(a)) s.rientriOk++; }
+    const v = votoGiro_(g, nCons[g.ID] || 0, sosta); if (v !== null) { s.vg = (s.vg || 0) + v; s.ng = (s.ng || 0) + 1; }
   });
   righe_('Turni').forEach(function (t) { if (nelMese(t.Inizio) && !vuoto_(t['Km percorsi'])) s_(t.Rider).km += Number(t['Km percorsi']); });
   const pc = function (a, b) { return b ? Math.round(a / b * 100) : 100; };
@@ -787,7 +810,7 @@ function classifica_(rif) {
   lista.forEach(function (x) {
     x.percorso = pc(x.percorsiOk, x.giriMulti);   // ha seguito l'ordine consigliato
     x.puntualita = pc(x.inOrario, x.conOrario);   // arrivato entro l'orario PER LE
-    x.tempi = pc(x.tratteOk, x.tratte);           // tratte entro il tempo di Google
+    x.tempi = x.ng ? Math.round(x.vg / x.ng * 10) : pc(x.tratteOk, x.tratte); // giro intero contro Google + 3 min a consegna (in linea = 80%, più svelti fino a 100%)
     x.rientro = pc(x.rientriOk, x.rientri);       // rientri senza giri lunghi
     x.ritardoMedio = x.consegne ? Math.round(x.ritardo / x.consegne * 10) / 10 : 0;
     x.punteggio = Math.round(0.30 * x.percorso + 0.30 * x.puntualita + 0.25 * x.tempi + 0.15 * x.rientro);
@@ -826,7 +849,7 @@ function premiazioneMensile() {
           '<td align="center"><b>' + x.voto + '</b>/10</td>' + cella(x.percorso) + cella(x.puntualita) + cella(x.tempi) + cella(x.rientro) +
           '<td align="center">' + x.consegne + '</td><td align="center">' + x.km + '</td></tr>';
       }).join('') + '</table><p style="color:#888;font-size:12px">Voto: 30% percorso consigliato seguito, 30% puntualità sull\'orario PER LE (fascia di 15 min; ' +
-      'le consegne uscite in ritardo dal locale non contano), 25% tempi entro Google Maps + 3 min a consegna, 15% rientri senza giri lunghi. Minimo ' + (imp.PREMIO_MIN_CONSEGNE || 10) + ' consegne nel mese.</p>' +
+      'le consegne uscite in ritardo dal locale non contano), 25% tempi del giro intero (Google andata + 3 min a consegna + Google ritorno: in linea = 8, più svelti fino a 10), 15% rientri senza giri lunghi. Minimo ' + (imp.PREMIO_MIN_CONSEGNE || 10) + ' consegne nel mese.</p>' +
       uscitaCucinaHtml_(function (d) { return d && Utilities.formatDate(new Date(d), 'Europe/Rome', 'yyyy-MM') === mese; }, 'del mese') + '</div>'
   });
 }
