@@ -102,12 +102,14 @@ function syncConsegna_(c, imp) {
 /** tempi reali contro Google per le consegne fatte e non ancora analizzate (come prima faceva "Consegnato") */
 function analizzaConsegne_(imp) {
   const tol = Number(imp.TOLLERANZA_MIN) || 3, sosta = Number(imp.SOSTA_CLIENTE_MIN) || 3, piz = imp.INDIRIZZO_PIZZERIA || PIZZERIA;
-  const giri = {}; righe_('Giri').forEach(function (g) { giri[g.ID] = g; });
-  const perGiro = {};
-  righe_('Consegne').forEach(function (c) { if (c.Giro && c.Consegnata) (perGiro[c.Giro] = perGiro[c.Giro] || []).push(c); });
+  colonna_('Consegne', 'Uscita in ritardo (min)'); colonna_('Consegne', 'Causa ritardo uscita');
+  const giri = {}, giriL = righe_('Giri'); giriL.forEach(function (g) { giri[g.ID] = g; });
+  const perGiro = {}, tutte = righe_('Consegne');
+  tutte.forEach(function (c) { if (c.Giro && c.Consegnata) (perGiro[c.Giro] = perGiro[c.Giro] || []).push(c); });
   Object.keys(perGiro).forEach(function (idg) {
     const g = giri[idg]; if (!g || !g.Partenza) return;
     const fatte = perGiro[idg].sort(function (a, b) { return new Date(a.Consegnata) - new Date(b.Consegnata); });
+    let cum = 0;
     fatte.forEach(function (c, i) {
       if (!vuoto_(c['Tratta reale (min)'])) return;
       const prec = i ? fatte[i - 1] : null;
@@ -115,18 +117,54 @@ function analizzaConsegne_(imp) {
       const avvisi = String(c.Avvisi || '').split(' · ').filter(function (a) { return a && !/^(Lento|In ritardo)/.test(a); });
       let ritTratta = '';
       if (goo !== null) { ritTratta = reale - goo - (prec ? sosta : 0); if (ritTratta > tol) avvisi.push('Lento: ' + reale + ' min invece di ' + goo + ' (Google)'); }
-      let ritOrario = '';
+      // strada attesa dalla partenza fino a questa consegna: Google + sosta per le consegne prima
+      if (goo === null) cum = null; else if (cum !== null) cum += goo + (prec ? sosta : 0);
+      let ritOrario = '', uscita = '', causa = '';
       const prev = String(c['Orario previsto'] instanceof Date ? ora_(c['Orario previsto']) : c['Orario previsto'] || '').replace(/^'/, '');
       if (/^\d{1,2}:\d{2}$/.test(prev)) {
-        const d = new Date(c.Consegnata), p = prev.split(':');
-        ritOrario = Number(Utilities.formatDate(d, 'Europe/Rome', 'H')) * 60 + Number(Utilities.formatDate(d, 'Europe/Rome', 'm')) - (Number(p[0]) * 60 + Number(p[1]));
-        if (ritOrario > tol) avvisi.push('In ritardo di ' + ritOrario + ' min sull\'orario ' + prev);
+        const d = new Date(c.Consegnata), p = prev.split(':'), fine = Number(p[0]) * 60 + Number(p[1]) + 15; // "per le 19:00" = entro le 19:15
+        ritOrario = minDelGiorno_(d) - (Number(p[0]) * 60 + Number(p[1]));
+        if (cum !== null) {
+          // uscita dal locale: se il rider parte quando, con la strada di Google, non può più arrivare entro la fascia, il ritardo non è suo
+          uscita = Math.max(0, Math.round(minDelGiorno_(new Date(g.Partenza)) - (fine - cum)));
+          if (uscita > 0) causa = causaUscita_(c, g, fine - cum, tutte, giriL, imp);
+        }
+        if (!(uscita > 0) && ritOrario - 15 > tol) avvisi.push('In ritardo di ' + (ritOrario - 15) + ' min oltre la fascia ' + prev);
       }
       scrivi_('Consegne', c._riga, { 'N. fatto': i + 1, 'Minuti dalla partenza': min_(g.Partenza, c.Consegnata), 'Tratta reale (min)': reale,
-        'Tratta Google (min)': goo === null ? '' : goo, 'Ritardo tratta (min)': ritTratta, 'Ritardo su orario (min)': ritOrario, Avvisi: avvisi.join(' · ') });
+        'Tratta Google (min)': goo === null ? '' : goo, 'Ritardo tratta (min)': ritTratta, 'Ritardo su orario (min)': ritOrario, Avvisi: avvisi.join(' · '),
+        'Uscita in ritardo (min)': uscita, 'Causa ritardo uscita': causa });
     });
   });
 }
+
+const minDelGiorno_ = function (d) { return Number(Utilities.formatDate(d, 'Europe/Rome', 'H')) * 60 + Number(Utilities.formatDate(d, 'Europe/Rome', 'm')); };
+const hm_ = function (m) { m = Math.round(m); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+/** Perché è uscita tardi: 1) cassiere, fascia già piena quando ha preso l'ordine; 2) rider, nessuno libero all'ora giusta; 3) pizzeria/cucina. */
+function causaUscita_(c, g, partIdeale, tutte, giri, imp) {
+  const max = Number(imp.MAX_FASCIA) || 20, f = fascia_(c['Orario previsto']), giorno = data_(new Date(c.Creata || c.Consegnata));
+  if (f) {
+    const stesse = tutte.filter(function (x) { return x.Stato !== 'annullata' && fascia_(x['Orario previsto']) === f && x.Creata && data_(new Date(x.Creata)) === giorno; })
+      .sort(function (a, b) { return new Date(a.Creata) - new Date(b.Creata); });
+    let p = 0, b = 0;
+    for (let k = 0; k < stesse.length && String(stesse[k].ID) !== String(c.ID); k++) { p += Number(stesse[k].Pizze) || 0; b += Number(stesse[k].Burger) || 0; }
+    const cp = Number(c.Pizze) || 0, cb = Number(c.Burger) || 0;
+    if ((cp && p + cp > max) || (cb && b + cb > max)) {
+      const chi = c['Creata da'] && c['Creata da'] !== 'Cassa' ? c['Creata da'] : (c.Cassiere || 'cassa');
+      return 'Cassiere ' + chi + ': fascia ' + f + ' già piena (' + p + ' pizze, ' + b + ' burger prima di questo ordine)';
+    }
+  }
+  const prima = giri.filter(function (x) { return x.Rider === g.Rider && x.ID !== g.ID && x.Partenza && new Date(x.Partenza) < new Date(g.Partenza); })
+    .sort(function (a, b) { return new Date(b.Partenza) - new Date(a.Partenza); })[0];
+  if (prima && prima.Rientro && minDelGiorno_(new Date(prima.Rientro)) > partIdeale && data_(new Date(prima.Rientro)) === data_(new Date(g.Partenza)))
+    return 'Rider: ' + g.Rider + ' ancora in giro (rientrato alle ' + ora_(prima.Rientro) + ', doveva partire alle ' + hm_(partIdeale) + ')';
+  const cp = Number(c.Pizze) || 0, cb = Number(c.Burger) || 0;
+  return cp && cb ? 'Pizzeria e cucina' : cb ? 'Cucina' : 'Pizzeria';
+}
+const fascia_ = function (v) {
+  const s = String(v instanceof Date ? ora_(v) : v || '').replace(/^'/, ''), m = /^(\d{1,2}):(\d{2})$/.exec(s); if (!m) return '';
+  const t = Number(m[1]) * 60 + Math.floor(Number(m[2]) / 15) * 15; return hm_(t);
+};
 
 /* ---------- giri ---------- */
 function syncGiro_(g) {
@@ -216,8 +254,11 @@ function syncTurno_(t, imp) {
 }
 
 function syncVersamento_(v) {
+  ['Fondo', 'Incasso', 'Atteso', 'Differenza'].forEach(function (k) { colonna_('Versamenti', k); });
+  const atteso = v.contantiAtteso !== undefined ? Number(v.contantiAtteso) : (v.fondo !== undefined ? (Number(v.fondo) || 0) + (Number(v.incasso) || 0) : '');
   salvaRiga_('Versamenti', v.id, { Data: v.data, Servizio: v.servizio, Rider: v.rider, Contanti: v.contanti || 0, SumUp: v.sumup || '', Consegne: v.consegne || '',
-    'Confermato da': v.confermatoDa || '', Ora: dt_(v.confermato || v.ora) });
+    'Confermato da': v.confermatoDa || '', Ora: dt_(v.confermato || v.ora), Fondo: v.fondo || '', Incasso: v.incasso || '', Atteso: atteso,
+    Differenza: atteso === '' ? '' : Math.round(((Number(v.contanti) || 0) - atteso) * 100) / 100 });
 }
 
 /** Il giorno 1: km del mese appena finito per ogni rider e per il furgone (dal Foglio, scheda Turni), via email. */
@@ -306,7 +347,7 @@ function classificaChallenge_(mese, iscritti) {
     s.n++;
     const rt = num(c['Ritardo tratta (min)']), ro = num(c['Ritardo su orario (min)']);
     if (rt !== null) s.t.push(lim(1 - rt / 10));            // in linea con Google (sosta compresa) = pieno, 10 min in più = zero
-    if (ro !== null) s.p.push(lim(1 - (ro - 15) / 15));     // entro l'orario + 15 = pieno, 30 min oltre = zero
+    if (ro !== null && !(num(c['Uscita in ritardo (min)']) > 0)) s.p.push(lim(1 - (ro - 15) / 15)); // uscita in ritardo dal locale: non conta
   });
   righe_('Giri').forEach(function (g) {
     const s = st[g.Rider]; if (!s || !delMese(g.Partenza)) return;

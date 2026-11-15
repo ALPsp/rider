@@ -769,7 +769,7 @@ function classifica_(rif) {
     const s = s_(c.Rider), a = String(c.Avvisi || '');
     s.consegne++;
     if (a) s.avvisi += a.split(' · ').length;
-    if (!vuoto_(c['Ritardo su orario (min)'])) { s.conOrario++; if (!/In ritardo/.test(a)) s.inOrario++; }
+    if (!vuoto_(c['Ritardo su orario (min)']) && !(Number(c['Uscita in ritardo (min)']) > 0)) { s.conOrario++; if (!/In ritardo/.test(a)) s.inOrario++; } // uscita in ritardo dal locale: non conta per il rider
     if (!vuoto_(c['Tratta Google (min)'])) { s.tratte++; if (!/Lento/.test(a)) s.tratteOk++; }
     s.ritardo += Math.max(0, Number(c['Ritardo tratta (min)']) || 0);
   });
@@ -825,9 +825,49 @@ function premiazioneMensile() {
         return '<tr style="border-top:1px solid #eee"><td align="center">' + (medaglie[i] || i + 1) + '</td><td><b>' + x.rider + '</b></td>' +
           '<td align="center"><b>' + x.voto + '</b>/10</td>' + cella(x.percorso) + cella(x.puntualita) + cella(x.tempi) + cella(x.rientro) +
           '<td align="center">' + x.consegne + '</td><td align="center">' + x.km + '</td></tr>';
-      }).join('') + '</table><p style="color:#888;font-size:12px">Voto: 30% percorso consigliato seguito, 30% puntualità sull\'orario PER LE, ' +
-      '25% tempi entro Google Maps, 15% rientri senza giri lunghi. Minimo ' + (imp.PREMIO_MIN_CONSEGNE || 10) + ' consegne nel mese.</p></div>'
+      }).join('') + '</table><p style="color:#888;font-size:12px">Voto: 30% percorso consigliato seguito, 30% puntualità sull\'orario PER LE (fascia di 15 min; ' +
+      'le consegne uscite in ritardo dal locale non contano), 25% tempi entro Google Maps + 3 min a consegna, 15% rientri senza giri lunghi. Minimo ' + (imp.PREMIO_MIN_CONSEGNE || 10) + ' consegne nel mese.</p>' +
+      uscitaCucinaHtml_(function (d) { return d && Utilities.formatDate(new Date(d), 'Europe/Rome', 'yyyy-MM') === mese; }, 'del mese') + '</div>'
   });
+}
+
+/* ================= USCITA PRODOTTI CUCINA (pizzeria + cucina) =================
+   Dalle consegne analizzate: quante sono partite in tempo e, se in ritardo, per colpa di chi
+   (cassiere che ha riempito troppo la fascia, rider non libero, pizzeria, cucina). */
+function uscitaCucina_(cons) {
+  const o = { tot: 0, ok: 0, rep: { Pizzeria: { n: 0, rit: 0, min: 0 }, Cucina: { n: 0, rit: 0, min: 0 } }, cassieri: {}, rider: 0, righe: [] };
+  cons.forEach(function (c) {
+    if (vuoto_(c['Uscita in ritardo (min)'])) return;
+    o.tot++;
+    const u = Number(c['Uscita in ritardo (min)']) || 0, causa = String(c['Causa ritardo uscita'] || ''), p = Number(c.Pizze) || 0, b = Number(c.Burger) || 0;
+    if (p || !b) o.rep.Pizzeria.n++; if (b) o.rep.Cucina.n++;
+    if (u <= 0) { o.ok++; return; }
+    o.righe.push((c['Orario previsto'] instanceof Date ? ora_(c['Orario previsto']) : String(c['Orario previsto']).replace(/^'/, '')) + ' ' + String(c.Indirizzo).split(',')[0] + ' – uscita ' + u + ' min tardi: ' + causa);
+    if (/^Cassiere/.test(causa)) { const k = causa.replace(/^Cassiere (.*?):.*$/, '$1'); o.cassieri[k] = (o.cassieri[k] || 0) + 1; }
+    else if (/^Rider/.test(causa)) o.rider++;
+    else { if (/Pizzeria/.test(causa)) { o.rep.Pizzeria.rit++; o.rep.Pizzeria.min += u; } if (/ucina/.test(causa)) { o.rep.Cucina.rit++; o.rep.Cucina.min += u; } }
+  });
+  const pc = function (r) { return r.n ? Math.round((r.n - r.rit) / r.n * 100) : 100; };
+  o.testo = o.tot ? o.ok + ' su ' + o.tot + ' uscite in tempo · Pizzeria ' + pc(o.rep.Pizzeria) + '% · Cucina ' + pc(o.rep.Cucina) + '%' +
+    (Object.keys(o.cassieri).length ? ' · fasce troppo piene: ' + Object.keys(o.cassieri).map(function (k) { return k + ' ' + o.cassieri[k]; }).join(', ') : '') +
+    (o.rider ? ' · nessun rider libero: ' + o.rider : '') + (o.righe.length ? '\n  - ' + o.righe.join('\n  - ') : '') : 'nessun dato';
+  o.pc = pc;
+  return o;
+}
+function uscitaCucinaHtml_(filtro, quando, cons) {
+  cons = cons || righe_('Consegne').filter(function (c) { return filtro(c.Consegnata); });
+  const o = uscitaCucina_(cons); if (!o.tot) return '';
+  const col = function (v) { return v >= 90 ? '#2e7d32' : v >= 75 ? '#b26a00' : '#C6413C'; };
+  const riga = function (nome, r) { const v = o.pc(r); return '<tr style="border-top:1px solid #eee"><td><b>' + nome + '</b></td><td align="center" style="color:' + col(v) + '"><b>' + v + '%</b></td><td align="center">' + r.rit + ' su ' + r.n + '</td><td align="center">' + (r.rit ? Math.round(r.min / r.rit) + ' min' : '–') + '</td></tr>'; };
+  const ord = ['Pizzeria', 'Cucina'].sort(function (a, b) { return o.pc(o.rep[b]) - o.pc(o.rep[a]); });
+  return '<h3 style="margin:22px 0 4px;color:#C6413C">🍕 USCITA PRODOTTI CUCINA ' + quando + '</h3>' +
+    '<div style="color:#555">' + o.ok + ' su ' + o.tot + ' consegne uscite in tempo dal locale</div>' +
+    '<table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:6px"><tr style="color:#888"><th align="left">Reparto</th><th>In tempo</th><th>In ritardo</th><th>Ritardo medio</th></tr>' +
+    ord.map(function (k) { return riga(k, o.rep[k]); }).join('') + '</table>' +
+    (Object.keys(o.cassieri).length ? '<p style="margin:8px 0 0">🧾 <b>Fasce troppo piene</b> (ordine preso oltre ' + (imp_().MAX_FASCIA || 20) + ' pizze o burger in 15 min): ' +
+      Object.keys(o.cassieri).map(function (k) { return k + ' ' + o.cassieri[k]; }).join(', ') + '</p>' : '') +
+    (o.rider ? '<p style="margin:4px 0 0">🛵 Nessun rider libero all\'ora giusta: ' + o.rider + ' volte</p>' : '') +
+    (quando === 'del servizio' && o.righe.length ? '<ul style="color:#555">' + o.righe.map(function (r) { return '<li>' + r + '</li>'; }).join('') + '</ul>' : '');
 }
 
 /* ================= REPORT FINE SERVIZIO ================= */
@@ -882,6 +922,9 @@ function report_(servizio) {
     r.soldi = ' · 💶 ' + p.contanti.toFixed(2) + ' € contanti · 💳 ' + p.sumup.toFixed(2) + ' € SumUp' +
       (p.contanti ? (p.inTasca > 0 ? ' · ' : ' · contanti lasciati in cassa ✓') : '');
     if (p.inTasca > 0) r.avvisi.push('Contanti non lasciati in cassa: ' + p.inTasca.toFixed(2) + ' €');
+    // discrepanza: versato a fine turno contro atteso (fondo + incassato)
+    tv.filter(function (v) { return v.Rider === n && (v.Data instanceof Date ? data_(v.Data) : String(v.Data)) === oggi && v.Servizio === servizio && !vuoto_(v.Differenza) && Math.abs(Number(v.Differenza)) >= 0.5; })
+      .forEach(function (v) { r.avvisi.push('Discrepanza contanti: versati ' + Number(v.Contanti).toFixed(2) + ' € invece di ' + Number(v.Atteso).toFixed(2) + ' € (' + (Number(v.Differenza) > 0 ? '+' : '') + Number(v.Differenza).toFixed(2) + ' €)'); });
   });
   let totAvvisi = 0, testo = '', html = '';
   Object.keys(perRider).sort().forEach(function (n) {
@@ -894,6 +937,9 @@ function report_(servizio) {
       (r.avvisi.length ? '<ul>' + r.avvisi.map(function (a) { return '<li>' + a + '</li>'; }).join('') + '</ul>' : '');
   });
 
+  const uc = uscitaCucina_(cons);
+  testo += '\nUSCITA PRODOTTI CUCINA: ' + uc.testo;
+  html += uscitaCucinaHtml_(null, 'del servizio', cons);
   aggiungi_('Report', { Data: oggi, Servizio: servizio, Creato: ora, Consegne: cons.length, Avvisi: totAvvisi, Testo: testo });
 
   if (imp.EMAIL_REPORT) {
