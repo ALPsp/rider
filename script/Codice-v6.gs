@@ -126,10 +126,16 @@ function doPost(e) {
 function geocodifica(via, paese) {
   via = String(via || '').slice(0, 120); paese = String(paese || "San Paolo d'Argon").slice(0, 60);
   if (!via) return null;
-  const k = 'gg_' + Utilities.base64EncodeWebSafe(via + '|' + paese).slice(0, 200), c = CacheService.getScriptCache(), x = c.get(k);
+  const k = 'gg2_' + Utilities.base64EncodeWebSafe(via + '|' + paese).slice(0, 200), c = CacheService.getScriptCache(), x = c.get(k);
   if (x) return JSON.parse(x);
-  const r = Maps.newGeocoder().setRegion('it').setLanguage('it').geocode(via + ', ' + paese + ', BG, Italia');
-  const g = (r.results || []).filter(function (a) { return (a.types || []).some(function (t) { return /street_address|premise|subpremise|route|establishment/.test(t); }); })[0];
+  const r = Maps.newGeocoder().setRegion('it').setLanguage('it').setBounds(45.55, 9.6, 45.82, 10.0).geocode(via + ', ' + paese + ', BG, Italia');
+  const norm = function (t) { return String(t || '').toLowerCase().replace(/[^a-z]/g, ''); }, np = norm(paese.replace(/\s+BG$/i, ''));
+  const g = (r.results || []).filter(function (a) {
+    const via_ = (a.types || []).some(function (t) { return /street_address|premise|subpremise|route|establishment/.test(t); });
+    const loc = (a.address_components || []).some(function (c) { return (c.types || []).some(function (t) { return /locality|administrative_area_level_3/.test(t); }) && (norm(c.long_name) === np || norm(c.short_name) === np); });
+    const l = a.geometry.location, km = Math.sqrt(Math.pow((l.lat - 45.6860723) * 111, 2) + Math.pow((l.lng - 9.7990781) * 78, 2));
+    return via_ && loc && km < 25;   // la via giusta, nel paese giusto, vicino alla pizzeria
+  })[0];
   const out = g ? [g.geometry.location.lat, g.geometry.location.lng] : null;
   c.put(k, JSON.stringify(out), 21600);
   return out;
