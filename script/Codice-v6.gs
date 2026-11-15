@@ -11,20 +11,21 @@
 
 const FOGLIO_ID = '1y_QIAARjBJAY_qAK6heMKlGDiiowUwjcI2huT8jM8W8';
 const PIZZERIA = 'Via Francesco Baracca 2, 24060 San Paolo d\'Argon BG';
-const CENTRO = [45.6886, 9.8037];
+const CENTRO = [45.6860723, 9.7990781];
 
 const SCHEDE = {
   'Rider': ['Nome', 'PIN', 'Attivo'],
   'Accessi': ['Ruolo', 'Nome', 'PIN'],
   'Giri': ['ID', 'Data', 'Servizio', 'Rider', 'Partenza', 'Rientro', 'Minuti totali', 'Stato',
            'Ordine consigliato', 'Google percorso ottimo (min)', 'Google percorso fatto (min)',
-           'Rientro reale (min)', 'Rientro Google (min)', 'Km Google', 'Avvisi', 'Percorso'],
+           'Rientro reale (min)', 'Rientro Google (min)', 'Km Google', 'Avvisi', 'Percorso', 'Furgone'],
   'Consegne': ['ID', 'Giro', 'Rider', 'Indirizzo', 'Note', 'Pagamento', 'Importo', 'Orario previsto',
                'Creata', 'N. consigliato', 'Tratta Google pianificata (min)', 'Consegnata', 'N. fatto',
                'Minuti dalla partenza', 'Tratta reale (min)', 'Tratta Google (min)', 'Ritardo tratta (min)',
-               'Ritardo su orario (min)', 'Avvisi', 'Cliente', 'Telefono', 'N. ordine', 'Cassiere', 'Foto ordine', 'Lat', 'Lng'],
+               'Ritardo su orario (min)', 'Avvisi', 'Cliente', 'Telefono', 'N. ordine', 'Cassiere', 'Foto ordine', 'Lat', 'Lng',
+               'Paese', 'Stato', 'Cambi', 'Assegnata', 'Creata da'],
   'Turni': ['ID', 'Data', 'Servizio', 'Rider', 'Inizio', 'Km inizio', 'Km letti inizio', 'Foto inizio',
-            'Fine', 'Km fine', 'Km letti fine', 'Foto fine', 'Km percorsi', 'Km Google giri', 'Avvisi'],
+            'Fine', 'Km fine', 'Km letti fine', 'Foto fine', 'Km percorsi', 'Km Google giri', 'Avvisi', 'Furgone', 'Km a mano'],
   'Premiazioni': ['Mese', 'Posizione', 'Rider', 'Punteggio', 'Consegne', 'Puntualità %', 'Ritardo medio (min)',
                   'Avvisi', 'Km', 'Creato', 'Voto', 'Percorso %', 'Tempi %', 'Rientri %'],
   'Posizioni': ['Rider', 'Lat', 'Lng', 'Precisione (m)', 'Ora'],
@@ -899,6 +900,7 @@ function reportPranzo() { report_('Pranzo'); }
 function reportCena() { report_('Cena'); }
 
 function report_(servizio) {
+  try { syncFirebase(true); } catch (e) { console.log('Sync prima del report: ' + e); }
   const imp = imp_(), oggi = data_(), ora = new Date();
   // chiude i giri rimasti aperti di questo servizio
   righe_('Giri').filter(function (g) {
