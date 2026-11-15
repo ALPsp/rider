@@ -39,10 +39,21 @@ window.onerror = function (m, u, l) { try { ALP.toast('Errore: ' + m + ' (riga '
   .rc.bersaglio { box-shadow:0 0 0 3px var(--rosso2), 0 0 0 9px rgba(198,65,60,.15); transform:scale(1.02); }
   .rc.lib { box-shadow:0 0 0 2px var(--lime); }
   .vuoto { color:var(--muto); font-size:14px; padding:10px 6px; }
-  .vass { position:fixed; left:16px; bottom:16px; right:calc(var(--colw) + 32px); z-index:690; border-radius:28px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; max-height:38vh; }
+  .vass { position:fixed; left:16px; bottom:16px; right:calc(var(--colw) + 32px); z-index:690; border-radius:28px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; max-height:52vh; }
   .vass h3 { margin:0 2px; font-size:17px; display:flex; gap:10px; align-items:baseline; } .vass h3 small { font-size:13px; color:var(--muto); font-weight:600; }
-  .carte { display:flex; flex-wrap:wrap; gap:10px; overflow:auto; }
-  .ca { width:230px; background:#fff; border-radius:18px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:grab; }
+  .carte { flex-shrink:0; display:flex; flex-wrap:nowrap; gap:10px; overflow-x:auto; overflow-y:hidden; padding-bottom:4px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
+  .fil { flex-shrink:0; display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; } .fil::-webkit-scrollbar, .carte::-webkit-scrollbar { height:0; }
+  .fil button { flex:0 0 auto; border:1px solid rgba(48,47,49,.15); background:rgba(255,255,255,.85); color:var(--ink); border-radius:999px; padding:5px 12px; font:700 13px -apple-system,sans-serif; }
+  .fil button.on { background:var(--ink); color:#fff; border-color:var(--ink); } .fil button.now:not(.on) { box-shadow:0 0 0 2px var(--lime); }
+  .ca { flex:0 0 220px; scroll-snap-align:start; position:relative; border:1px solid transparent; }
+  .ca .po { font:800 15px -apple-system,sans-serif; color:var(--ink); } .ca .vi { font-weight:800; color:var(--ink); font-size:14px; text-transform:uppercase; white-space:normal; }
+  .ca .cl { color:var(--ink) !important; } .ca .rd { margin-top:6px; padding:6px 9px; border-radius:12px; font:800 17px -apple-system,sans-serif; display:flex; align-items:center; gap:6px; }
+  .ca .st { font-size:12px !important; font-weight:700; margin-top:2px; }
+  .ca.dass { border:2px dashed #e0a800; } .ca.dass .rd { background:#fff4d6; color:#7a5600; }
+  .ca.gir .rd { background:#dde8ff; color:#123f8c; } .ca.fat { border-color:#3aa35c; } .ca.fat .rd { background:#e2f3e8; color:#1d7a3d; }
+  .ca .spunta { position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:50%; background:#2e9b50; color:#fff; display:grid; place-items:center; font:900 18px sans-serif; }
+  .ca.ces { opacity:.7; } .ca.ces .rd { background:#fde8e7; color:#b3261e; }
+  .ca { width:220px; background:#fff; border-radius:18px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; touch-action:pan-x; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:grab; }
   .ca .r1 { display:flex; justify-content:space-between; gap:6px; } .ca b { font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .ca .ora { font-size:12px; font-weight:800; background:var(--sfondo); border-radius:999px; padding:2px 8px; white-space:nowrap; } .ca .ora.r { background:#fde8e7; color:#b3261e; }
   .ca span { font-size:14px; color:var(--muto); } .ca .soldi { color:var(--ink); }
@@ -214,7 +225,8 @@ function struttura() {
       <button class="b-s" id="vOrari">Orari consegne</button><button class="b-s" id="fine">Fine turno e totali</button><button class="b-p" id="nuova">+ Consegna</button></div>
     <div class="vers" id="vers"></div>
     <div class="col vetro"><h3>Rider in servizio <small id="nr"></small></h3><div class="lista" id="lista"></div></div>
-    <div class="vass vetro"><h3><span id="na">Da assegnare</span><small>Tieni premuto e trascina sul rider · tocca per modificare</small></h3><div class="carte" id="carte"></div></div>
+    <div class="vass vetro"><h3><span id="na">Consegne</span><small>Tieni premuto e trascina sul rider · tocca per gestirla</small></h3>
+      <div class="fil" id="filF"></div><div class="fil" id="filS"></div><div class="carte" id="carte"></div></div>
     <div id="orari"><div style="display:flex;align-items:center;gap:10px">
       <img src="../img/marchio.png" alt="Amo la Pizza" style="height:30px">
       <b style="font-size:19px">ORARI CONSEGNE</b><span class="muto" id="oraTesta" style="font-size:13px;font-weight:700"></span>
@@ -263,8 +275,7 @@ function disegna() {
       + manca.map(x => `<div class="rc" style="opacity:.6"><span class="pal" style="background:${ALP.colore(x.nome)}"></span><div class="t"><div class="r1"><b class="nome">${esc(x.nome)}</b><span class="pill p-off">${x.tra > 0 ? 'tra ' + x.tra + ' min' : 'in ritardo'}</span></div><span class="riga">Turno ${esc(x.da)}–${esc(x.a)}</span></div></div>`).join('') : '');
   tutti('.rc[data-rider]').forEach(el => el.onclick = () => schedaRider(el.dataset.rider));
   const da = daAssegnare();
-  $('#na').textContent = 'Da assegnare · ' + da.length;
-  $('#carte').innerHTML = da.length ? da.map(cardConsegna).join('') : '<div class="vuoto">Nessuna consegna in attesa. Premi “+ Consegna”.</div>';
+  striscia();
   const va = VERS.filter(v => v.stato === 'attesa');
   $('#vers').innerHTML = va.map(v => `<div class="vetro">${v.fine ? '🏁' : '💶'} ${esc(v.rider)} ${v.fine ? 'ha chiuso il turno: versa' : 'lascia'} <b>${euro(v.contanti)}</b> in cassa · contali e <button data-v="${v.id}">✓ Conferma</button></div>`).join('');
   tutti('[data-v]').forEach(b => b.onclick = () => confermaVersamento(b.dataset.v));
@@ -286,11 +297,56 @@ function cardRider(o) {
   return `<div class="rc ${o.stato === 'pizzeria' && !o.pend.length ? 'lib' : ''}" data-rider="${esc(o.n)}"><span class="pal" style="background:${o.colore}"></span>
     <div class="t"><div class="r1"><b class="nome">${esc(o.n)}${t && t.furgone ? ' 🚐' : ''}</b>${pill}</div>${corpo}</div></div>`;
 }
+/* ---------- striscia consegne: filtro per fascia (segue l'ora da sola) + stato ---------- */
+let FIL_F = null, FIL_S = 'tutte';
+const STATI = [['tutte', 'Tutte'], ['dass', 'Da assegnare'], ['gir', 'In giro'], ['fat', 'Consegnate'], ['ces', 'Cestino']];
+const statoC = c => c.stato === 'annullata' ? 'ces' : c.stato === 'consegnata' ? 'fat' : !c.rider ? 'dass' : 'gir';
+function striscia() {
+  const tutte = CONS.filter(c => c.tipo !== 'ASPORTO'), adesso = ALP.fascia(ALP.hhmm(Date.now()));
+  const f = FIL_F || adesso, inF = c => f === 'tutto' || fasciaForno(c) === f;
+  const fasce = [...new Set(tutte.map(fasciaForno).filter(Boolean).concat(ALP.fasce(SERV).includes(adesso) ? [adesso] : []))].sort();
+  const n = (x, flt) => tutte.filter(c => (x === 'tutto' || fasciaForno(c) === x) && (flt ? flt(c) : statoC(c) !== 'ces')).length;
+  $('#filF').innerHTML = `<button data-ff="tutto" class="${f === 'tutto' ? 'on' : ''}">Tutto il turno (${n('tutto')})</button>`
+    + fasce.map(x => `<button data-ff="${x}" class="${x === f ? 'on' : ''} ${x === adesso ? 'now' : ''}">${x}–${ALP.meno(x, -15)}${x === adesso ? ' · adesso' : ''} (${n(x)})</button>`).join('');
+  $('#filS').innerHTML = STATI.map(([k, t]) => `<button data-fs="${k}" class="${k === FIL_S ? 'on' : ''}">${t} (${tutte.filter(c => inF(c) && (k === 'tutte' ? statoC(c) !== 'ces' : statoC(c) === k)).length})</button>`).join('');
+  tutti('[data-ff]').forEach(b => b.onclick = () => { FIL_F = b.dataset.ff === adesso ? null : b.dataset.ff; striscia(); });
+  tutti('[data-fs]').forEach(b => b.onclick = () => { FIL_S = b.dataset.fs; striscia(); });
+  const l = tutte.filter(c => inF(c) && (FIL_S === 'tutte' ? statoC(c) !== 'ces' : statoC(c) === FIL_S))
+    .sort((a, b) => (a.previsto || '99').localeCompare(b.previsto || '99'));
+  $('#na').textContent = 'Consegne · ' + l.length;
+  $('#carte').innerHTML = l.length ? l.map(cardConsegna).join('') : '<div class="vuoto">Nessuna consegna qui. Premi “+ Consegna” o cambia filtro.</div>';
+}
 function cardConsegna(c) {
-  return `<div class="ca" data-c="${c.id}"><div class="r1"><b>${esc(c.via)}</b>${c.previsto ? `<span class="ora">${esc(c.previsto)}</span>` : ''}</div>
-    <span>${esc(c.paese)}${c.cliente ? ' · ' + esc(c.cliente) : ''}${c.lat ? '' : ' · 📍 cerco…'}</span>
-    ${c.lontano && !c.lontanoOk ? `<span style="color:#b3261e;font-weight:800">⚠️ ${c.lontano} min dalla pizzeria: controlla il paese</span>` : ''}
-    <span class="soldi"><b style="font-size:15px">${c.importo ? euro(c.importo) : '—'}</b> · ${c.pagamento === 'SumUp' ? 'SumUp' : 'Contanti'}</span></div>`;
+  const s = statoC(c), info = [c.pizze ? c.pizze + 'P' : '', c.burger ? c.burger + 'B' : ''].filter(Boolean).join(' ') + (c.note ? ' · ' + c.note : '');
+  const rd = s === 'dass' ? '👆 Da assegnare' : s === 'gir' ? '🚗 ' + esc(c.rider) : s === 'fat' ? '✓ ' + esc(c.rider) : '🗑 ' + esc(c.rider || 'Eliminata');
+  const st = s === 'dass' ? 'Tieni premuto o trascina sul rider →' : s === 'gir' ? (c.stato === 'partita' ? 'In giro' : 'Assegnata, parte a breve')
+    : s === 'fat' ? 'Consegnata alle ' + hhmm(c.consegnata) : 'Nel cestino' + (c.eliminataDa ? ' · ' + esc(c.eliminataDa) : '') + (c.eliminata ? ' ' + hhmm(c.eliminata) : '');
+  return `<div class="ca ${s}" data-c="${c.id}">${s === 'fat' ? '<span class="spunta">✓</span>' : ''}
+    <span class="po">PER LE ${esc(c.previsto || '—')}</span><span class="vi">${esc(c.via)}${c.paese && !/san paolo/i.test(c.paese) ? ', ' + esc(c.paese) : ''}</span>
+    ${c.cliente ? `<span class="cl">${esc(c.cliente)}</span>` : ''}${info ? `<span>${esc(info)}</span>` : ''}
+    ${c.lontano && !c.lontanoOk ? `<span style="color:#b3261e;font-weight:800">⚠️ ${c.lontano} min dalla pizzeria</span>` : ''}
+    <div class="rd">${rd}</div><span class="st">${st}</span></div>`;
+}
+/* ---------- cestino, ripristino, riapertura (tutti i cassieri, resta scritto chi) ---------- */
+async function eliminaC(c) {
+  if (!confirm('Metto nel cestino ' + (c.via || c.cliente) + '?' + (c.stato === 'consegnata' ? '\nEra già consegnata: portafoglio e report si ricalcolano.' : '') + '\nSi può ripristinare dal filtro Cestino.')) return;
+  const ora = Date.now();
+  FB.cambia('consegne/' + c.id, { stato: 'annullata', prima: c.stato, eliminata: ora, eliminataDa: HUB, agg: ora,
+    storia: await FB.aggiungiA({ t: ora, da: c.rider || '', a: c.rider || '', chi: HUB, tipo: 'messa nel cestino' }) }).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+  chiudi(); ALP.toast('Nel cestino');
+}
+async function ripristinaC(c) {
+  const ora = Date.now(), p = c.prima && c.prima !== 'annullata' ? c.prima : (c.rider ? 'assegnata' : 'attesa');
+  FB.cambia('consegne/' + c.id, { stato: p, prima: '', eliminata: null, eliminataDa: '', agg: ora,
+    storia: await FB.aggiungiA({ t: ora, da: c.rider || '', a: c.rider || '', chi: HUB, tipo: 'ripristinata' }) }).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+  chiudi(); ALP.toast('Ripristinata');
+}
+async function riapriC(c) {
+  if (!confirm('Rimetto ' + c.via + ' da consegnare? Portafoglio e report si ricalcolano.')) return;
+  const ora = Date.now(), r = RIDER.find(x => x.nome === c.rider);
+  FB.cambia('consegne/' + c.id, { stato: r && r.giro ? 'partita' : 'assegnata', consegnata: null, giro: r && r.giro ? r.giro : (c.giro || ''), agg: ora,
+    storia: await FB.aggiungiA({ t: ora, da: c.rider || '', a: c.rider || '', chi: HUB, tipo: 'riaperta dalla cassa' }) }).catch(e => ALP.toast('Non salvato: ' + e.message, 1));
+  chiudi(); ALP.toast('Riaperta');
 }
 
 /* ---------- mappa: frecce dei rider (piena = va dal cliente, vuota con casetta = torna) ---------- */
@@ -352,6 +408,7 @@ function trascina() {
     pulisci();
   });
   document.addEventListener('pointercancel', pulisci);
+  document.addEventListener('touchmove', e => { if (fant) e.preventDefault(); }, { passive: false });
 }
 
 /* ---------- assegnare / spostare (si vede subito, si salva in sottofondo) ---------- */
@@ -501,7 +558,10 @@ function schedaConsegna(c) {
   let pag = c.pagamento || 'Contanti', a = c.rider || '', tipo = c.tipo === 'ASPORTO' ? 'ASPORTO' : 'DOMICILIO';
   const ri = inServizio();
   apri(`<div class="maniglia"></div><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${nuova ? 'Nuova consegna' : 'Consegna'}</h2>
-      ${nuova ? '' : `<button class="mini" id="elim" style="color:var(--rosso2)">Elimina</button>`}</div>
+      ${nuova ? '' : `<div style="display:flex;gap:6px">${c.stato === 'annullata' ? '<button class="mini" id="ripr">↩ Ripristina</button>'
+        : (c.stato === 'consegnata' ? '<button class="mini" id="riap">↩ Riapri</button>' : '') + '<button class="mini" id="elim" style="color:var(--rosso2)">🗑 Elimina</button>'}</div>`}</div>
+      ${!nuova && c.stato === 'consegnata' ? `<div class="avv">✓ Consegnata da ${esc(c.rider)} alle ${hhmm(c.consegnata)}: ogni modifica ricalcola portafoglio e report.</div>` : ''}
+      ${!nuova && c.stato === 'annullata' ? `<div class="avv err">🗑 Nel cestino${c.eliminataDa ? ' (' + esc(c.eliminataDa) + ' alle ' + hhmm(c.eliminata) + ')' : ''}.</div>` : ''}
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
       ${nuova ? `<button class="btn n" id="foto">📷 Foto comanda</button><input type="file" accept="image/*" capture="environment" id="file" hidden><div class="muto" id="st" style="text-align:center;font-size:14px"></div>` : ''}
       <div id="avvisi">${c.lontano && !c.lontanoOk ? `<div class="avv err">⚠️ Questo indirizzo risulta a ${c.lontano} minuti dalla pizzeria: controlla via e paese.</div>` : ''}</div>
@@ -527,7 +587,9 @@ function schedaConsegna(c) {
     tutti('#pag button').forEach(b => b.onclick = () => { pag = b.dataset.p; segna(); });
     tutti('#chips button').forEach(b => b.onclick = () => { a = b.dataset.a; segna(); }); segna();
     $('#annulla').onclick = chiudi;
-    if ($('#elim')) $('#elim').onclick = () => { if (confirm('Elimino questa consegna?')) { FB.cambia('consegne/' + c.id, { stato: 'annullata', agg: Date.now() }); chiudi(); } };
+    if ($('#elim')) $('#elim').onclick = () => eliminaC(c);
+    if ($('#ripr')) $('#ripr').onclick = () => ripristinaC(c);
+    if ($('#riap')) $('#riap').onclick = () => riapriC(c);
     if (nuova) {
       $('#foto').onclick = () => $('#file').click();
       $('#file').onchange = async e => {
